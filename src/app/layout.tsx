@@ -1,21 +1,54 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+// 메타/SEO: 값 SSOT = docs/seo-checklist.md(cmo) + docs/design/04-brand-assets.md(uxui).
+// 사적 도구이므로 전역 noindex(검색 비노출), OG/PWA 는 공유·홈화면 경험용.
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-// PROVISIONAL: 메타/SEO 카피는 cmo 확정본 도착 후 교체. 서비스명만 우선 반영.
 export const metadata: Metadata = {
-  title: "배달장부2",
-  description: "라이더 개인 SLA 대시보드",
+  metadataBase: new URL(SITE_URL),
+  applicationName: "배달장부2",
+  title: "배달장부2 — 내 배달 실적 대시보드",
+  description:
+    "완료·수락률·취소까지 내 배달 실적을 오늘·주·월로 한눈에. 라이더 본인용 대시보드.",
+  // 사적 데이터 보호 (seo-checklist §4) — 전 경로 검색 비노출.
+  robots: { index: false, follow: false },
+  openGraph: {
+    type: "website",
+    siteName: "배달장부2",
+    title: "배달장부2 — 내 배달 성적표",
+    description:
+      "완료·수락률·취소까지 내 배달 실적을 오늘·주·월로 한눈에. 라이더 본인용 대시보드.",
+    locale: "ko_KR",
+    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "배달장부2 미리보기" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "배달장부2 — 내 배달 성적표",
+    description:
+      "완료·수락률·취소까지 내 배달 실적을 오늘·주·월로 한눈에. 라이더 본인용 대시보드.",
+    images: ["/og-image.png"],
+  },
+  icons: {
+    icon: [
+      { url: "/icons/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icons/favicon-16.png", sizes: "16x16", type: "image/png" },
+    ],
+    apple: "/icons/apple-touch-icon-180.png",
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "배달장부2",
+  },
+};
+
+// 모바일 퍼스트 + safe-area + dark-first 상태바색 (04-brand-assets §1).
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#0f172a",
 };
 
 export default function RootLayout({
@@ -23,12 +56,18 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // dark-first (00-foundations §3): data-theme="dark" 기본.
+  // 폰트: 토큰(--font-sans)이 Pretendard 우선 — Pretendard 웹폰트를 CDN 으로 로드.
   return (
-    <html
-      lang="ko"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">{children}</body>
+    <html lang="ko" data-theme="dark">
+      <head>
+        <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
+        <link
+          rel="stylesheet"
+          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
+        />
+      </head>
+      <body className="min-h-dvh">{children}</body>
     </html>
   );
 }

@@ -8,12 +8,6 @@ import type { RiderHourlyRow, RiderSummaryRow, SlaPeriod } from "@/types/databas
 
 export const SLA_PERIODS: readonly SlaPeriod[] = ["today", "week", "month"];
 
-export const PERIOD_LABELS: Record<SlaPeriod, string> = {
-  today: "오늘",
-  week: "이번 주",
-  month: "이번 달",
-};
-
 export function isSlaPeriod(value: unknown): value is SlaPeriod {
   return typeof value === "string" && (SLA_PERIODS as readonly string[]).includes(value);
 }
@@ -24,9 +18,14 @@ export function parsePeriod(raw: string | string[] | undefined): SlaPeriod {
   return isSlaPeriod(value) ? value : "today";
 }
 
-/** 대시보드 한 화면 = 기간 요약(get_rider_summary) + 시간대 분포(get_rider_hourly). */
+/**
+ * 대시보드 한 화면 = 현재 기간 요약(get_rider_summary) + 직전 기간 요약(델타용)
+ * + 시간대 분포(get_rider_hourly).
+ */
 export interface DashboardData {
   summary: RiderSummaryRow;
+  /** 델타(과거의 나) 비교용 직전 기간 요약. 없으면 null. */
+  previous: RiderSummaryRow | null;
   hourly: RiderHourlyRow[];
 }
 
@@ -52,6 +51,13 @@ const MOCK_SUMMARY: Record<SlaPeriod, RiderSummaryRow> = {
   },
 };
 
+// 직전 기간(델타 방향 시연용 — 일부는 호조, 일부는 부진).
+const MOCK_PREVIOUS: Record<SlaPeriod, RiderSummaryRow> = {
+  today: { ...MOCK_SUMMARY.today, sla_score: 89, completed: 15, rejected: 3, dispatch_canceled: 2, delivery_canceled: 1, acceptance_rate: 0.85 },
+  week: { ...MOCK_SUMMARY.week, sla_score: 90, completed: 118, rejected: 9, dispatch_canceled: 8, delivery_canceled: 2, acceptance_rate: 0.88 },
+  month: { ...MOCK_SUMMARY.month, sla_score: 87, completed: 488, rejected: 45, dispatch_canceled: 30, delivery_canceled: 12, acceptance_rate: 0.85 },
+};
+
 function mockHourly(period: SlaPeriod): RiderHourlyRow[] {
   const scale = period === "today" ? 1 : period === "week" ? 6 : 26;
   // 점심/저녁 피크를 흉내낸 결정적 분포.
@@ -66,6 +72,7 @@ function mockHourly(period: SlaPeriod): RiderHourlyRow[] {
 export async function getDashboardData(period: SlaPeriod): Promise<DashboardData> {
   return {
     summary: MOCK_SUMMARY[period],
+    previous: MOCK_PREVIOUS[period],
     hourly: mockHourly(period),
   };
 }

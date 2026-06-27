@@ -75,7 +75,7 @@ export async function getDashboard(
 /** 현재 로그인 사용자의 바인딩 상태(라이더 연결 여부) */
 export async function getBindingStatus(supabase: Client): Promise<BindingStatus> {
   const { data: account, error } = await supabase
-    .from('rider_account')
+    .from('rider_accounts')
     .select('admin_rider_id')
     .maybeSingle()
   if (error) throw error
