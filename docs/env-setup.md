@@ -17,10 +17,13 @@ jangboooo 는 두 런타임으로 나뉜다.
 |----|:---:|:---:|------|
 | `NEXT_PUBLIC_SUPABASE_URL` | ✅ | ✅¹ | Supabase 프로젝트 URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ✅ | — | 클라이언트 anon 키(RLS 적용) |
+| `NEXT_PUBLIC_SITE_URL` | ✅ | — | 배포 절대 URL(SEO/OG/메타 baseUrl). 예: `https://<도메인>` |
 | `SUPABASE_URL` | — | ✅¹ | 워커용 URL(없으면 `NEXT_PUBLIC_SUPABASE_URL` 폴백) |
 | `SUPABASE_SERVICE_ROLE_KEY` | ✅² | ✅ | RLS 우회. 서버/워커 전용 |
-| `KAKAO_REST_API_KEY` / `KAKAO_CLIENT_SECRET` | ✅ | — | 카카오 간편로그인 |
-| `KAKAO_IDENTITY_*` / `IDENTITY_VERIFY_*` | ✅ | — | 휴대폰 본인인증 |
+| `IDENTITY_VERIFY_PROVIDER` | ✅(`kakao`) | — | 본인확인 어댑터. 미설정 시 `PROVIDER_NOT_CONFIGURED` 안전차단 |
+| `KAKAO_IDENTITY_CLIENT_ID`/`_SECRET`/`_REDIRECT_URI` | ✅ | — | 휴대폰 본인확인(서버). REDIRECT_URI=배포 도메인 일치 |
+| `IDENTITY_VERIFY_SANDBOX` | dev only | — | **운영 금지**. true 면 `mock:01012345678` 토큰 허용 |
+| `KAKAO_REST_API_KEY` / `KAKAO_CLIENT_SECRET` | —³ | — | 카카오 **간편로그인** — Supabase Auth Provider(대시보드)에 입력, Vercel env 아님 |
 | `ADMIN_PORTAL_URL` | — | ✅ | grider 포털 URL (확정: `https://jangboo.grider.ai/dashboard`) |
 | `ADMIN_PORTAL_ID` / `ADMIN_PORTAL_PASSWORD` | — | ✅ | grider 관리자 계정 (**미확정** — 인증 샘플 대기) |
 | `SCRAPE_INTERVAL_SECONDS` | — | ✅(기본 60) | 수집 주기(초) = 한 틱 시간 예산 |
@@ -34,6 +37,7 @@ jangboooo 는 두 런타임으로 나뉜다.
 
 ¹ 워커는 `SUPABASE_URL` 우선, 없으면 `NEXT_PUBLIC_SUPABASE_URL` 사용.
 ² 웹은 서버 액션/라우트에서만 사용(클라이언트 번들 노출 금지).
+³ 코드는 `KAKAO_REST_API_KEY/CLIENT_SECRET` 를 직접 읽지 않음 — 간편로그인은 Supabase Auth Kakao Provider 가 처리. 키는 Supabase 대시보드에 입력(아래 Supabase 절).
 
 ## Railway — 스크래퍼 배포
 
@@ -56,10 +60,75 @@ jangboooo 는 두 런타임으로 나뉜다.
 `scraper/package.json` 의 `playwright` 버전과 **반드시 일치**해야 한다(브라우저/드라이버 충돌 방지).
 playwright 를 올릴 때 두 곳을 함께 변경한다.
 
-## Vercel — 웹앱 (참고)
+## Supabase — 프로비저닝 + 마이그레이션 적용
 
-루트 Next.js 앱은 Vercel 에 배포. Framework Preset = **Next.js**. 위 매트릭스의
-웹 컬럼 변수를 Project Settings → Environment Variables 에 등록. (상세 CI/CD 는 후속 작업.)
+웹앱과 스크래퍼가 **같은 Supabase 프로젝트**를 공유한다. 순서: 프로젝트 생성 → 마이그레이션 → 키 배포 → Auth 설정.
+
+1. supabase.com 에서 프로젝트 생성. Settings → API 에서 값 확보:
+   - `Project URL` → `NEXT_PUBLIC_SUPABASE_URL` (+워커 `SUPABASE_URL`)
+   - `anon public` → `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `service_role` → `SUPABASE_SERVICE_ROLE_KEY` (**비밀** — 서버/워커 전용, 클라이언트 금지)
+
+2. 마이그레이션 — `supabase/migrations/` 3개를 **순서대로** 적용. 순서 의존:
+   `0001_core_schema`(테이블) → `0002_rls`(0001 필요) → `0003_rpc`(0001/0002 필요). 어기면 실패.
+
+   **방법 A — SQL Editor (권장, 현재 CLI 미초기화):**
+   Dashboard → SQL Editor → 0001 → 0002 → 0003 파일 내용을 차례로 붙여넣고 RUN.
+
+   **방법 B — Supabase CLI:**
+   ```bash
+   supabase init                       # config.toml 생성(최초 1회 — 아직 없음)
+   supabase link --project-ref <ref>   # 대시보드 URL 의 프로젝트 ref
+   supabase db push                    # migrations/ 를 순서대로 적용
+   ```
+
+3. 적용 검증(SQL Editor):
+   - 테이블 4: `riders / rider_accounts / sla_snapshots / rider_hourly_stats`
+   - RLS 활성: `select relname, relrowsecurity from pg_class where relname in ('riders','rider_accounts','sla_snapshots','rider_hourly_stats');` → 모두 `t`
+   - RPC grant: `bind_rider_by_phone`(service_role 전용), `get_rider_summary/daily/hourly`(authenticated)
+
+4. Auth — 카카오 간편로그인(`signInWithKakao`):
+   Dashboard → Authentication → Providers → **Kakao** 활성 → 카카오 앱의 REST API 키 /
+   Client Secret 입력(= `.env.example` 의 `KAKAO_REST_API_KEY/CLIENT_SECRET`).
+   ⚠️ 이 두 키는 **Vercel env 아님** — Supabase 대시보드에 넣는다.
+   카카오 개발자콘솔 Redirect URI 에 `https://<project>.supabase.co/auth/v1/callback` 등록.
+
+## Vercel — 웹앱 배포
+
+루트 Next.js 16 앱만 배포한다(스크래퍼 `scraper/` 는 Railway 담당 — Vercel 빌드 대상 아님).
+
+1. New Project → `Plattlnc/jangboooo` 임포트.
+2. **Framework Preset = Next.js** 확인(자동감지되나 **반드시 확인** — preset 어긋나면 빌드 실패 이력 있음).
+   **Root Directory = `./` (repo 루트)** — ⚠️ Railway(=`scraper`)와 다름. Build=`next build`, Install=`npm install`(기본).
+   루트 `vercel.json` 이 `framework: nextjs` 를 고정한다.
+3. **Environment Variables**(Settings) — 매트릭스 웹 컬럼(✅) 입력:
+   `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_SITE_URL`,
+   `SUPABASE_SERVICE_ROLE_KEY`, `IDENTITY_VERIFY_PROVIDER=kakao`,
+   `KAKAO_IDENTITY_CLIENT_ID/SECRET/REDIRECT_URI`.
+   - 각 변수의 Environment(Production/Preview/Development) 범위 지정.
+   - `NEXT_PUBLIC_*` 는 **빌드타임 인라인** → 값 변경 시 재배포 필요.
+4. 첫 배포 후 도메인 확정 → **도메인 의존 값 갱신 후 재배포**:
+   - `NEXT_PUBLIC_SITE_URL` = 배포 도메인.
+   - `KAKAO_IDENTITY_REDIRECT_URI` = `https://<도메인>/...`(본인확인 콜백) → 카카오 개발자콘솔에도 등록.
+   - (카카오 **로그인** Redirect 는 Supabase 도메인 기준 → 배포 도메인 무관.)
+
+## 배포 체크리스트
+
+**사전(키 주입 전):**
+- [ ] Supabase 프로젝트 생성 + 마이그레이션 0001→0002→0003 적용·검증
+- [ ] 카카오 개발자 앱: 로그인용(Supabase Provider) + 본인확인용 키/동의항목(phone_number)
+- [ ] Vercel 프로젝트 임포트(Framework=Next.js, Root=루트)
+
+**배포:**
+- [ ] Vercel 웹 env 입력 → 배포 → 도메인 확정
+- [ ] `NEXT_PUBLIC_SITE_URL` / `KAKAO_IDENTITY_REDIRECT_URI` 도메인 반영 → 재배포 → 카카오 콘솔 등록
+- [ ] Railway 워커(스크래퍼)는 위 `## Railway` 절 참조(별도 타깃)
+
+**사후 검증:**
+- [ ] `/login` 카카오 로그인 → `/api/auth/callback` 정상
+- [ ] 본인확인 → `bind_rider_by_phone` 바인딩(운영 전 `IDENTITY_VERIFY_SANDBOX` 제거 확인)
+- [ ] 대시보드 SLA 조회 RLS(본인 데이터만). 데이터 없으면 스크래퍼 적재 후 재확인
+- [ ] `SUPABASE_SERVICE_ROLE_KEY` 가 클라이언트 번들에 없는지(브라우저 devtools) 확인
 
 ## 로컬 개발
 

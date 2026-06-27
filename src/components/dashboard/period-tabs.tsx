@@ -3,8 +3,7 @@
 import { useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { SegmentedTabs } from "@/components/ui/segmented-tabs";
-import { SLA_PERIODS } from "@/app/(rider)/_lib/queries";
-import { PERIOD_LABEL } from "@/app/(rider)/_lib/metrics";
+import { PERIOD_LABEL, SLA_PERIODS } from "@/app/(rider)/_lib/metrics";
 import type { SlaPeriod } from "@/types/database";
 
 // 03 §B. 기간 탭 — sticky, URL(period)이 SSOT. 인디케이터는 즉시(optimistic) 이동.

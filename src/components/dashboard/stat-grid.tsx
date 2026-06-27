@@ -15,7 +15,8 @@ function diff(cur: number, prev: number | undefined): number | null {
 
 function acceptanceNote(rate: number | null, periodLabel: string): string | undefined {
   if (rate == null) return undefined;
-  const pct = Math.round(rate * 100);
+  // rate 는 0~100 퍼센트 (sla-api.md §6).
+  const pct = Math.round(rate);
   if (pct >= 90) return `수락률 ${pct}%, 콜을 잘 잡고 있어요`;
   if (pct >= 70) return `수락률 ${pct}%`;
   return `수락률 ${pct}%, 이번 ${periodLabel}엔 조금 낮아요`;
@@ -24,7 +25,7 @@ function acceptanceNote(rate: number | null, periodLabel: string): string | unde
 export function StatGrid({ summary, previous, period }: StatGridProps) {
   const p = previous ?? undefined;
   const periodLabel = PERIOD_LABEL[period];
-  const acceptancePct = summary.acceptance_rate == null ? null : Math.round(summary.acceptance_rate * 100);
+  const acceptancePct = summary.acceptance_rate == null ? null : Math.round(summary.acceptance_rate);
 
   return (
     <section aria-label="SLA 지표" className="grid grid-cols-2 gap-3 md:grid-cols-3">
