@@ -1,0 +1,27 @@
+{
+  "name": "@jangboooo/scraper",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "라이더 SLA 1분 스크래퍼 워커 (Railway + Playwright)",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "once": "tsx src/index.ts --once",
+    "dev": "tsx watch src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "postinstall": "playwright install chromium"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.4",
+    "playwright": "1.49.1",
+    "tsx": "^4.19.2",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "typescript": "^5.6.3"
+  }
+}
