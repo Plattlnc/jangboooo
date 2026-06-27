@@ -1,4 +1,2 @@
-/** 조건부 className 결합 (외부 의존성 없는 경량 헬퍼). */
-export function cn(...parts: Array<string | false | null | undefined>): string {
-  return parts.filter(Boolean).join(" ");
-}
+// 단일 cn 구현은 ./utils (clsx + tailwind-merge). 기존 import 경로 하위호환 re-export.
+export { cn } from "./utils";

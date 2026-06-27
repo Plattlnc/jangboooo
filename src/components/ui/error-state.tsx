@@ -32,7 +32,7 @@ export function ErrorState({
     >
       <Alert className="text-danger" size={28} />
       <p className="text-h3 text-fg">{title}</p>
-      <p className="max-w-xs text-sm text-muted">{description}</p>
+      <p className="max-w-xs text-sm text-muted-foreground">{description}</p>
       {onRetry ? (
         <Button variant="secondary" size="md" className="mt-1" onClick={onRetry}>
           {retryLabel}

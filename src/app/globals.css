@@ -1,13 +1,22 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 @import "../styles/tokens.css";
 
 /* JS config(content/darkMode 등 툴링 호환) 연결 — Tailwind v4 는 CSS-first 이지만
    tailwind.config.ts 의 content 글롭/darkMode 전략을 명시적으로 로드한다. */
 @config "../../tailwind.config.ts";
 
-/* 속성 기반 다크 변형: data-theme="dark" 하위에서 dark: 유틸 활성화.
-   (토큰 자체는 tokens.css 가 자동 전환하므로 dark: 는 예외 케이스 보정용) */
-@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+/* shadcn 표준 다크 변형: .dark 클래스 하위에서 dark: 유틸 활성화.
+   (토큰은 tokens.css 의 .dark 블록이 자동 전환. next-themes attribute="class") */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* tossface 이모지 폰트 (05 §4) — 미로딩 시 OS 이모지로 폴백(레이아웃 영향 0).
+   PROVISIONAL: 공식 배포 URL 확정 시 교체. */
+@font-face {
+  font-family: "Tossface";
+  font-display: swap;
+  src: url("https://cdn.jsdelivr.net/gh/toss/tossface/dist/tossface.woff2") format("woff2");
+}
 
 /* -----------------------------------------------------------------------------
  * Base layer — 모바일 퍼스트 리셋/기본값
@@ -22,8 +31,8 @@
   }
 
   body {
-    background: var(--bg);
-    color: var(--text);
+    background: var(--background);
+    color: var(--foreground);
     font-family: var(--font-sans);
     font-size: var(--text-body);
     line-height: 1.55;
@@ -43,7 +52,7 @@
 
   /* 포커스 가시성 (a11y) — 키보드 탐색 시에만 링 표시 */
   :focus-visible {
-    outline: 2px solid var(--focus-ring);
+    outline: 2px solid var(--ring);
     outline-offset: 2px;
   }
   :focus:not(:focus-visible) {
@@ -78,6 +87,14 @@
   .touch-target {
     min-width: var(--touch-min);
     min-height: var(--touch-min);
+  }
+
+  /* tossface 이모지 액센트 (05 §4) — 장식 전용, 의미는 텍스트가 전달. */
+  .emoji {
+    font-family: var(--font-emoji);
+    font-weight: 400;
+    font-style: normal;
+    line-height: 1;
   }
 
   /* 스켈레톤 시머 (로딩 상태) */

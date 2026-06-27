@@ -30,13 +30,17 @@ export function PeakHourChart({ data }: PeakHourChartProps) {
   return (
     <Card className="flex flex-col gap-3">
       <div className="flex flex-col gap-0.5">
-        <h2 className="text-h3 text-fg">시간대별 실적</h2>
+        <h2 className="text-h3 text-foreground">
+          <span aria-hidden="true" className="emoji mr-1">⏰</span>
+          시간대별 실적
+        </h2>
         {peak ? (
-          <p className="text-sm text-muted">
+          <p className="text-sm text-muted-foreground">
+            <span aria-hidden="true" className="emoji mr-1">🔥</span>
             {peak.start}~{peak.end}시에 가장 많이 달렸어요
           </p>
         ) : (
-          <p className="text-caption text-muted">내가 가장 많이 달린 시간대예요.</p>
+          <p className="text-caption text-muted-foreground">내가 가장 많이 달린 시간대예요.</p>
         )}
       </div>
 
@@ -79,8 +83,8 @@ export function PeakHourChart({ data }: PeakHourChartProps) {
                     transitionDelay: `${i * 25}ms`,
                   }}
                 />
-                {/* DESIGN-QA m4: 축 라벨 토큰화(text-caption) + 대비(text-muted). */}
-                <span aria-hidden="true" className="text-caption leading-none text-muted tabular-nums">
+                {/* DESIGN-QA m4: 축 라벨 토큰화(text-caption) + 대비(text-muted-foreground). */}
+                <span aria-hidden="true" className="text-caption leading-none text-muted-foreground tabular-nums">
                   {bucket.hour % 3 === 0 ? bucket.hour : " "}
                 </span>
               </div>

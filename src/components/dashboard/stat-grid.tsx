@@ -31,6 +31,7 @@ export function StatGrid({ summary, previous, period }: StatGridProps) {
     <section aria-label="SLA 지표" className="grid grid-cols-2 gap-3 md:grid-cols-3">
       <StatCard
         label="완료"
+        emoji="✅"
         tooltip="정상적으로 끝낸 배달 건수예요."
         value={summary.completed}
         unit="건"
@@ -39,6 +40,7 @@ export function StatGrid({ summary, previous, period }: StatGridProps) {
       />
       <StatCard
         label="거절"
+        emoji="🙅"
         tooltip="들어온 콜을 받지 않은 건수예요."
         value={summary.rejected}
         unit="건"
@@ -47,6 +49,7 @@ export function StatGrid({ summary, previous, period }: StatGridProps) {
       />
       <StatCard
         label="배차취소"
+        emoji="🔄"
         tooltip="배차를 받은 뒤 픽업 전에 취소된 건수예요."
         value={summary.dispatch_canceled}
         unit="건"
@@ -55,6 +58,7 @@ export function StatGrid({ summary, previous, period }: StatGridProps) {
       />
       <StatCard
         label="배달취소"
+        emoji="📦"
         tooltip="픽업 이후 배달이 취소된 건수예요."
         value={summary.delivery_canceled}
         unit="건"
@@ -64,6 +68,7 @@ export function StatGrid({ summary, previous, period }: StatGridProps) {
       <StatCard
         className="col-span-2 md:col-span-1"
         label="수락률"
+        emoji="🤝"
         tooltip="들어온 콜 중 내가 받은 비율이에요. (받은 콜 ÷ 전체 콜)"
         value={acceptancePct}
         unit="%"

@@ -52,7 +52,7 @@ export const Field = forwardRef<HTMLInputElement, FieldProps>(function Field(
           )}
           {...props}
         />
-        <div className="absolute inset-y-0 right-3 flex items-center gap-2 text-muted">
+        <div className="absolute inset-y-0 right-3 flex items-center gap-2 text-muted-foreground">
           {trailing}
           {loading ? <Spinner size="sm" /> : null}
           {!loading && success ? <Check className="text-success" size={20} /> : null}
@@ -64,7 +64,7 @@ export const Field = forwardRef<HTMLInputElement, FieldProps>(function Field(
           {error}
         </p>
       ) : helper ? (
-        <p id={describedById} className="text-caption text-muted">
+        <p id={describedById} className="text-caption text-muted-foreground">
           {helper}
         </p>
       ) : null}

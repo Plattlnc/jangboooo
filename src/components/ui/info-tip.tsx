@@ -35,7 +35,7 @@ export function InfoTip({ label, text, size = 14 }: InfoTipProps) {
         role="note"
         className={cn(
           open
-            ? "absolute left-0 top-full z-[200] mt-1 w-56 rounded-md border border-border bg-surface-elevated p-2 text-caption text-muted shadow-lg"
+            ? "absolute left-0 top-full z-[200] mt-1 w-56 rounded-md border border-border bg-surface-elevated p-2 text-caption text-muted-foreground shadow-lg"
             : "sr-only",
         )}
       >

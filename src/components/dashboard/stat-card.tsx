@@ -23,13 +23,15 @@ interface StatCardProps {
   /** 값 자체에 상태색을 줄 때(수락률 등) */
   valueStatus?: StatusColor;
   note?: string;
+  /** tossface 액센트(05 §4) — 라벨 좌측 장식. aria-hidden. */
+  emoji?: string;
   className?: string;
 }
 
 const VALUE_COLOR: Record<StatusColor, string> = {
   success: "text-success",
   warning: "text-warning",
-  danger: "text-danger",
+  danger: "text-destructive",
 };
 
 export function StatCard({
@@ -41,39 +43,41 @@ export function StatCard({
   good = "up",
   valueStatus,
   note,
+  emoji,
   className,
 }: StatCardProps) {
   const missing = value == null;
 
   return (
     <Card className={cn("flex flex-col gap-2", className)}>
-      <div className="flex items-center gap-1 text-caption text-muted">
+      <div className="flex items-center gap-1 text-caption text-muted-foreground">
+        {emoji ? <span aria-hidden="true" className="emoji text-sm">{emoji}</span> : null}
         <span>{label}</span>
         {tooltip ? <InfoTip label={`${label} 설명`} text={tooltip} /> : null}
       </div>
 
       <div className="flex items-baseline gap-1">
         {missing ? (
-          <span className="text-h1 tabular-nums text-subtle">—</span>
+          <span className="text-h1 tabular-nums text-muted-foreground">—</span>
         ) : (
           <>
             <span
               className={cn(
                 "text-h1 tabular-nums",
-                valueStatus ? VALUE_COLOR[valueStatus] : "text-fg",
+                valueStatus ? VALUE_COLOR[valueStatus] : "text-foreground",
               )}
             >
               {value.toLocaleString("ko-KR")}
             </span>
-            <span className="text-sm text-muted">{unit}</span>
+            <span className="text-sm text-muted-foreground">{unit}</span>
           </>
         )}
       </div>
 
       {missing ? (
-        <span className="text-caption text-subtle">데이터 없음</span>
+        <span className="text-caption text-muted-foreground">데이터 없음</span>
       ) : note ? (
-        <span className="text-caption text-muted">{note}</span>
+        <span className="text-caption text-muted-foreground">{note}</span>
       ) : delta != null ? (
         <DeltaBadge delta={delta} good={good} unit={unit} />
       ) : null}

@@ -1,35 +1,39 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
-import { cn } from "@/lib/cn";
+import { cva, type VariantProps } from "class-variance-authority";
+import { cn } from "@/lib/utils";
 import { Spinner } from "./spinner";
 
-// 01-component-library §A. 3 사이즈 × 4 변형 + 상태(loading/disabled/focus).
-// 색/크기 하드코딩 없음 — 토큰 유틸만.
+// shadcn(cva) Button — 05 §5 매핑. variant: primary(=default)/secondary/ghost/outline/destructive
+// + kakao(고정 브랜드색). loading/leftIcon/fullWidth 는 래퍼 확장. 토큰=05 §2.
+const buttonVariants = cva(
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md font-semibold " +
+    "outline-none transition-[transform,background-color,box-shadow] duration-150 ease-[var(--ease-standard)] " +
+    "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background " +
+    "disabled:pointer-events-none disabled:opacity-50 active:scale-[.97]",
+  {
+    variants: {
+      variant: {
+        primary: "bg-primary text-primary-foreground hover:bg-primary/90",
+        secondary: "border border-border bg-card text-foreground hover:bg-muted",
+        ghost: "text-primary hover:bg-primary-subtle",
+        outline: "border border-border bg-transparent hover:bg-muted",
+        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+        kakao: "bg-kakao text-kakao-foreground hover:brightness-95",
+      },
+      size: {
+        sm: "h-9 px-3 text-sm",
+        md: "h-11 px-4 text-base",
+        lg: "h-[52px] px-5 text-base",
+        icon: "size-11",
+      },
+    },
+    defaultVariants: { variant: "primary", size: "md" },
+  },
+);
 
-type Variant = "primary" | "secondary" | "ghost" | "kakao";
-type Size = "sm" | "md" | "lg";
-
-const BASE =
-  "inline-flex items-center justify-center gap-2 rounded-md font-semibold " +
-  "transition-[transform,background-color,box-shadow] duration-150 ease-[var(--ease-standard)] " +
-  "select-none disabled:opacity-50 disabled:pointer-events-none disabled:cursor-not-allowed " +
-  "active:scale-[.97]";
-
-const SIZES: Record<Size, string> = {
-  sm: "h-9 px-3 text-sm",
-  md: "h-11 px-4 text-body", // 44px — 터치 최소
-  lg: "h-[52px] px-5 text-body", // 주요 CTA
-};
-
-const VARIANTS: Record<Variant, string> = {
-  primary: "bg-primary text-primary-fg hover:bg-primary-hover",
-  secondary: "bg-surface text-fg border border-border-strong hover:bg-surface-sunken",
-  ghost: "text-primary hover:bg-primary-subtle",
-  kakao: "bg-kakao text-kakao-fg hover:brightness-95",
-};
-
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: Variant;
-  size?: Size;
+interface ButtonProps
+  extends ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
   loading?: boolean;
   loadingLabel?: string;
   fullWidth?: boolean;
@@ -37,8 +41,8 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 export function Button({
-  variant = "primary",
-  size = "md",
+  variant,
+  size,
   loading = false,
   loadingLabel,
   fullWidth = false,
@@ -54,7 +58,7 @@ export function Button({
       type={type}
       disabled={disabled || loading}
       aria-busy={loading || undefined}
-      className={cn(BASE, SIZES[size], VARIANTS[variant], fullWidth && "w-full", className)}
+      className={cn(buttonVariants({ variant, size }), fullWidth && "w-full", className)}
       {...props}
     >
       {loading ? (
@@ -71,3 +75,5 @@ export function Button({
     </button>
   );
 }
+
+export { buttonVariants };
