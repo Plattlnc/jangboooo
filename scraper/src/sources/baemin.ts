@@ -8,7 +8,7 @@
 import type { Page, Request } from 'playwright'
 import type { Config } from '../config'
 import type { Logger } from '../logger'
-import { dateStringInTz } from '../util'
+import { businessDayInTz } from '../util'
 import type { ScrapeResult } from '../types'
 import type { DeliveryStatusResponse } from './baemin-types'
 import { mapDeliveryStatus } from './baemin-map'
@@ -67,13 +67,15 @@ function historyQuery(pageNum: number, size: number): string {
 
 const API_BASE = 'https://api-deliverycenter.baemin.com'
 const API_PATH = '/v4/management/delivery-status'
+// 과거 영업일 백필(라이더별 배달내역). 응답 구조는 delivery-status 와 동일.
+const RIDER_HISTORY_PATH = '/v4/management/rider-delivery-status'
 
 /**
  * 데이터 화면을 띄워 SPA 가 발사하는 delivery-status 요청의 헤더(`center-id`+브라우저 헤더)를 캡처.
  * 직접 fetch 는 `center-id` 헤더가 없으면 BAD_REQUEST 라, SPA 요청 헤더를 그대로 재사용한다.
  * SPA 가 호출 자체를 안 하면(스텔스 실패/세션 만료) 에러.
  */
-async function captureApiHeaders(page: Page, cfg: Config): Promise<Record<string, string>> {
+export async function captureApiHeaders(page: Page, cfg: Config): Promise<Record<string, string>> {
   let headers: Record<string, string> | null = null
   const handler = (req: Request) => {
     if (!headers && req.url().includes(DELIVERY_STATUS_PATH) && req.method() === 'GET') {
@@ -95,14 +97,13 @@ async function captureApiHeaders(page: Page, cfg: Config): Promise<Record<string
   return headers
 }
 
-/** 캡처한 헤더로 delivery-status API 를 페이지 컨텍스트에서 직접 호출(쿠키 자동 포함). */
-async function fetchPage(
+/** 캡처한 헤더로 api-deliverycenter 를 페이지 컨텍스트에서 직접 호출(쿠키 자동 포함). */
+async function apiGet(
   page: Page,
   headers: Record<string, string>,
-  pageNum: number,
-  size: number,
+  url: string,
+  label: string,
 ): Promise<DeliveryStatusResponse> {
-  const url = `${API_BASE}${API_PATH}?${historyQuery(pageNum, size)}`
   const res = await page.evaluate(
     async ({ u, h }) => {
       const r = await fetch(u, { headers: h, credentials: 'include' })
@@ -117,10 +118,50 @@ async function fetchPage(
     { u: url, h: headers },
   )
   if (res.status === 401 || res.status === 403) throw new SessionExpiredError(`HTTP ${res.status}`)
-  if (res.status < 200 || res.status >= 300) {
-    throw new Error(`delivery-status HTTP ${res.status} (page=${pageNum})`)
-  }
+  if (res.status < 200 || res.status >= 300) throw new Error(`${label} HTTP ${res.status}`)
   return res.body as DeliveryStatusResponse
+}
+
+/** 오늘 배달현황 한 페이지(delivery-status). */
+async function fetchPage(
+  page: Page,
+  headers: Record<string, string>,
+  pageNum: number,
+  size: number,
+): Promise<DeliveryStatusResponse> {
+  return apiGet(page, headers, `${API_BASE}${API_PATH}?${historyQuery(pageNum, size)}`, `delivery-status(page=${pageNum})`)
+}
+
+/**
+ * 과거 영업일 1일치 라이더별 배달내역(rider-delivery-status, fromDate=toDate=day).
+ * 응답 구조는 delivery-status 와 동일 → mapDeliveryStatus 재사용(snapshot_date=day).
+ */
+export async function fetchHistoryDay(
+  page: Page,
+  headers: Record<string, string>,
+  cfg: Config,
+  log: Logger,
+  day: string,
+): Promise<ScrapeResult> {
+  const size = cfg.pageSize
+  const q = new URLSearchParams({ page: '0', size: String(size), fromDate: day, toDate: day }).toString()
+  const first = await apiGet(page, headers, `${API_BASE}${RIDER_HISTORY_PATH}?${q}`, `rider-delivery-status(${day})`)
+  const rows = [...first.data]
+  const total = typeof first.total === 'number' ? first.total : rows.length
+  const serverSize = first.size && first.size > 0 ? first.size : size
+  if (rows.length < total) {
+    const totalPages = first.totalPage && first.totalPage > 0 ? first.totalPage : Math.ceil(total / serverSize)
+    for (let p = 1; p < totalPages; p++) {
+      const pq = new URLSearchParams({ page: String(p), size: String(serverSize), fromDate: day, toDate: day }).toString()
+      const r = await apiGet(page, headers, `${API_BASE}${RIDER_HISTORY_PATH}?${pq}`, `rider-delivery-status(${day},p=${p})`)
+      if (typeof r.page === 'number' && r.page !== p) break
+      rows.push(...r.data)
+      if (rows.length >= total) break
+    }
+  }
+  const result = mapDeliveryStatus(rows, day)
+  log.info('과거 백필 1일', { day, total, riders: result.riders.length, snapshots: result.snapshots.length })
+  return result
 }
 
 /**
@@ -153,7 +194,7 @@ export async function fetchSlaData(page: Page, cfg: Config, log: Logger): Promis
     }
   }
 
-  const snapshotDate = dateStringInTz(cfg.timezone)
+  const snapshotDate = businessDayInTz(cfg.timezone)
   const result = mapDeliveryStatus(rows, snapshotDate)
   log.info('배민 수집 완료', {
     snapshotDate,
@@ -170,7 +211,7 @@ export async function fetchSlaData(page: Page, cfg: Config, log: Logger): Promis
  * ⚠️ 운영 금지 — admin_rider_id 는 'MOCK-' 접두로 식별/정리 용이.
  */
 export function mockScrapeResult(cfg: Config): ScrapeResult {
-  const snapshot_date = dateStringInTz(cfg.timezone)
+  const snapshot_date = businessDayInTz(cfg.timezone)
   return {
     riders: [
       { admin_rider_id: 'MOCK-0001', name: '모의 라이더 1', phone: '010-0000-0001', is_active: true },
