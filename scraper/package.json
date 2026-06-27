@@ -11,6 +11,7 @@
     "start": "tsx src/index.ts",
     "once": "tsx src/index.ts --once",
     "dev": "tsx watch src/index.ts",
+    "capture": "tsx scripts/capture-session.ts",
     "typecheck": "tsc --noEmit",
     "postinstall": "playwright install chromium"
   },

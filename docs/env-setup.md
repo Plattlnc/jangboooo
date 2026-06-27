@@ -25,16 +25,17 @@ jangboooo 는 두 런타임으로 나뉜다.
 | `KAKAO_IDENTITY_CLIENT_ID`/`_SECRET`/`_REDIRECT_URI` | ✅ | — | 휴대폰 본인확인(서버). REDIRECT_URI=배포 도메인 일치 |
 | `IDENTITY_VERIFY_SANDBOX` | dev only | — | **운영 금지**. true 면 `mock:01012345678` 토큰 허용 |
 | `KAKAO_REST_API_KEY` / `KAKAO_CLIENT_SECRET` | —³ | — | 카카오 **간편로그인** — Supabase Auth Provider(대시보드)에 입력, Vercel env 아님 |
-| `ADMIN_PORTAL_URL` | — | ✅ | grider 포털 URL (확정: `https://jangboo.grider.ai/dashboard`) |
-| `ADMIN_PORTAL_ID` / `ADMIN_PORTAL_PASSWORD` | — | ✅ | grider 관리자 계정 (**미확정** — 인증 샘플 대기) |
+| `ADMIN_PORTAL_URL` | — | ✅ | 배민 deliverycenter URL (`https://deliverycenter.baemin.com`) |
 | `SCRAPE_INTERVAL_SECONDS` | — | ✅(기본 60) | 수집 주기(초) = 한 틱 시간 예산 |
+| `SCRAPE_PAGE_SIZE` | — | ✅(기본 200) | delivery-status 1콜 행 수(서버 상한 시 페이지 루프 폴백) |
 | `SCRAPE_TIMEZONE` | — | ✅(기본 Asia/Seoul) | 영업일(`snapshot_date`) 판정 TZ |
 | `SCRAPE_MAX_RETRIES` | — | ✅(기본 3) | 사이클 재시도 횟수 |
 | `SCRAPE_NAV_TIMEOUT_MS` | — | ✅(기본 30000) | Playwright 타임아웃(ms) |
 | `HEADLESS` | — | ✅(기본 true) | 헤드리스 여부 |
-| `STORAGE_STATE_PATH` | — | ✅(기본 `./.session/...`) | 로그인 세션 영속 경로 |
+| `STORAGE_STATE_PATH` | — | ✅(기본 `./.session/...`) | 로그인 세션(storageState) 파일 경로 |
+| `STORAGE_STATE_B64` | — | ✅(Railway) | 세션 JSON base64 — 영속 FS 없는 환경서 부팅 시 파일 복원. 캡처 스크립트가 출력. **시크릿** |
 | `LOG_LEVEL` | — | ✅(기본 info) | debug/info/warn/error |
-| `SCRAPE_MOCK` | — | ✅(기본 false) | **운영 금지**. true 면 grider 미접속·mock 적재로 파이프라인 검증 |
+| `SCRAPE_MOCK` | — | ✅(기본 false) | **운영 금지**. true 면 배민 미접속·mock 적재로 파이프라인 검증 |
 
 ¹ 워커는 `SUPABASE_URL` 우선, 없으면 `NEXT_PUBLIC_SUPABASE_URL` 사용.
 ² 웹은 서버 액션/라우트에서만 사용(클라이언트 번들 노출 금지).
@@ -44,16 +45,20 @@ jangboooo 는 두 런타임으로 나뉜다.
 
 워커는 HTTP 서버가 아니라 **내부 스케줄러로 상주**하는 프로세스다(포트 노출 없음).
 
-1. Railway 프로젝트 → New Service → **Deploy from GitHub repo** (`Plattlnc/jangboooo`).
-2. 서비스 Settings → **Root Directory = `scraper`** (모노레포의 하위 패키지).
-   - `scraper/railway.json` 이 `DOCKERFILE` 빌더 + `scraper/Dockerfile` 을 지정한다.
-3. **Variables** 탭에 위 매트릭스의 워커 컬럼(✅) 값을 입력.
-   - 자격증명(`ADMIN_PORTAL_*`) 미입력 시 **골격 모드**로 상주(수집 스킵) — 배포·기동 검증 가능.
-   - 적재 파이프라인을 실데이터 없이 점검하려면 일시적으로 `SCRAPE_MOCK=true`(검증 후 제거, 운영 금지).
-4. 배포 후 **Logs** 에서 JSON 로그 확인:
-   - 정상: `"워커 시작"` → (골격 모드면) `"골격 모드 — ADMIN_PORTAL_* 미설정..."`.
+1. **세션 캡처(선행, 로컬):** `cd scraper && npm install && npm run capture` → headed 브라우저에서
+   배민 biz-member 로그인(ID/PW + SMS 2FA, "자동로그인" 체크) → 터미널 ENTER.
+   출력된 `STORAGE_STATE_B64`(한 줄)를 복사한다. (세션 만료 시 이 단계만 재실행.)
+2. Railway 프로젝트 → New Service → **Deploy from GitHub repo** (`Plattlnc/jangboooo`).
+3. 서비스 Settings → **Root Directory = `scraper`**. `scraper/railway.json` 이 `DOCKERFILE` 빌더 지정.
+4. **Variables** 입력(매트릭스 워커 컬럼):
+   - `ADMIN_PORTAL_URL=https://deliverycenter.baemin.com`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
+   - `STORAGE_STATE_B64=<1단계 캡처 출력>` (세션 주입 — **시크릿**)
+   - `ADMIN_PORTAL_URL` 미입력 시 **골격 모드**(상주·수집 스킵). 실데이터 없이 적재만 점검하려면 `SCRAPE_MOCK=true`(검증 후 제거).
+5. 배포 후 **Logs**(JSON) 확인:
+   - 골격: `"골격 모드 — ADMIN_PORTAL_URL 미설정..."`.
    - MOCK: `"MOCK 모드 ..."` → `"사이클 완료" {riders:2, snapshots:2, hourly:4}`.
-   - 자격증명 채운 뒤: `"로그인 시도"` → `"사이클 완료" {riders, snapshots, hourly}`.
+   - 실수집: `"STORAGE_STATE_B64 → 세션 파일 복원"` → `"배민 수집 완료"` → `"사이클 완료" {...}`.
+   - 세션 만료: `"재로그인 필요 — 세션 만료로 이번 사이클 스킵"` → 1단계 재실행해 `STORAGE_STATE_B64` 갱신.
 
 ### Dockerfile/Playwright 버전 동기화
 
