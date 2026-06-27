@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent, act } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { SlaScore } from "@/components/dashboard/sla-score";
 import { StatCard } from "@/components/dashboard/stat-card";
 
@@ -94,76 +94,6 @@ describe("PeriodTabs — 기간 탭", () => {
   });
 });
 
-describe("PhoneVerifyForm — 본인인증 단계 상태", () => {
-  beforeEach(() => vi.useFakeTimers());
-  afterEach(() => vi.useRealTimers());
-
-  async function renderForm() {
-    // #8: PhoneVerifyForm 의 onResult → onVerify(phoneDigits)=>Promise<{error?}> 로 변경됨.
-    const onVerify = vi.fn().mockResolvedValue({});
-    const { PhoneVerifyForm } = await import("@/components/auth/phone-verify-form");
-    render(<PhoneVerifyForm onVerify={onVerify} />);
-    return { onVerify };
-  }
-
-  it("초기: 휴대폰 입력 단계 + 버튼 비활성", async () => {
-    await renderForm();
-    expect(screen.getByText("휴대폰 번호를 입력해 주세요")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "인증번호 받기" })).toBeDisabled();
-  });
-
-  it("유효 번호 입력 → 버튼 활성", async () => {
-    await renderForm();
-    fireEvent.change(screen.getByLabelText("휴대폰 번호"), {
-      target: { value: "01012345678" },
-    });
-    expect(screen.getByRole("button", { name: "인증번호 받기" })).toBeEnabled();
-  });
-
-  it("발송(0.8s) 후 인증번호 입력 단계로 전환", async () => {
-    await renderForm();
-    fireEvent.change(screen.getByLabelText("휴대폰 번호"), {
-      target: { value: "01012345678" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: "인증번호 받기" }));
-    await act(async () => {
-      vi.advanceTimersByTime(800);
-    });
-    expect(screen.getByText("문자로 받은 6자리 숫자를 입력해 주세요")).toBeInTheDocument();
-    // 마스킹된 번호 노출(가운데 4자리 *)
-    expect(screen.getByText(/010-\*\*\*\*-5678/)).toBeInTheDocument();
-  });
-
-  // 발송 → 코드단계 진입 공통 절차.
-  async function reachCodeStep() {
-    const ctx = await renderForm();
-    fireEvent.change(screen.getByLabelText("휴대폰 번호"), {
-      target: { value: "01012345678" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: "인증번호 받기" }));
-    await act(async () => {
-      vi.advanceTimersByTime(800);
-    });
-    return ctx;
-  }
-
-  it("6자리 입력 후 '인증 완료하기' → onVerify 가 숫자만 추출한 phone 으로 호출", async () => {
-    const { onVerify } = await reachCodeStep();
-    fireEvent.change(screen.getByLabelText("인증번호"), { target: { value: "123456" } });
-    await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "인증 완료하기" }));
-    });
-    expect(onVerify).toHaveBeenCalledTimes(1);
-    expect(onVerify).toHaveBeenCalledWith("01012345678");
-  });
-
-  it("onVerify 가 {error} 반환 → 인라인 에러 표시(부모 화면전환 없음)", async () => {
-    const { onVerify } = await reachCodeStep();
-    onVerify.mockResolvedValueOnce({ error: "명단에서 번호를 찾을 수 없어요" });
-    fireEvent.change(screen.getByLabelText("인증번호"), { target: { value: "123456" } });
-    await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "인증 완료하기" }));
-    });
-    expect(screen.getByText("명단에서 번호를 찾을 수 없어요")).toBeInTheDocument();
-  });
-});
+// PhoneVerifyForm/LoginFlow/KakaoLoginButton 테스트는 #20(카카오/SMS 인증 → 라이더ID+비번 로그인 전환)으로
+// 컴포넌트가 삭제되어 제거함. 신규 RiderLoginForm 테스트는 backend signInRider 계약(#19) 확정 후 작성 예정:
+//   (a) 형식검증(ID 공백 / 비번 4자리 아님)  (b) signInRider 결과분기(RIDER_NOT_FOUND·INVALID_PASSWORD→인라인 / ok→/dashboard)

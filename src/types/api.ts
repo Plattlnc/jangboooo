@@ -32,37 +32,24 @@ export interface SlaDashboardResponse {
   hourly: RiderHourlyRow[]
 }
 
-// ── 바인딩 ───────────────────────────────────────────────────
-/**
- * 본인인증 바인딩 요청.
- * 클라이언트는 본인인증 위젯에서 받은 검증 토큰을 전달.
- * 서버가 토큰을 제공사 API 로 검증 → 인증된 휴대폰 확보 → 바인딩.
- * (휴대폰을 클라이언트가 직접 보내지 않는다 — 위변조 방지)
- */
-export const bindRiderSchema = z.object({
-  verificationToken: z.string().min(1, 'verificationToken required'),
+// ── 라이더 로그인 (ID + 비번=휴대폰 뒤4자리) ──────────────────
+export const signInRiderSchema = z.object({
+  /** 관리시스템 라이더 고유 ID (admin_rider_id) */
+  riderId: z.string().trim().min(1, 'riderId required'),
+  /** 비밀번호 = 등록 휴대폰 뒤 4자리(숫자 4자리) */
+  password: z.string().regex(/^\d{4}$/, 'password must be 4 digits'),
 })
-export type BindRiderInput = z.infer<typeof bindRiderSchema>
+export type SignInRiderInput = z.infer<typeof signInRiderSchema>
 
-export type BindErrorCode =
-  | 'AUTH_REQUIRED'
-  | 'PROVIDER_NOT_CONFIGURED'
-  | 'VERIFY_FAILED'
-  | 'INVALID_PHONE'
+export type SignInErrorCode =
+  | 'INVALID_INPUT'
   | 'RIDER_NOT_FOUND'
-  | 'RIDER_ALREADY_BOUND'
-  | 'UNKNOWN'
+  | 'INVALID_PASSWORD'
+  | 'SERVER_ERROR'
 
-export type BindRiderResult =
-  | { ok: true; adminRiderId: string }
-  | { ok: false; code: BindErrorCode; message: string }
-
-// ── 바인딩 상태 ──────────────────────────────────────────────
-export interface BindingStatus {
-  bound: boolean
-  adminRiderId: string | null
-  riderName: string | null
-}
+export type SignInResult =
+  | { ok: true; adminRiderId: string; name: string | null }
+  | { ok: false; code: SignInErrorCode; message: string }
 
 /** API 에러 응답 공통 형태 */
 export interface ApiError {

@@ -115,6 +115,7 @@ export type RiderHourlyRow = {
 
 // ── Supabase 클라이언트 제네릭용 Database 타입 ─────────────────
 type RpcArgs = { p_period: SlaPeriod; p_ref?: string | null }
+type RpcForArgs = { p_admin_rider_id: string; p_period: SlaPeriod; p_ref?: string | null }
 type Empty = Record<never, never>
 
 export type Database = {
@@ -151,13 +152,14 @@ export type Database = {
     }
     Views: Empty
     Functions: {
+      // auth.uid 기반(레거시 — 카카오 인증 시절). 신규 경로는 *_for 사용.
       get_rider_summary: { Args: RpcArgs; Returns: RiderSummaryRow[] }
       get_rider_daily: { Args: RpcArgs; Returns: RiderDailyRow[] }
       get_rider_hourly: { Args: RpcArgs; Returns: RiderHourlyRow[] }
-      bind_rider_by_phone: {
-        Args: { p_user_id: string; p_phone: string; p_verify_provider?: string | null }
-        Returns: RiderAccountRow
-      }
+      // 커스텀 세션 인증(0005): admin_rider_id 명시, service_role 전용.
+      get_rider_summary_for: { Args: RpcForArgs; Returns: RiderSummaryRow[] }
+      get_rider_daily_for: { Args: RpcForArgs; Returns: RiderDailyRow[] }
+      get_rider_hourly_for: { Args: RpcForArgs; Returns: RiderHourlyRow[] }
       current_admin_rider_id: { Args: Empty; Returns: string | null }
       normalize_phone: { Args: { p_phone: string }; Returns: string | null }
     }

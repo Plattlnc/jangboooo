@@ -1,11 +1,11 @@
 // 대시보드 데이터 접근 — 서버 전용(server component 에서만 호출).
 //
-// 실연결: backend 헬퍼(getRiderSummary/getRiderHourly, src/lib/supabase/queries.ts)를
-//   RLS 사용자 컨텍스트 server client(@/lib/supabase/server)로 호출한다(sla-api.md §4).
-// 폴백: Supabase env 미설정(devops 프로비저닝 전) 환경에서는 결정적 목 데이터로 폴백 →
-//   QA/디자인 리뷰가 백엔드 없이도 화면을 검증할 수 있게 한다. env 채워지면 자동으로 실데이터.
+// 실연결(#20/#19 계약): 서명 세션쿠키(getRiderSession)의 admin_rider_id 로
+//   service_role 기반 *_for RPC(getRiderSummaryFor/getRiderHourlyFor)를 호출한다.
+//   라이더 이름은 riders.name(admin 클라이언트) 으로 별도 조회.
+// 폴백: DEMO_MODE 또는 Supabase env(service_role) 미설정 시 결정적 목 데이터.
 //
-// 단위: acceptance_rate/sla_score 는 0~100 퍼센트(sla-api.md §6) — 목 데이터도 동일.
+// 단위: acceptance_rate/sla_score 는 0~100 퍼센트 — 목 데이터도 동일.
 
 import type { RiderHourlyRow, RiderSummaryRow, SlaPeriod } from "@/types/database";
 import { DEMO_MODE } from "@/lib/demo";
@@ -13,17 +13,20 @@ import { DEMO_MODE } from "@/lib/demo";
 // period 유틸의 정식 위치는 _lib/metrics(클라이언트 안전). 기존 import 경로 하위호환 re-export.
 export { SLA_PERIODS, isSlaPeriod, parsePeriod } from "./metrics";
 
-/** 대시보드 한 화면 = 현재 기간 요약 + 직전 기간 요약(델타용) + 시간대 분포. */
+/** 대시보드 한 화면 = 현재 기간 요약 + 직전 기간 요약(델타용) + 시간대 분포 + 라이더 이름. */
 export interface DashboardData {
   summary: RiderSummaryRow;
   /** 델타(과거의 나) 비교용 직전 기간 요약. 데이터 없으면 null. */
   previous: RiderSummaryRow | null;
   hourly: RiderHourlyRow[];
+  /** 세션 라이더 이름(헤더 표시). 미상이면 null. */
+  riderName: string | null;
 }
 
+// 실데이터 경로는 service_role 필요(*_for RPC + riders 조회). 없으면 목 폴백.
 function hasSupabaseEnv(): boolean {
   return Boolean(
-    process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY,
   );
 }
 
@@ -35,32 +38,55 @@ function isoDateMinusDays(date: string, n: number): string {
 }
 
 export async function getDashboardData(period: SlaPeriod): Promise<DashboardData> {
-  // 데모 모드(#13) 또는 Supabase env 미설정 → 목 데이터 강제.
+  // 데모 모드(#13) 또는 Supabase service_role 미설정 → 목 데이터.
   if (DEMO_MODE || !hasSupabaseEnv()) {
     return getMockDashboardData(period);
   }
 
-  // 동적 import: env 없는 폴백 환경에서 server-only 모듈을 불러오지 않도록.
-  const [{ createClient }, { getRiderSummary, getRiderHourly }] = await Promise.all([
-    import("@/lib/supabase/server"),
-    import("@/lib/supabase/queries"),
-  ]);
+  // 동적 import: 목 폴백 경로에서 server-only 모듈을 불러오지 않도록.
+  const { getRiderSession } = await import("@/lib/auth/cookies");
+  const session = await getRiderSession();
+  if (!session) {
+    // middleware 가 미인증 /dashboard 를 막지만 방어적으로 로그인 유도.
+    const { redirect } = await import("next/navigation");
+    return redirect("/login");
+  }
+  const adminRiderId = session.adminRiderId;
 
-  const supabase = await createClient();
+  const { getRiderSummaryFor, getRiderHourlyFor } = await import("@/lib/supabase/queries");
   const [summary, hourly] = await Promise.all([
-    getRiderSummary(supabase, period),
-    getRiderHourly(supabase, period),
+    getRiderSummaryFor(adminRiderId, period),
+    getRiderHourlyFor(adminRiderId, period),
   ]);
 
   // 직전 기간 요약(델타용): 현재 기간 시작일 하루 전을 기준일로 같은 기간 단위 조회.
   let previous: RiderSummaryRow | null = null;
   if (summary?.start_date) {
-    const prevRef = isoDateMinusDays(summary.start_date, 1);
-    const prev = await getRiderSummary(supabase, period, prevRef);
+    const prev = await getRiderSummaryFor(adminRiderId, period, isoDateMinusDays(summary.start_date, 1));
     previous = prev && prev.active_days > 0 ? prev : null;
   }
 
-  return { summary, previous, hourly };
+  return { summary, previous, hourly, riderName: await getRiderName(adminRiderId) };
+}
+
+/**
+ * 세션 라이더 이름 조회 (riders.name, admin 클라이언트).
+ * NOTE: getRiderSession/summary 가 name 을 안 실어줘서 별도 조회 — backend 가 세션/요약에
+ *       name 을 포함시키면 그걸로 교체 가능(요청해둠).
+ */
+async function getRiderName(adminRiderId: string): Promise<string | null> {
+  try {
+    const { createAdminClient } = await import("@/lib/supabase/admin");
+    const admin = createAdminClient();
+    const { data } = await admin
+      .from("riders")
+      .select("name")
+      .eq("admin_rider_id", adminRiderId)
+      .maybeSingle();
+    return data?.name ?? null;
+  } catch {
+    return null;
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -104,5 +130,6 @@ async function getMockDashboardData(period: SlaPeriod): Promise<DashboardData> {
     summary: MOCK_SUMMARY[period],
     previous: MOCK_PREVIOUS[period],
     hourly: mockHourly(period),
+    riderName: "라이더",
   };
 }
