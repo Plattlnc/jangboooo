@@ -14,6 +14,15 @@ export function dateStringInTz(timeZone = 'Asia/Seoul', d: Date = new Date()): s
   }).format(d)
 }
 
+/**
+ * 배민 영업일 기준 날짜(YYYY-MM-DD). 영업일 = 06:00 ~ 익일 05:59 (해당 TZ).
+ * 06:00 이전이면 전날이 영업일(예: 06/28 03:00 → 06/27). 시각에서 6h 빼면
+ * 영업일 경계(06:00)가 자정 경계로 정렬되어 dateStringInTz 로 변환 가능.
+ */
+export function businessDayInTz(timeZone = 'Asia/Seoul', d: Date = new Date()): string {
+  return dateStringInTz(timeZone, new Date(d.getTime() - 6 * 60 * 60 * 1000))
+}
+
 /** 주어진 예산(ms) 초과 시 reject. 사이클 시간 상한(다음 틱 스킵)에 사용. */
 export class TimeoutError extends Error {
   constructor(ms: number, label: string) {
