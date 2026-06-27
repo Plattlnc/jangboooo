@@ -106,7 +106,7 @@ export function PhoneVerifyForm({ onVerify }: PhoneVerifyFormProps) {
   if (sub === "phone") {
     return (
       <div className="flex flex-col gap-6">
-        <h2 className="text-h2 text-fg">휴대폰 번호를 입력해 주세요</h2>
+        <h2 className="text-h2 text-foreground">휴대폰 번호를 입력해 주세요</h2>
         <Field
           label="휴대폰 번호"
           inputMode="numeric"
@@ -128,7 +128,7 @@ export function PhoneVerifyForm({ onVerify }: PhoneVerifyFormProps) {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">
-        <h2 className="text-h2 text-fg">문자로 받은 6자리 숫자를 입력해 주세요</h2>
+        <h2 className="text-h2 text-foreground">문자로 받은 6자리 숫자를 입력해 주세요</h2>
         <p className="text-sm text-muted-foreground">{maskPhone(phone)} 로 보냈어요</p>
       </div>
       <Field
@@ -144,7 +144,7 @@ export function PhoneVerifyForm({ onVerify }: PhoneVerifyFormProps) {
         onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
         trailing={
           // DESIGN-QA M2: 매초 갱신 카운트다운은 aria-live 제거(SR 가 초마다 읽지 않도록).
-          <span className={expired ? "text-caption text-danger" : "text-caption text-muted-foreground tabular-nums"}>
+          <span className={expired ? "text-caption text-destructive" : "text-caption text-muted-foreground tabular-nums"}>
             {expired ? "만료됨" : `${mmss}`}
           </span>
         }
@@ -154,7 +154,7 @@ export function PhoneVerifyForm({ onVerify }: PhoneVerifyFormProps) {
           type="button"
           disabled={!expired}
           onClick={resend}
-          className="touch-target text-sm text-primary disabled:text-subtle disabled:pointer-events-none"
+          className="touch-target text-sm text-primary disabled:text-muted-foreground disabled:pointer-events-none"
         >
           인증번호 다시 받기
         </button>

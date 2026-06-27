@@ -32,7 +32,7 @@ export function PeriodTabs({ active }: { active: SlaPeriod }) {
   const options = SLA_PERIODS.map((p) => ({ value: p, label: PERIOD_LABEL[p] }));
 
   return (
-    <div className="sticky top-0 z-[100] -mx-4 bg-bg/90 px-4 py-2 backdrop-blur md:-mx-6 md:px-6">
+    <div className="sticky top-0 z-[100] -mx-4 bg-background/90 px-4 py-2 backdrop-blur md:-mx-6 md:px-6">
       <SegmentedTabs<SlaPeriod>
         options={options}
         value={optimistic}

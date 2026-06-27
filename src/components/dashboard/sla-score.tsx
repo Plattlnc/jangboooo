@@ -16,12 +16,12 @@ const CIRC = 2 * Math.PI * R;
 const STROKE: Record<StatusColor, string> = {
   success: "stroke-success",
   warning: "stroke-warning",
-  danger: "stroke-danger",
+  danger: "stroke-destructive",
 };
 const TEXT: Record<StatusColor, string> = {
   success: "text-success",
   warning: "text-warning",
-  danger: "text-danger",
+  danger: "text-destructive",
 };
 
 function prefersReducedMotion() {

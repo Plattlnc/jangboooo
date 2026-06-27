@@ -127,8 +127,10 @@ function StepS1({
   return (
     <div className="flex flex-1 flex-col">
       <div className="flex flex-col gap-3 pt-8">
-        <span className="text-caption text-muted-foreground">배달장부2</span>
-        <h1 className="text-h1 text-fg">내 배달 성적표, 내 손안에.</h1>
+        <span className="text-caption text-muted-foreground">
+          <span aria-hidden="true" className="emoji mr-1">🛵</span>배달장부2
+        </span>
+        <h1 className="text-h1 text-foreground">내 배달 성적표, 내 손안에.</h1>
         <p className="text-body text-muted-foreground">
           완료·수락률·취소까지, 내 실적을 오늘·주·월로 한눈에 봐요.
         </p>
@@ -141,7 +143,7 @@ function StepS1({
         <p className="text-center text-caption text-muted-foreground">
           카카오 계정으로 안전하게 로그인해요. 친구 목록이나 메시지는 가져오지 않아요.
         </p>
-        <p className="text-center text-caption text-subtle">
+        <p className="text-center text-caption text-muted-foreground">
           시작하면{" "}
           <Link href="#" className="text-primary underline">이용약관</Link>과{" "}
           <Link href="#" className="text-primary underline">개인정보 처리방침</Link>에 동의하게 돼요.
@@ -155,7 +157,7 @@ function StepS2({ onNext }: { onNext: () => void }) {
   return (
     <div className="flex flex-1 flex-col">
       <div className="flex flex-1 flex-col justify-center gap-4">
-        <Phone size={40} className="text-subtle" />
+        <Phone size={40} className="text-muted-foreground" />
         <h2 className="text-h2 text-foreground">
           <span aria-hidden="true" className="emoji mr-1">📱</span>
           휴대폰으로 내 기록을 찾을게요
@@ -167,7 +169,7 @@ function StepS2({ onNext }: { onNext: () => void }) {
         </p>
         <div className="flex items-start gap-2 rounded-md bg-primary-subtle p-4">
           <ShieldCheck size={20} className="mt-0.5 shrink-0 text-primary" />
-          <p className="text-sm text-fg">
+          <p className="text-sm text-foreground">
             이 점수와 기록은 평가가 아니라 내 기록이에요. 정산이나 배차에 영향을 주지 않아요.
           </p>
         </div>
@@ -207,11 +209,10 @@ function StepS5b({ onRetry }: { onRetry: () => void }) {
     <div className="flex flex-1 flex-col">
       <div className="flex flex-1 flex-col justify-center">
         <EmptyState
-          icon={<Phone size={40} />}
           title="연결할 기록을 못 찾았어요"
           description="이 번호로 등록된 라이더 기록이 없어요. 관리 담당자에게 등록된 번호가 맞는지 확인해 주세요."
         />
-        <p className="text-center text-sm text-subtle">번호를 바꿔 다시 시도할 수도 있어요.</p>
+        <p className="text-center text-sm text-muted-foreground">번호를 바꿔 다시 시도할 수도 있어요.</p>
       </div>
       <div className="flex flex-col gap-2">
         <Button size="lg" fullWidth onClick={onRetry}>
