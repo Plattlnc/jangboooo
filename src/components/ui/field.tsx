@@ -30,7 +30,7 @@ export const Field = forwardRef<HTMLInputElement, FieldProps>(function Field(
 
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor={inputId} className="text-sm font-medium text-foreground">
+      <label htmlFor={inputId} className="text-sm font-bold text-foreground">
         {label}
       </label>
       <div className="relative">
