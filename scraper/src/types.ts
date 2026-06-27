@@ -18,6 +18,19 @@ export type RiderUpsert = {
   is_active?: boolean
 }
 
+/** sla_snapshots.breakdown jsonb (푸드/비마트/스토어 세부). */
+export type SlaCategoryCounts = {
+  complete: number
+  reject: number
+  cancel: number
+  riderFault: number
+}
+export type SlaCategoryBreakdown = {
+  food: SlaCategoryCounts
+  bmart: SlaCategoryCounts
+  store: SlaCategoryCounts
+}
+
 /** sla_snapshots upsert: 라이더 × 영업일 누적치. */
 export type SlaSnapshotUpsert = {
   admin_rider_id: string
@@ -30,6 +43,12 @@ export type SlaSnapshotUpsert = {
   delivery_canceled?: number
   assigned?: number
   acceptance_rate?: number | null
+  // 배민 보강(0004): 피크 4버킷 + 카테고리 세부
+  peak_morning?: number
+  peak_afternoon?: number
+  peak_evening?: number
+  peak_midnight?: number
+  breakdown?: SlaCategoryBreakdown | null
 }
 
 /** rider_hourly_stats upsert: 라이더 × 영업일 × 시간(0~23) 완료건. */

@@ -1,7 +1,10 @@
 /**
  * 환경 변수 로딩 + 검증(zod). 잘못된/누락 설정은 부팅 시 즉시 실패.
- * service_role 키와 Supabase URL 은 필수. grider 포털 자격증명은
- * 미확정이므로 선택값 — 셋이 모두 채워졌을 때만 실제 수집을 시도한다.
+ * service_role 키와 Supabase URL 은 필수.
+ *
+ * 소스 = 배민 deliverycenter. 인증은 ID/PW 가 아니라 **로그인 세션(storageState)**
+ * 기반이라(SMS 2FA 때문에 무인 로그인 불가), 포털 자격증명 대신 ADMIN_PORTAL_URL +
+ * 세션 파일만 필요하다. 세션은 로컬 캡처 스크립트로 만든다(scripts/capture-session.ts).
  */
 import { z } from 'zod'
 import type { LogLevel } from './logger'
@@ -25,18 +28,21 @@ const EnvSchema = z.object({
   NEXT_PUBLIC_SUPABASE_URL: optionalNonEmpty,
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1, 'SUPABASE_SERVICE_ROLE_KEY 필수'),
 
+  // 배민 deliverycenter 베이스 URL. 데이터 화면 경로(/delivery/history)로 네비.
   ADMIN_PORTAL_URL: optionalNonEmpty,
-  ADMIN_PORTAL_ID: optionalNonEmpty,
-  ADMIN_PORTAL_PASSWORD: optionalNonEmpty,
 
   SCRAPE_INTERVAL_SECONDS: z.coerce.number().int().positive().default(60),
   SCRAPE_TIMEZONE: z.string().min(1).default('Asia/Seoul'),
   SCRAPE_MAX_RETRIES: z.coerce.number().int().min(0).default(3),
   SCRAPE_NAV_TIMEOUT_MS: z.coerce.number().int().positive().default(30_000),
+  // delivery-status 한 콜에 받을 행 수. size 크게 주면 1콜로 전체(서버 상한 시 페이지 루프).
+  SCRAPE_PAGE_SIZE: z.coerce.number().int().positive().default(200),
   HEADLESS: boolish.default(true),
   STORAGE_STATE_PATH: z.string().min(1).default('./.session/storage-state.json'),
+  // Railway 등 영속 FS 없는 환경용: 세션 JSON 을 base64 로 주입하면 부팅 시 파일로 복원.
+  STORAGE_STATE_B64: optionalNonEmpty,
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
-  // 운영 금지. true 면 grider 미접속·mock 파서로 적재 파이프라인만 검증.
+  // 운영 금지. true 면 배민 미접속·mock 파서로 적재 파이프라인만 검증.
   SCRAPE_MOCK: boolish.default(false),
 })
 
@@ -44,17 +50,18 @@ export type Config = {
   supabaseUrl: string
   supabaseServiceRoleKey: string
   portal: {
+    /** ADMIN_PORTAL_URL 설정 여부. 미설정이면 골격 모드(수집 스킵). */
     configured: boolean
     url?: string
-    id?: string
-    password?: string
   }
   intervalSeconds: number
   timezone: string
   maxRetries: number
   navTimeoutMs: number
+  pageSize: number
   headless: boolean
   storageStatePath: string
+  storageStateB64?: string
   logLevel: LogLevel
   runOnce: boolean
   mock: boolean
@@ -81,23 +88,21 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env, argv: readonly 
     throw new Error('환경 변수 검증 실패 — SUPABASE_URL(또는 NEXT_PUBLIC_SUPABASE_URL) 필수')
   }
 
-  const portalConfigured = Boolean(e.ADMIN_PORTAL_URL && e.ADMIN_PORTAL_ID && e.ADMIN_PORTAL_PASSWORD)
-
   return {
     supabaseUrl,
     supabaseServiceRoleKey: e.SUPABASE_SERVICE_ROLE_KEY,
     portal: {
-      configured: portalConfigured,
+      configured: Boolean(e.ADMIN_PORTAL_URL),
       url: e.ADMIN_PORTAL_URL,
-      id: e.ADMIN_PORTAL_ID,
-      password: e.ADMIN_PORTAL_PASSWORD,
     },
     intervalSeconds: e.SCRAPE_INTERVAL_SECONDS,
     timezone: e.SCRAPE_TIMEZONE,
     maxRetries: e.SCRAPE_MAX_RETRIES,
     navTimeoutMs: e.SCRAPE_NAV_TIMEOUT_MS,
+    pageSize: e.SCRAPE_PAGE_SIZE,
     headless: e.HEADLESS,
     storageStatePath: e.STORAGE_STATE_PATH,
+    storageStateB64: e.STORAGE_STATE_B64,
     logLevel: e.LOG_LEVEL,
     runOnce: hasOnceFlag(argv),
     mock: e.SCRAPE_MOCK,

@@ -66,8 +66,23 @@ GET https://api-deliverycenter.baemin.com/v4/management/delivery-status
 | 피크(morning/afternoon/evening/midnight) | `deliveryPeakTimeCount` → 스키마에 추가 or jsonb (결정 필요) |
 | 푸드/비마트/배민스토어 세부 | 현재 스키마엔 합계만 — 세부 보존 원하면 컬럼/jsonb 추가 |
 
-## 미해결/결정 필요
-1. **SLA 점수**: 이 API엔 없음. (a) 우리가 계산(수락률 기반 등) (b) 달성현황(beta) 등 다른 엔드포인트에서 수집. → 사용자/CTO 결정.
-2. **일자/기간**: 이 응답이 "오늘 누적"인지 "전체"인지 미확정(일자 파라미터 안 보임). snapshot_date 매핑 위해 확인 필요 — 추가 탐색.
-3. **size 상한**: size=200 한 콜로 전체 되는지 검증.
-4. 세부(푸드/비마트/스토어)·피크 보존 범위.
+## 확정 (backend Task #17)
+
+매퍼: **`scraper/src/sources/baemin-map.ts`** (`mapDeliveryStatus(rows, snapshotDate)` → `ScrapeResult{riders, snapshots, hourly}`). 응답 타입: `scraper/src/sources/baemin-types.ts`. 스키마 보강: `supabase/migrations/0004_baemin_mapping.sql`, 앱측 row 타입: `src/types/database.ts`.
+> 매핑 로직은 **스크래퍼(독립 앱)에서만 실행**되므로 매퍼는 scraper/ 에 단일 구현으로 둔다(Next 앱은 배민 API 미접근). 본 문서가 두 영역의 SSOT.
+
+| 항목 | 확정 |
+|------|------|
+| `assigned` | `totalComplete + totalReject + totalCancel + totalRiderFault` (배차 제안 총량) |
+| `acceptance_rate`(수락률) | `(assigned - totalReject) / assigned × 100`. assigned=0 → null. **기존 `get_rider_summary` 기간 산식과 일치 → RPC 변경 없음** |
+| `sla_score` | **잠정** `totalComplete / assigned × 100`(완료율 기반). assigned=0 → null. 달성현황(beta) 실점수 확보 시 교체 |
+| 피크 4버킷 | `sla_snapshots.peak_morning/afternoon/evening/midnight` 컬럼 추가(0004). 시간(0~23)은 `rider_hourly_stats` 별도 보존 |
+| 푸드/비마트/스토어 세부 | `sla_snapshots.breakdown` jsonb 로 원본 보존(0004). 합계는 기존 컬럼이 핫패스 |
+
+> 참고: `acceptance_rate` 분모에서 `totalCancel`을 제외하지 않고 포함한 이유 — 배차취소/배달취소는 모두 "수락 후" 발생(거절만 미수락)으로 보아 `수락=제안-거절`로 정의. 배민 실제 정의가 다르면 매퍼 산식만 교체(스키마/RPC 불변).
+
+## 미해결 (devops·CTO 트랙)
+1. ~~**일자/기간**~~ **확정(CTO 브라우저 검증)**: 배달현황 화면에 **날짜 선택기 없음**(필터=이름/아이디/휴대폰/운행상태뿐), API에 일자 파라미터 없음 → **"오늘 누적"(서버 기본, 영업일 리셋)**. 스크래퍼는 `snapshotDate = 캡처시점 KST 영업일` 주입, 1분마다 같은 날 row upsert(최신 누적 덮어쓰기). (과거 일자별 이력이 필요하면 `일별 배달내역` 메뉴 별도 탐색 — MVP 범위 밖)
+2. **size 상한**: size=200 한 콜로 전체(142명) 되는지 검증(devops #18).
+3. **SLA 실점수**: 달성현황(beta)/라이더별 배달내역에서 실제 SLA 점수·일자별 이력 확보 가능한지 추가 탐색 → 확보 시 `sla_score` 잠정식 교체.
+4. **운행상태**(`status.code/desc`)·페이지네이션 처리는 스크래퍼 어댑터(#18)에서.
