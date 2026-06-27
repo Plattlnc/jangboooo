@@ -1,7 +1,8 @@
 import { cn } from "@/lib/cn";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowUp, ArrowDown, Info } from "@/components/ui/icons";
+import { ArrowUp, ArrowDown } from "@/components/ui/icons";
+import { InfoTip } from "@/components/ui/info-tip";
 import {
   deltaTone,
   type GoodDirection,
@@ -48,16 +49,7 @@ export function StatCard({
     <Card className={cn("flex flex-col gap-2", className)}>
       <div className="flex items-center gap-1 text-caption text-muted">
         <span>{label}</span>
-        {tooltip ? (
-          <button
-            type="button"
-            className="touch-target -m-2 grid place-items-center text-subtle"
-            aria-label={`${label} 설명`}
-            title={tooltip}
-          >
-            <Info size={14} />
-          </button>
-        ) : null}
+        {tooltip ? <InfoTip label={`${label} 설명`} text={tooltip} /> : null}
       </div>
 
       <div className="flex items-baseline gap-1">

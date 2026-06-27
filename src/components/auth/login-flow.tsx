@@ -207,6 +207,7 @@ function StepS5b({ onRetry }: { onRetry: () => void }) {
         <Button size="lg" fullWidth onClick={onRetry}>
           다른 번호로 인증하기
         </Button>
+        {/* TODO(m8): 문의 연결 (별도 후속). 현재 placeholder. */}
         <Button variant="ghost" size="md" fullWidth>
           문의하기
         </Button>

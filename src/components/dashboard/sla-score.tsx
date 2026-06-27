@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { cn } from "@/lib/cn";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Info } from "@/components/ui/icons";
+import { InfoTip } from "@/components/ui/info-tip";
 import { slaGrade, type StatusColor } from "@/app/(rider)/_lib/metrics";
 
 // 03 §C / 01 §D. 메인 SLA 점수 — 원형 게이지 + 카운트업. reduced-motion 시 즉시 최종값.
@@ -117,14 +117,11 @@ function ScoreLabel() {
   return (
     <div className="flex items-center justify-center gap-1 text-caption text-muted">
       <span>SLA 점수</span>
-      <button
-        type="button"
-        className="touch-target -m-2 grid place-items-center text-subtle"
-        aria-label="SLA 점수 설명"
-        title="배달을 약속대로 잘 해낸 정도를 나타내는 종합 신뢰 점수예요."
-      >
-        <Info size={16} />
-      </button>
+      <InfoTip
+        label="SLA 점수 설명"
+        size={16}
+        text="배달을 약속대로 잘 해낸 정도를 나타내는 종합 신뢰 점수예요. (배달 신뢰도 점수)"
+      />
     </div>
   );
 }
