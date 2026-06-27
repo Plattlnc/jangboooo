@@ -108,7 +108,7 @@ export type Database = {
         Update: Partial<Omit<RiderRow, 'phone_norm'>>
         Relationships: []
       }
-      rider_account: {
+      rider_accounts: {
         Row: RiderAccountRow
         Insert: Pick<RiderAccountRow, 'user_id' | 'admin_rider_id' | 'verified_phone'> &
           Partial<Omit<RiderAccountRow, 'user_id' | 'admin_rider_id' | 'verified_phone'>>

@@ -2,39 +2,8 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { verifyIdentity, IdentityError, type VerifiedIdentity } from '@/lib/identity/verify'
 import { bindRiderSchema, type BindRiderResult } from '@/types/api'
-
-/**
- * 본인인증 검증 결과.
- * 제공사(PASS/NICE 등) 미확정 → 토큰을 제공사 API 로 검증해 인증 휴대폰을 얻는 단계는
- * 어댑터로 분리. 현재는 미설정 시 명시적 실패(보안상 토큰 우회 금지).
- */
-interface VerifiedIdentity {
-  phone: string
-  provider: string
-}
-
-async function verifyIdentity(token: string): Promise<VerifiedIdentity> {
-  const provider = process.env.IDENTITY_VERIFY_PROVIDER
-  const apiKey = process.env.IDENTITY_VERIFY_API_KEY
-  if (!provider || !apiKey) {
-    // 제공사 결정 전까지 바인딩은 의도적으로 차단
-    throw new IdentityError('PROVIDER_NOT_CONFIGURED', '본인인증 제공사가 설정되지 않았습니다.')
-  }
-  // TODO(provider 확정 시): provider API 로 token 검증 → 인증된 휴대폰 반환.
-  // 예) const res = await fetch(providerVerifyUrl, { ... }); return { phone: res.phone, provider }
-  void token
-  throw new IdentityError('VERIFY_FAILED', `미구현 제공사: ${provider}`)
-}
-
-class IdentityError extends Error {
-  constructor(
-    public code: 'PROVIDER_NOT_CONFIGURED' | 'VERIFY_FAILED',
-    message: string,
-  ) {
-    super(message)
-  }
-}
 
 // Postgres errcode → 바인딩 에러코드 매핑
 function mapBindError(message: string): BindRiderResult {

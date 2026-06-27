@@ -1,21 +1,21 @@
-// PROVISIONAL: uxui 명세 / backend 계약 도착 후 교체
-// 대시보드 로딩 스켈레톤 (Next.js loading 컨벤션). 중립 클래스만.
-
-import { Skeleton } from "@/components/feedback/skeleton";
+// 대시보드 로딩 스켈레톤 (Next.js loading 컨벤션). 레이아웃 동일·시프트 0.
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function DashboardLoading() {
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between gap-3">
-        <Skeleton className="h-6 w-32" />
-        <Skeleton className="h-9 w-48" />
+    <div className="flex flex-col gap-5 pt-4">
+      <div className="flex flex-col gap-2">
+        <Skeleton className="h-6 w-44" />
+        <Skeleton className="h-4 w-32" />
       </div>
-      <section className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <Skeleton key={i} className="h-20 w-full" />
+      <Skeleton className="h-12 w-full rounded-full" />
+      <Skeleton className="h-64 w-full rounded-2xl" />
+      <section className="grid grid-cols-2 gap-3 md:grid-cols-3">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <Skeleton key={i} className="h-24 w-full rounded-card" />
         ))}
       </section>
-      <Skeleton className="h-40 w-full" />
+      <Skeleton className="h-44 w-full rounded-card" />
     </div>
   );
 }
