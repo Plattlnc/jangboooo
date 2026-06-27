@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" aria-label="배달장부2 앱 아이콘">
+  <!--
+    배달장부2 앱 아이콘 마스터 (1024). 풀-블리드(maskable/apple-touch 겸용).
+    모티프: SLA 점수 게이지 — 제품의 핵심 지표를 상징. 다크 배경 + 신뢰 블루.
+    글리프는 중앙 안전영역(반경 40% 이내)에 배치 → maskable 안전.
+    색은 디자인 토큰과 동일: bg #0f172a→#060b18, 트랙 #1e293b, value #2563eb, dot #93c5fd.
+  -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0f172a"/>
+      <stop offset="1" stop-color="#060b18"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#2563eb" stop-opacity="0.16"/>
+      <stop offset="1" stop-color="#2563eb" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- 풀-블리드 배경 -->
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+  <circle cx="512" cy="512" r="420" fill="url(#glow)"/>
+
+  <!-- 게이지 트랙 (270°, 하단 90° 갭) -->
+  <path d="M 363.5 660.5 A 210 210 0 1 1 660.5 660.5"
+        fill="none" stroke="#1e293b" stroke-width="96" stroke-linecap="round"/>
+
+  <!-- 게이지 값 (약 80% 충전, 신뢰 블루) -->
+  <path d="M 363.5 660.5 A 210 210 0 1 1 719.4 479.2"
+        fill="none" stroke="#2563eb" stroke-width="96" stroke-linecap="round"/>
+
+  <!-- 값 끝 표시 점 -->
+  <circle cx="719.4" cy="479.2" r="30" fill="#93c5fd"/>
+
+  <!-- 중앙 상승 막대 3개 — '실적/장부'의 숫자 상징 -->
+  <g fill="#e2e8f0">
+    <rect x="446" y="512" width="40" height="70"  rx="14"/>
+    <rect x="492" y="476" width="40" height="106" rx="14"/>
+    <rect x="538" y="440" width="40" height="142" rx="14"/>
+  </g>
+</svg>
