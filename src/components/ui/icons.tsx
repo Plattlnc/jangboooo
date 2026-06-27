@@ -59,6 +59,9 @@ export const Phone = (p: IconProps) => (
 export const TrendUp = (p: IconProps) => (
   <Svg {...p}><path d="M16 7h6v6" /><path d="m22 7-8.5 8.5-5-5L2 17" /></Svg>
 );
+export const Clock = (p: IconProps) => (
+  <Svg {...p}><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></Svg>
+);
 export const Kakao = (p: IconProps) => (
   // 카카오 말풍선 심볼(고정 자산). 단색 currentColor.
   <Svg {...p} stroke="none" fill="currentColor">

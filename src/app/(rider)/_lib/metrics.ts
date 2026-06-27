@@ -12,12 +12,27 @@ export function slaGrade(score: number): { label: string; status: StatusColor } 
   return { label: "위험", status: "danger" };
 }
 
-/** 수락률(0~1) → 상태색 (≥95% 우수 / 85–94% 주의 / <85% 위험). */
-export function acceptanceStatus(rate: number): StatusColor {
-  const pct = rate * 100;
+/**
+ * 수락률(%) → 상태색 (≥95 우수 / 85–94 주의 / <85 위험).
+ * 단위는 backend 계약과 동일 0~100 퍼센트(sla-api.md §6).
+ */
+export function acceptanceStatus(pct: number): StatusColor {
   if (pct >= 95) return "success";
   if (pct >= 85) return "warning";
   return "danger";
+}
+
+// ── 기간(period) 유틸 — 클라이언트 안전(서버 의존 없음). ────────────
+export const SLA_PERIODS: readonly SlaPeriod[] = ["today", "week", "month"];
+
+export function isSlaPeriod(value: unknown): value is SlaPeriod {
+  return typeof value === "string" && (SLA_PERIODS as readonly string[]).includes(value);
+}
+
+/** searchParams 의 period 값을 안전하게 SlaPeriod 로 정규화 (기본 today). */
+export function parsePeriod(raw: string | string[] | undefined): SlaPeriod {
+  const value = Array.isArray(raw) ? raw[0] : raw;
+  return isSlaPeriod(value) ? value : "today";
 }
 
 export type GoodDirection = "up" | "down";

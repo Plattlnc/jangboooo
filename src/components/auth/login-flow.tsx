@@ -7,13 +7,20 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ShieldCheck, Phone, Check } from "@/components/ui/icons";
 import { KakaoLoginButton } from "./kakao-login-button";
-import { PhoneVerifyForm, type VerifyResult } from "./phone-verify-form";
+import { PhoneVerifyForm } from "./phone-verify-form";
 
-// 02 로그인/본인인증 플로우 오케스트레이터 (S1→S2→S3/S4→S5a/S5b).
-// 카피 SSOT: docs/copy/auth.md.
+// 02 로그인/본인인증 플로우 오케스트레이터 (S1→S2→본인확인→S5a/S5b). 카피 SSOT: docs/copy/auth.md.
 //
-// PROVISIONAL: 카카오 OAuth 리다이렉트는 backend Auth 도착 후 연결.
-// 현재 카카오 버튼은 UI 시연을 위해 다음 스텝으로 진행시킨다(실제 OAuth 미호출).
+// 실연동(sla-api.md §3):
+//   - S1: signInWithKakao() → 카카오 OAuth → /api/auth/callback → 세션.
+//   - 본인확인: bindRider({verificationToken}) (sandbox: mock:<phone>).
+// Supabase env 미설정(무백엔드)이면 데모 스텁으로 폴백 → 디자인/플로우 검증 유지.
+//
+// ⚠️ 운영 본인확인 = 카카오 본인확인(authcode redirect)이라 SMS형 S3/S4 화면과 상이.
+//    + 로그인 후 본인확인 단계 재진입(세션 감지) UX 는 backend identity-initiate 헬퍼 + uxui
+//    재설계 대기(team-lead 에스컬레이션). 지금은 sandbox(번호→mock 토큰)로 바인딩 검증.
+
+const hasSupabaseEnv = () => Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL);
 
 type Step = "s1" | "s2" | "verify" | "s5a" | "s5b";
 
@@ -22,34 +29,68 @@ const RESET_DOTS: Step[] = ["s1", "s2", "verify"];
 export function LoginFlow() {
   const [step, setStep] = useState<Step>("s1");
   const [kakaoLoading, setKakaoLoading] = useState(false);
-  const [result, setResult] = useState<VerifyResult | null>(null);
+  const [kakaoError, setKakaoError] = useState<string>();
 
-  function startKakao() {
-    // PROVISIONAL: 실제로는 supabase.auth.signInWithOAuth({ provider: 'kakao' }) 리다이렉트.
+  async function startKakao() {
+    setKakaoError(undefined);
     setKakaoLoading(true);
-    window.setTimeout(() => {
+    if (!hasSupabaseEnv()) {
+      // 무백엔드 데모: 다음 단계로 진행(실제 OAuth 미호출).
+      window.setTimeout(() => {
+        setKakaoLoading(false);
+        setStep("s2");
+      }, 600);
+      return;
+    }
+    try {
+      const { signInWithKakao } = await import("@/lib/supabase/auth");
+      // 로그인 후 /login 으로 복귀해 본인확인 이어서 진행(세션 재진입 UX 는 후속).
+      await signInWithKakao("/login");
+    } catch {
       setKakaoLoading(false);
-      setStep("s2");
-    }, 700);
+      setKakaoError("로그인이 안 됐어요. 잠시 후 다시 시도해 주세요.");
+    }
   }
 
-  function handleResult(r: VerifyResult) {
-    setResult(r);
-    setStep(r.matched ? "s5a" : "s5b");
+  // 본인확인 → 바인딩. 성공 시 S5a, 명단없음 S5b, 그 외 인라인 에러 반환.
+  async function verify(phoneDigits: string): Promise<{ error?: string }> {
+    if (!hasSupabaseEnv()) {
+      // 데모 스텁: 번호가 0000 으로 끝나면 명단없음(S5b).
+      const matched = !phoneDigits.endsWith("0000");
+      setStep(matched ? "s5a" : "s5b");
+      return {};
+    }
+    try {
+      const { bindRider } = await import("@/actions/bind-rider");
+      // sandbox: verificationToken = mock:<phone> (IDENTITY_VERIFY_SANDBOX=true 필요).
+      const res = await bindRider({ verificationToken: `mock:${phoneDigits}` });
+      if (res.ok) {
+        setStep("s5a");
+        return {};
+      }
+      if (res.code === "RIDER_NOT_FOUND") {
+        setStep("s5b");
+        return {};
+      }
+      // AUTH_REQUIRED / PROVIDER_NOT_CONFIGURED / VERIFY_FAILED 등 → 인라인.
+      return { error: res.message };
+    } catch {
+      return { error: "본인인증에 실패했어요. 잠시 후 다시 시도해 주세요." };
+    }
   }
 
   return (
     <div className="app-container flex min-h-dvh flex-col px-5 py-8">
       {RESET_DOTS.includes(step) ? <StepDots step={step} /> : null}
 
-      {step === "s1" && <StepS1 onStart={startKakao} loading={kakaoLoading} />}
+      {step === "s1" && <StepS1 onStart={startKakao} loading={kakaoLoading} error={kakaoError} />}
       {step === "s2" && <StepS2 onNext={() => setStep("verify")} />}
       {step === "verify" && (
         <div className="flex flex-1 flex-col justify-center">
-          <PhoneVerifyForm onResult={handleResult} />
+          <PhoneVerifyForm onVerify={verify} />
         </div>
       )}
-      {step === "s5a" && <StepS5a name={result?.name ?? "라이더"} />}
+      {step === "s5a" && <StepS5a name="라이더" />}
       {step === "s5b" && <StepS5b onRetry={() => setStep("verify")} />}
     </div>
   );
@@ -70,7 +111,15 @@ function StepDots({ step }: { step: Step }) {
   );
 }
 
-function StepS1({ onStart, loading }: { onStart: () => void; loading: boolean }) {
+function StepS1({
+  onStart,
+  loading,
+  error,
+}: {
+  onStart: () => void;
+  loading: boolean;
+  error?: string;
+}) {
   return (
     <div className="flex flex-1 flex-col">
       <div className="flex flex-col gap-3 pt-8">
@@ -84,7 +133,7 @@ function StepS1({ onStart, loading }: { onStart: () => void; loading: boolean })
       <div className="flex flex-1" />
 
       <div className="flex flex-col gap-3">
-        <KakaoLoginButton onClick={onStart} loading={loading} />
+        <KakaoLoginButton onClick={onStart} loading={loading} error={error} />
         <p className="text-center text-caption text-muted">
           카카오 계정으로 안전하게 로그인해요. 친구 목록이나 메시지는 가져오지 않아요.
         </p>

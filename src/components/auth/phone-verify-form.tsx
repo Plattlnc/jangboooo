@@ -7,22 +7,19 @@ import { Toast, ToastViewport } from "@/components/ui/toast";
 
 // 02 §S3~S4. 휴대폰 번호 입력 → 인증번호 입력. 카피 SSOT: docs/copy/auth.md / errors.md.
 //
-// PROVISIONAL: 실제 문자 발송/검증/명단 매칭은 backend(카카오 본인확인 + admin_rider_id 바인딩)
-// 도착 후 연결. 현재는 UI 상태 시연용 목 핸들러.
-//   - 발송: 항상 성공(0.8s 지연)
-//   - 검증: 코드 "000000" 이면 불일치 에러, 그 외 통과
-//   - 매칭: 번호가 "0000" 으로 끝나면 명단 없음(S5b), 그 외 성공(S5a)
+// 최종 검증/바인딩은 부모(LoginFlow)의 onVerify 에 위임한다:
+//   - 실모드: bindRider({verificationToken}) (sandbox 토큰) — backend
+//   - 폴백(무백엔드): 데모용 스텁
+// 이 컴포넌트는 입력/타이머/재전송 등 UI 상태만 담당.
+//
+// ⚠️ 백엔드 본인확인 방식 = 카카오 본인확인(authcode redirect)으로 이 SMS형 화면(번호+6자리)과
+//    상이. 운영 전환 시 화면 재설계 필요(team-lead/uxui 협의 중) — 현재는 sandbox 검증용.
 
 const RESEND_SECONDS = 180;
 
-export interface VerifyResult {
-  matched: boolean;
-  name?: string;
-  phoneMasked: string;
-}
-
 interface PhoneVerifyFormProps {
-  onResult: (result: VerifyResult) => void;
+  /** 6자리 입력 후 호출. 성공 시 부모가 다음 단계로 이동, 실패 시 인라인 메시지 반환. */
+  onVerify: (phoneDigits: string) => Promise<{ error?: string }>;
 }
 
 function formatPhone(raw: string): string {
@@ -40,7 +37,7 @@ function maskPhone(raw: string): string {
 
 const isValidPhone = (raw: string) => /^010\d{8}$/.test(raw.replace(/\D/g, ""));
 
-export function PhoneVerifyForm({ onResult }: PhoneVerifyFormProps) {
+export function PhoneVerifyForm({ onVerify }: PhoneVerifyFormProps) {
   const [sub, setSub] = useState<"phone" | "code">("phone");
   const [phone, setPhone] = useState("");
   const [code, setCode] = useState("");
@@ -90,23 +87,17 @@ export function PhoneVerifyForm({ onResult }: PhoneVerifyFormProps) {
     flashToast("인증번호를 보냈어요");
   }
 
-  // S4 — 검증 + 매칭 (PROVISIONAL mock)
-  function verify() {
+  // S4 — 검증 위임(부모 onVerify). 성공 시 부모가 화면 전환, 실패면 인라인 에러.
+  async function verify() {
     if (code.length < 6) return;
     if (secondsLeft <= 0) {
       setCodeError("인증번호가 만료됐어요. 새 번호를 받아 주세요.");
       return;
     }
     setVerifying(true);
-    window.setTimeout(() => {
-      setVerifying(false);
-      if (code === "000000") {
-        setCodeError("인증번호가 맞지 않아요. 문자로 받은 6자리를 다시 확인해 주세요.");
-        return;
-      }
-      const matched = !phone.replace(/\D/g, "").endsWith("0000");
-      onResult({ matched, name: matched ? "라이더" : undefined, phoneMasked: maskPhone(phone) });
-    }, 900);
+    const { error } = await onVerify(phone.replace(/\D/g, ""));
+    setVerifying(false);
+    if (error) setCodeError(error);
   }
 
   const mmss = `${String(Math.floor(secondsLeft / 60)).padStart(2, "0")}:${String(secondsLeft % 60).padStart(2, "0")}`;

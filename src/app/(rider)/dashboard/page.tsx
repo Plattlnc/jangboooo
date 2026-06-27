@@ -8,8 +8,8 @@ import { MotivationBanner } from "@/components/dashboard/motivation-banner";
 import { StatGrid } from "@/components/dashboard/stat-grid";
 import { PeakHourChart } from "@/components/dashboard/peak-hour-chart";
 import { FooterActions } from "@/components/dashboard/footer-actions";
-import { getDashboardData, parsePeriod } from "@/app/(rider)/_lib/queries";
-import { PERIOD_LABEL, selectMotivation } from "@/app/(rider)/_lib/metrics";
+import { getDashboardData } from "@/app/(rider)/_lib/queries";
+import { parsePeriod, PERIOD_LABEL, selectMotivation } from "@/app/(rider)/_lib/metrics";
 
 interface DashboardPageProps {
   // Next 16: searchParams 는 비동기.
