@@ -60,7 +60,7 @@ export function SegmentedTabs<T extends string>({
             onClick={() => onChange(opt.value)}
             className={cn(
               "relative z-[1] flex-1 touch-target rounded-full px-3 text-sm transition-colors duration-150 active:scale-[.98]",
-              selected ? "text-foreground font-semibold" : "text-muted-foreground hover:text-foreground",
+              selected ? "text-foreground font-bold" : "text-muted-foreground hover:text-foreground",
             )}
           >
             {opt.label}

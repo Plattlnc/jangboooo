@@ -1,4 +1,6 @@
-@import url("https://cdn.jsdelivr.net/gh/toss/tossface@1.6.1/dist/tossface.css");
+/* Tossface 웹폰트는 layout.tsx <head> 의 <link> 로 로드한다 — 번들 @import 는
+   상대 폰트 URL(./TossFaceFontMac-*.woff2)이 깨져 OS 이모지로 폴백되는 문제가 있어
+   Pretendard 와 동일하게 <link> 방식으로 로드(상대 URL 이 jsdelivr 기준으로 resolve). */
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "../styles/tokens.css";

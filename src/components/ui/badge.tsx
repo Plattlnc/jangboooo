@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 
 // shadcn(cva) Badge — 05 §5. 상태 칩(success/warning 확장). 색 단독 의존 금지(텍스트/아이콘 동반).
 const badgeVariants = cva(
-  "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold",
+  "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-bold",
   {
     variants: {
       variant: {

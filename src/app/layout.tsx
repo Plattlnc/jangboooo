@@ -58,7 +58,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   // 테마: next-themes(attribute="class") 라이트 기본 + 다크 토글(#15). suppressHydrationWarning 필수.
-  // 폰트: --font-sans=Pretendard(CDN), --font-emoji=Tossface(globals @font-face).
+  // 폰트: --font-sans 선두 Pretendard(텍스트)+Tossface(이모지, unicode-range). 둘 다 <link> 로드.
   return (
     <html lang="ko" suppressHydrationWarning>
       <head>
@@ -66,6 +66,11 @@ export default function RootLayout({
         <link
           rel="stylesheet"
           href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
+        />
+        {/* Tossface 이모지 폰트 — <link> 로드(상대 폰트 URL 이 jsdelivr 기준 resolve → 실제 렌더). */}
+        <link
+          rel="stylesheet"
+          href="https://cdn.jsdelivr.net/gh/toss/tossface@1.6.1/dist/tossface.css"
         />
       </head>
       <body className="min-h-dvh">
