@@ -49,7 +49,7 @@
 
 화면 1순위. 컴포넌트 D 규격. `sla_score`(0–100), 단위 **"점"** 표기(라벨이 "점수"라 % 아님 — 수락률만 %).
 
-- 상단 라벨 `text-caption text-muted`: "SLA 점수" + i 아이콘(탭 시 툴팁 "배달을 약속대로 잘 해낸 정도를 나타내는 종합 신뢰 점수예요.").
+- 상단 라벨 `text-caption text-muted`: **첫 노출 시** "SLA 점수 (배달 신뢰도 점수)" — 영문약어 첫 등장 한글 괄호풀이(cmo 브랜딩 §8.8). 같은 세션 재노출부터는 "SLA 점수"만. + i 아이콘(탭 시 툴팁 "배달을 약속대로 잘 해낸 정도를 나타내는 종합 신뢰 점수예요.").
 - 점수 `text-score tabular-nums`, 상태색(임계값 00-foundations §1) + "점" 접미는 `text-h2 text-muted`.
 - 게이지: 원형 링 0→값 600ms out, 진행색=상태색, 트랙=`border`.
 - 등급 Badge: 우수(success)/주의(warning)/위험(danger) — **색+텍스트 병행**.

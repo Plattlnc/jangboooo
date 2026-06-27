@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="배달장부2 미리보기">
+  <!--
+    OG/공유 미리보기 마스터 (1200×630, dark-first). 카카오톡 공유 대비.
+    좌: 워드마크 "배달장부2" + 한 줄 카피. 우: SLA 게이지 모티프(브랜드 비주얼).
+    ⚠ 한글 텍스트 렌더는 폰트 의존 — 최종 PNG 는 frontend 가 Next.js opengraph-image.tsx
+      (ImageResponse + next/font Pretendard)로 생성 권장(또렷·정합). 본 SVG 는 레이아웃 SSOT.
+    색 토큰 동일: bg #0f172a→#060b18, 텍스트 #f8fafc, muted #94a3b8, accent #2563eb.
+  -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0f172a"/>
+      <stop offset="1" stop-color="#060b18"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.78" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#2563eb" stop-opacity="0.20"/>
+      <stop offset="1" stop-color="#2563eb" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+
+  <!-- 좌측 텍스트 블록 (안전 여백 ~90px) -->
+  <g font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif">
+    <!-- accent 라인 -->
+    <rect x="90" y="196" width="64" height="8" rx="4" fill="#2563eb"/>
+    <text x="90" y="320" font-size="104" font-weight="800" fill="#f8fafc" letter-spacing="-2">배달장부2</text>
+    <text x="92" y="392" font-size="40" font-weight="500" fill="#94a3b8">내 배달 성적표, 내 손안에.</text>
+    <text x="92" y="452" font-size="30" font-weight="400" fill="#64748b">완료·수락률·취소를 오늘·주·월로 한눈에</text>
+  </g>
+
+  <!-- 우측 게이지 모티프 -->
+  <g transform="translate(905,315) scale(0.92)">
+    <circle cx="0" cy="0" r="220" fill="url(#glow)"/>
+    <path d="M -148.5 148.5 A 210 210 0 1 1 148.5 148.5"
+          fill="none" stroke="#1e293b" stroke-width="84" stroke-linecap="round"/>
+    <path d="M -148.5 148.5 A 210 210 0 1 1 207.4 -32.8"
+          fill="none" stroke="#2563eb" stroke-width="84" stroke-linecap="round"/>
+    <circle cx="207.4" cy="-32.8" r="26" fill="#93c5fd"/>
+    <g fill="#e2e8f0">
+      <rect x="-66" y="0"   width="36" height="62"  rx="12"/>
+      <rect x="-22" y="-34" width="36" height="96"  rx="12"/>
+      <rect x="22"  y="-70" width="36" height="132" rx="12"/>
+    </g>
+  </g>
+</svg>
