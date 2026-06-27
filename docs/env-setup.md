@@ -18,6 +18,7 @@ jangboooo 는 두 런타임으로 나뉜다.
 | `NEXT_PUBLIC_SUPABASE_URL` | ✅ | ✅¹ | Supabase 프로젝트 URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ✅ | — | 클라이언트 anon 키(RLS 적용) |
 | `NEXT_PUBLIC_SITE_URL` | ✅ | — | 배포 절대 URL(SEO/OG/메타 baseUrl). 예: `https://<도메인>` |
+| `NEXT_PUBLIC_DEMO_MODE` | (기본 false) | — | **운영 금지**. true 면 로그인 가드 우회 + 목 데이터 데모. 데모 배포에만 |
 | `SUPABASE_URL` | — | ✅¹ | 워커용 URL(없으면 `NEXT_PUBLIC_SUPABASE_URL` 폴백) |
 | `SUPABASE_SERVICE_ROLE_KEY` | ✅² | ✅ | RLS 우회. 서버/워커 전용 |
 | `IDENTITY_VERIFY_PROVIDER` | ✅(`kakao`) | — | 본인확인 어댑터. 미설정 시 `PROVIDER_NOT_CONFIGURED` 안전차단 |
@@ -112,6 +113,14 @@ playwright 를 올릴 때 두 곳을 함께 변경한다.
    - `KAKAO_IDENTITY_REDIRECT_URI` = `https://<도메인>/...`(본인확인 콜백) → 카카오 개발자콘솔에도 등록.
    - (카카오 **로그인** Redirect 는 Supabase 도메인 기준 → 배포 도메인 무관.)
 
+### 데모 배포 (로그인 우회)
+
+카카오 미연동 등으로 로그인 벽 없이 화면을 보여줘야 할 때만:
+- Vercel Environment Variables 에 `NEXT_PUBLIC_DEMO_MODE=true` 추가 → **재배포**(NEXT_PUBLIC_* 는 빌드타임 인라인).
+- 효과: 미들웨어 로그인 가드 우회 + 목 데이터로 `/dashboard` 노출(데모 배지 표시 — frontend 구현).
+- ⚠️ **운영 금지** — 정식 오픈 시 이 변수 제거(또는 false) 후 재배포. 기본 off 라 미설정이면 정상 가드.
+- (상세 분기는 아래 "데모 접근성" 절 참조.)
+
 ## 배포 체크리스트
 
 **사전(키 주입 전):**
@@ -137,12 +146,14 @@ playwright 를 올릴 때 두 곳을 함께 변경한다.
 | Supabase env | `/dashboard` 가드 | 데이터 | 데모 |
 |--------------|------------------|--------|------|
 | **미설정** | 비활성 (`NextResponse.next()`) | mock 폴백(`_lib/queries.ts`) | **로그인 없이 접근** — 목 데이터로 화면 데모 가능 |
-| **설정** | 활성 — 미인증 시 `/login?next=/dashboard` 리다이렉트 | 실 Supabase | 카카오 로그인 미동작이면 대시보드 **접근 불가**(우회 없음) |
+| **설정** | 활성 — 미인증 시 `/login?next=/dashboard` 리다이렉트 | 실 Supabase | 기본은 접근 불가 → `NEXT_PUBLIC_DEMO_MODE=true` 로만 우회 |
 
-**첫 배포 권장(카카오 미비 시):**
-- ⓐ Supabase env **없이** 먼저 배포 → 로그인 불필요·목 데이터로 UI 데모 → 카카오·DB 준비되면 env 채워 실데이터 자동 전환. (단 env 없으면 SLA 실데이터·본인인증은 동작 안 함.)
-- ⓑ 또는 카카오 로그인 먼저 검증 후 env 포함 배포.
-- 가드 완화(미인증 허용)는 인증 로직 변경 → frontend/backend 영역. 데모용 임시 우회는 별도 합의 필요(devops 임의 변경 안 함).
+**확정 데모 시나리오 — "빈 DB + 카카오 우회"(사용자 결정):**
+Supabase env 를 채우면(빈 DB라도) 가드가 **활성**돼 `/dashboard` 가 `/login` 으로 막힌다.
+따라서 로그인 없이 화면을 보려면 둘 중 하나:
+- ⓐ **순수 UI 데모(코드 변경 0):** Supabase env **없이** 배포 → 가드 off + mock 데이터로 `/dashboard` 노출. 카카오·DB 준비되면 env 채워 실데이터 자동 전환. (env 없으면 SLA 실데이터·본인인증은 미동작.)
+- ⓑ **빈 DB + 로그인 우회(DEMO_MODE):** Supabase env 는 채우되 `NEXT_PUBLIC_DEMO_MODE=true`(프로덕션 기본 off, 데모 배포에만)로 **로그인 가드 우회 + 목 데이터 표시**. → 구현(미들웨어/쿼리/배지)은 frontend 영역, env 노출·문서는 devops/Vercel. 운영 오픈 시 변수 제거. (조작 절차는 위 "데모 배포" 절.)
+- env-gated 토글이므로 가드를 영구 약화하지 않는다(기본 off → 미설정이면 정상 인증).
 
 ## 로컬 개발
 

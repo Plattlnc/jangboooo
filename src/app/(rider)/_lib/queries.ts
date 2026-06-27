@@ -8,6 +8,7 @@
 // 단위: acceptance_rate/sla_score 는 0~100 퍼센트(sla-api.md §6) — 목 데이터도 동일.
 
 import type { RiderHourlyRow, RiderSummaryRow, SlaPeriod } from "@/types/database";
+import { DEMO_MODE } from "@/lib/demo";
 
 // period 유틸의 정식 위치는 _lib/metrics(클라이언트 안전). 기존 import 경로 하위호환 re-export.
 export { SLA_PERIODS, isSlaPeriod, parsePeriod } from "./metrics";
@@ -34,7 +35,8 @@ function isoDateMinusDays(date: string, n: number): string {
 }
 
 export async function getDashboardData(period: SlaPeriod): Promise<DashboardData> {
-  if (!hasSupabaseEnv()) {
+  // 데모 모드(#13) 또는 Supabase env 미설정 → 목 데이터 강제.
+  if (DEMO_MODE || !hasSupabaseEnv()) {
     return getMockDashboardData(period);
   }
 

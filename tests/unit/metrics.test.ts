@@ -121,9 +121,9 @@ describe("selectMotivation — 동기부여 배너 선택", () => {
     const r = selectMotivation(80, 90, "week", wednesday);
     expect(r?.tone).toBe("warning");
     expect(r?.message).toContain("4일");
-    // [QA-002] 카피 버그: "이번 " + PERIOD_LABEL.week("이번 주") → "이번 이번 주은" (이중 '이번' + 잘못된 조사 '주은').
-    // 현재 동작을 고정해 둔다(수정되면 이 단언을 함께 갱신). 별도 [BUG] 리포트.
-    expect(r?.message).toContain("이번 이번 주은");
+    // QA-002 수정 반영: 주어 완성형(PERIOD_SUBJECT_TOPIC.week="이번 주는") — 이중 '이번'/조사 오류 해소.
+    expect(r?.message).toContain("이번 주는");
+    expect(r?.message).not.toContain("이번 이번");
   });
 
   it("SLA 하락이지만 남은 기간 0이면 null (today / 주말 week)", () => {

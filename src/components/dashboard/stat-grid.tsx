@@ -1,6 +1,6 @@
 import type { RiderSummaryRow, SlaPeriod } from "@/types/database";
 import { StatCard } from "./stat-card";
-import { acceptanceStatus, PERIOD_LABEL } from "@/app/(rider)/_lib/metrics";
+import { acceptanceStatus, PERIOD_SUBJECT_LOCATIVE } from "@/app/(rider)/_lib/metrics";
 
 // 03 §E. 지표 5종 그리드. 델타는 직전 기간 대비. 카피 SSOT: docs/copy/dashboard.md §3.
 interface StatGridProps {
@@ -13,18 +13,18 @@ function diff(cur: number, prev: number | undefined): number | null {
   return prev == null ? null : cur - prev;
 }
 
-function acceptanceNote(rate: number | null, periodLabel: string): string | undefined {
+function acceptanceNote(rate: number | null, period: SlaPeriod): string | undefined {
   if (rate == null) return undefined;
   // rate 는 0~100 퍼센트 (sla-api.md §6).
   const pct = Math.round(rate);
   if (pct >= 90) return `수락률 ${pct}%, 콜을 잘 잡고 있어요`;
   if (pct >= 70) return `수락률 ${pct}%`;
-  return `수락률 ${pct}%, 이번 ${periodLabel}엔 조금 낮아요`;
+  // QA-002: 라벨 중복/조사 보정된 처소격 주어 사용("이번 주엔" 등).
+  return `수락률 ${pct}%, ${PERIOD_SUBJECT_LOCATIVE[period]} 조금 낮아요`;
 }
 
 export function StatGrid({ summary, previous, period }: StatGridProps) {
   const p = previous ?? undefined;
-  const periodLabel = PERIOD_LABEL[period];
   const acceptancePct = summary.acceptance_rate == null ? null : Math.round(summary.acceptance_rate);
 
   return (
@@ -68,7 +68,7 @@ export function StatGrid({ summary, previous, period }: StatGridProps) {
         value={acceptancePct}
         unit="%"
         valueStatus={summary.acceptance_rate == null ? undefined : acceptanceStatus(summary.acceptance_rate)}
-        note={acceptanceNote(summary.acceptance_rate, periodLabel)}
+        note={acceptanceNote(summary.acceptance_rate, period)}
       />
     </section>
   );

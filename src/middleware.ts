@@ -1,8 +1,13 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { DEMO_MODE } from "@/lib/demo";
 
 // SSR 세션 갱신 + 보호 경로 가드. 인증 계약 SSOT: docs/api/sla-api.md §3·6.
 // Supabase env 미설정(devops 프로비저닝 전)이면 가드 비활성 → 목 화면 검증을 유지한다.
 export async function middleware(request: NextRequest) {
+  // 데모 모드(#13): Supabase env 가 있어도 인증 가드 전면 우회.
+  if (DEMO_MODE) {
+    return NextResponse.next();
+  }
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
     return NextResponse.next();
   }
