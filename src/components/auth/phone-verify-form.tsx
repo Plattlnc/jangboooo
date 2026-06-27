@@ -129,7 +129,7 @@ export function PhoneVerifyForm({ onVerify }: PhoneVerifyFormProps) {
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">
         <h2 className="text-h2 text-fg">문자로 받은 6자리 숫자를 입력해 주세요</h2>
-        <p className="text-sm text-muted">{maskPhone(phone)} 로 보냈어요</p>
+        <p className="text-sm text-muted-foreground">{maskPhone(phone)} 로 보냈어요</p>
       </div>
       <Field
         label="인증번호"
@@ -144,7 +144,7 @@ export function PhoneVerifyForm({ onVerify }: PhoneVerifyFormProps) {
         onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
         trailing={
           // DESIGN-QA M2: 매초 갱신 카운트다운은 aria-live 제거(SR 가 초마다 읽지 않도록).
-          <span className={expired ? "text-caption text-danger" : "text-caption text-muted tabular-nums"}>
+          <span className={expired ? "text-caption text-danger" : "text-caption text-muted-foreground tabular-nums"}>
             {expired ? "만료됨" : `${mmss}`}
           </span>
         }
@@ -159,13 +159,13 @@ export function PhoneVerifyForm({ onVerify }: PhoneVerifyFormProps) {
           인증번호 다시 받기
         </button>
         {!expired ? (
-          <span className="text-caption text-muted">{secondsLeft}초 후에 다시 받을 수 있어요</span>
+          <span className="text-caption text-muted-foreground">{secondsLeft}초 후에 다시 받을 수 있어요</span>
         ) : null}
       </div>
       <Button size="lg" fullWidth disabled={code.length < 6} loading={verifying} loadingLabel="확인하는 중…" onClick={verify}>
         인증 완료하기
       </Button>
-      <p className="text-caption text-muted text-center">
+      <p className="text-caption text-muted-foreground text-center">
         이 점수와 기록은 평가가 아니라 내 기록이에요. 정산이나 배차에 영향을 주지 않아요.
       </p>
       {toast ? (

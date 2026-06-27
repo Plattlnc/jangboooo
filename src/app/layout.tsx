@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { ThemeProvider } from "@/components/theme-provider";
 
 // 메타/SEO: 값 SSOT = docs/seo-checklist.md(cmo) + docs/design/04-brand-assets.md(uxui).
 // 사적 도구이므로 전역 noindex(검색 비노출), OG/PWA 는 공유·홈화면 경험용.
@@ -56,10 +57,10 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // dark-first (00-foundations §3): data-theme="dark" 기본.
-  // 폰트: 토큰(--font-sans)이 Pretendard 우선 — Pretendard 웹폰트를 CDN 으로 로드.
+  // 테마: next-themes(attribute="class") 라이트 기본 + 다크 토글(#15). suppressHydrationWarning 필수.
+  // 폰트: --font-sans=Pretendard(CDN), --font-emoji=Tossface(globals @font-face).
   return (
-    <html lang="ko" data-theme="dark">
+    <html lang="ko" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
         <link
@@ -67,7 +68,16 @@ export default function RootLayout({
           href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
         />
       </head>
-      <body className="min-h-dvh">{children}</body>
+      <body className="min-h-dvh">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="light"
+          enableSystem={false}
+          disableTransitionOnChange
+        >
+          {children}
+        </ThemeProvider>
+      </body>
     </html>
   );
 }

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ShieldCheck, Phone, Check } from "@/components/ui/icons";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { KakaoLoginButton } from "./kakao-login-button";
 import { PhoneVerifyForm } from "./phone-verify-form";
 
@@ -81,6 +82,9 @@ export function LoginFlow() {
 
   return (
     <div className="app-container flex min-h-dvh flex-col px-5 py-8">
+      <div className="flex justify-end">
+        <ThemeToggle className="-mr-2" />
+      </div>
       {RESET_DOTS.includes(step) ? <StepDots step={step} /> : null}
 
       {step === "s1" && <StepS1 onStart={startKakao} loading={kakaoLoading} error={kakaoError} />}
@@ -123,9 +127,9 @@ function StepS1({
   return (
     <div className="flex flex-1 flex-col">
       <div className="flex flex-col gap-3 pt-8">
-        <span className="text-caption text-muted">배달장부2</span>
+        <span className="text-caption text-muted-foreground">배달장부2</span>
         <h1 className="text-h1 text-fg">내 배달 성적표, 내 손안에.</h1>
-        <p className="text-body text-muted">
+        <p className="text-body text-muted-foreground">
           완료·수락률·취소까지, 내 실적을 오늘·주·월로 한눈에 봐요.
         </p>
       </div>
@@ -134,7 +138,7 @@ function StepS1({
 
       <div className="flex flex-col gap-3">
         <KakaoLoginButton onClick={onStart} loading={loading} error={error} />
-        <p className="text-center text-caption text-muted">
+        <p className="text-center text-caption text-muted-foreground">
           카카오 계정으로 안전하게 로그인해요. 친구 목록이나 메시지는 가져오지 않아요.
         </p>
         <p className="text-center text-caption text-subtle">
@@ -152,8 +156,11 @@ function StepS2({ onNext }: { onNext: () => void }) {
     <div className="flex flex-1 flex-col">
       <div className="flex flex-1 flex-col justify-center gap-4">
         <Phone size={40} className="text-subtle" />
-        <h2 className="text-h2 text-fg">휴대폰으로 내 기록을 찾을게요</h2>
-        <p className="text-body text-muted">
+        <h2 className="text-h2 text-foreground">
+          <span aria-hidden="true" className="emoji mr-1">📱</span>
+          휴대폰으로 내 기록을 찾을게요
+        </h2>
+        <p className="text-body text-muted-foreground">
           등록된 휴대폰 번호로 내 배달 기록을 안전하게 연결해요.
           <br />
           번호는 본인 확인과 기록 연결에만 쓰이고, 따로 저장해 마케팅에 쓰지 않아요.
@@ -180,8 +187,11 @@ function StepS5a({ name }: { name: string }) {
         <span className="grid size-16 place-items-center rounded-full bg-success-subtle">
           <Check size={32} className="text-success" />
         </span>
-        <h2 className="text-h2 text-fg">내 기록을 찾았어요</h2>
-        <p className="text-body text-muted">
+        <h2 className="text-h2 text-foreground">
+          <span aria-hidden="true" className="emoji mr-1">🎉</span>
+          내 기록을 찾았어요
+        </h2>
+        <p className="text-body text-muted-foreground">
           {name}님의 배달 기록이 연결됐어요. 지금 바로 확인해 봐요.
         </p>
       </div>

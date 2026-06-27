@@ -66,7 +66,7 @@ export function SlaScore({ score, periodLabel }: SlaScoreProps) {
 
   if (score == null) {
     return (
-      <section className="bg-surface rounded-2xl shadow-md p-6">
+      <section className="bg-card rounded-2xl shadow-md p-6">
         <ScoreLabel />
         <EmptyState
           compact
@@ -82,7 +82,7 @@ export function SlaScore({ score, periodLabel }: SlaScoreProps) {
 
   return (
     <section
-      className="bg-surface rounded-2xl shadow-md p-6 flex flex-col items-center gap-4"
+      className="bg-card rounded-2xl shadow-md p-6 flex flex-col items-center gap-4"
       aria-label={`SLA 점수 ${score}점, ${label}`}
     >
       <ScoreLabel />
@@ -102,11 +102,11 @@ export function SlaScore({ score, periodLabel }: SlaScoreProps) {
         </svg>
         <div className="absolute flex items-baseline gap-1">
           <span className={cn("text-score tabular-nums", TEXT[status])}>{display}</span>
-          <span className="text-h2 text-muted">점</span>
+          <span className="text-h2 text-muted-foreground">점</span>
         </div>
       </div>
       <Badge variant={status}>{label}</Badge>
-      <p className="text-caption text-muted text-center">
+      <p className="text-caption text-muted-foreground text-center">
         이 숫자는 평가가 아니라 내 기록이에요.
       </p>
     </section>
@@ -115,7 +115,8 @@ export function SlaScore({ score, periodLabel }: SlaScoreProps) {
 
 function ScoreLabel() {
   return (
-    <div className="flex items-center justify-center gap-1 text-caption text-muted">
+    <div className="flex items-center justify-center gap-1 text-caption text-muted-foreground">
+      <span aria-hidden="true" className="emoji">🛡️</span>
       <span>SLA 점수</span>
       <InfoTip
         label="SLA 점수 설명"

@@ -1,368 +1,241 @@
 /* =============================================================================
- * jangboooo — Design Tokens (Tailwind v4 CSS-first)
- * 라이더 개인 SLA 대시보드 · 모바일 퍼스트
+ * 배달장부2 — Design Tokens (shadcn/ui · Tailwind v4 CSS-first)
  *
- * 구조 (2-Layer Token):
- *   1) Primitive  : 원시 색상 스케일 — 직접 사용 금지
- *   2) Semantic   : 의미 토큰(:root) — 다크모드에서 값이 바뀜, 실제 사용 대상
- *   3) @theme inline : Semantic 을 Tailwind 유틸로 노출 (bg-surface, text-muted ...)
- *
- * 다크모드: 시스템(prefers-color-scheme) 기본 + [data-theme] 수동 오버라이드
- *   - 자동:    시스템 다크 → 다크 적용 ([data-theme="light"] 이면 무시)
- *   - 수동:    <html data-theme="dark"> / data-theme="light"
+ * SSOT: docs/design/05-shadcn-redesign.md §2 (uxui). frontend 가 이 문서로 마이그레이션(#15).
+ * 구조: 라이트=:root 기본 / 다크=.dark 오버라이드 (런타임 기본 테마는 layout/next-themes).
+ * 색은 oklch(shadcn 표준), 우측 hex 근사 주석. 비색상 토큰(타이포/그림자/모션/레이아웃)은
+ * 기존 디자인시스템에서 캐리오버. 하단 "legacy 별칭"은 마이그레이션 중 기존 유틸 유지용.
  * ========================================================================== */
 
-/* -----------------------------------------------------------------------------
- * 1) PRIMITIVE PALETTE  (raw scales — 의미 토큰을 통해서만 사용)
- *    BRAND HUE: cmo 브랜딩 방향 반영 — "신뢰의 블루" 1종, 과하지 않게.
- *    (브랜드명 확정/리브랜딩 시 이 스케일만 교체하면 전 화면 반영)
- * -------------------------------------------------------------------------- */
 :root {
-  /* Brand — 신뢰 블루 (cmo §6: trust blue, dark-first 에서도 또렷) */
-  --brand-50:  #eff6ff;
-  --brand-100: #dbeafe;
-  --brand-200: #bfdbfe;
-  --brand-300: #93c5fd;
-  --brand-400: #60a5fa;
-  --brand-500: #3b82f6;
-  --brand-600: #2563eb;  /* primary */
-  --brand-700: #1d4ed8;
-  --brand-800: #1e40af;
-  --brand-900: #1e3a8a;
+  --radius: 0.875rem; /* 14px — 카드 rounded-xl, 시트 rounded-2xl */
 
-  /* Neutral / Gray (cool) */
-  --gray-0:   #ffffff;
-  --gray-50:  #f8fafc;
-  --gray-100: #f1f5f9;
-  --gray-200: #e2e8f0;
-  --gray-300: #cbd5e1;
-  --gray-400: #94a3b8;
-  --gray-500: #64748b;
-  --gray-600: #475569;
-  --gray-700: #334155;
-  --gray-800: #1e293b;
-  --gray-900: #0f172a;
-  --gray-950: #060b18;
+  /* ── Neutral (cool slate) — Light ── */
+  --background:            oklch(1 0 0);            /* #ffffff */
+  --foreground:            oklch(0.21 0.04 265);    /* slate-900 #0f172a */
+  --card:                  oklch(1 0 0);
+  --card-foreground:       oklch(0.21 0.04 265);
+  --popover:               oklch(1 0 0);
+  --popover-foreground:    oklch(0.21 0.04 265);
+  --muted:                 oklch(0.97 0.01 256);    /* slate-100 #f1f5f9 */
+  --muted-foreground:      oklch(0.55 0.03 257);    /* slate-500 #64748b */
+  --accent:                oklch(0.97 0.01 256);
+  --accent-foreground:     oklch(0.21 0.04 265);
+  --border:                oklch(0.92 0.01 256);    /* slate-200 #e2e8f0 */
+  --input:                 oklch(0.92 0.01 256);
+  --secondary:             oklch(0.97 0.01 256);
+  --secondary-foreground:  oklch(0.21 0.04 265);
 
-  /* Success (green) */
-  --green-50:  #ecfdf5;
-  --green-100: #d1fae5;
-  --green-500: #10b981;
-  --green-600: #059669;
-  --green-700: #047857;
+  /* ── Brand / semantic ── */
+  --primary:               oklch(0.55 0.22 263);    /* 신뢰 블루 #2563eb */
+  --primary-foreground:    oklch(0.985 0 0);
+  --ring:                  oklch(0.55 0.22 263);
 
-  /* Warning (amber) */
-  --amber-50:  #fffbeb;
-  --amber-100: #fef3c7;
-  --amber-500: #f59e0b;
-  --amber-600: #d97706;
-  --amber-700: #b45309;
+  --success:               oklch(0.60 0.13 163);    /* emerald-600 */
+  --success-foreground:    oklch(0.985 0 0);
+  --warning:               oklch(0.70 0.16 70);     /* amber-600 */
+  --warning-foreground:    oklch(0.21 0.04 265);
+  --destructive:           oklch(0.58 0.22 27);     /* red-600 — 파괴적 액션 전용 */
+  --destructive-foreground:oklch(0.985 0 0);
 
-  /* Danger (red) */
-  --red-50:  #fef2f2;
-  --red-100: #fee2e2;
-  --red-500: #ef4444;
-  --red-600: #dc2626;
-  --red-700: #b91c1c;
+  --primary-subtle:    color-mix(in oklch, var(--primary) 12%, var(--background));
+  --success-subtle:    color-mix(in oklch, var(--success) 14%, var(--background));
+  --warning-subtle:    color-mix(in oklch, var(--warning) 16%, var(--background));
+  --destructive-subtle:color-mix(in oklch, var(--destructive) 12%, var(--background));
 
-  /* Info (sky) */
-  --sky-50:  #f0f9ff;
-  --sky-100: #e0f2fe;
-  --sky-500: #0ea5e9;
-  --sky-600: #0284c7;
+  --chart-1: var(--primary);
+  --chart-2: oklch(0.62 0.19 260);
+  --chart-3: var(--success);
+  --chart-4: var(--warning);
+  --chart-5: oklch(0.55 0.03 257);
+
+  /* 고정 브랜드 자산 — 변경 금지 */
+  --kakao:            #fee500;
+  --kakao-foreground: #191600;
+
+  /* skeleton (자체 .skeleton 헬퍼용) */
+  --skeleton-base:      var(--muted);
+  --skeleton-highlight: var(--accent);
+
+  /* ── 비색상 토큰 (직접 var 참조) ── */
+  --dur-fast: 150ms;
+  --dur-base: 200ms;
+  --dur-slow: 300ms;
+  --touch-min: 44px;
+  --z-base: 0;
+  --z-sticky: 100;
+  --z-dropdown: 200;
+  --z-overlay: 300;
+  --z-modal: 400;
+  --z-toast: 500;
+  --scrim: oklch(0.21 0.04 265 / 0.45);
 }
 
-/* -----------------------------------------------------------------------------
- * 2) SEMANTIC TOKENS — LIGHT (default)
- *    실제 사용 대상. 다크모드에서 아래 블록이 덮어씀.
- * -------------------------------------------------------------------------- */
-:root {
-  /* Surfaces & background */
-  --bg:               var(--gray-50);   /* 앱 배경 */
-  --surface:          var(--gray-0);    /* 카드/시트 표면 */
-  --surface-elevated: var(--gray-0);    /* 떠있는 표면(모달/팝오버) */
-  --surface-sunken:   var(--gray-100);  /* 입력/트랙 등 들어간 영역 */
+.dark {
+  /* ── Neutral — Dark (dark-first 무드) ── */
+  --background:            oklch(0.16 0.02 265);    /* slate-950 ~#060b18 */
+  --foreground:            oklch(0.98 0.003 247);   /* slate-50 #f8fafc */
+  --card:                  oklch(0.21 0.04 265);    /* slate-900 */
+  --card-foreground:       oklch(0.98 0.003 247);
+  --popover:               oklch(0.24 0.04 265);
+  --popover-foreground:    oklch(0.98 0.003 247);
+  --muted:                 oklch(0.27 0.03 260);
+  --muted-foreground:      oklch(0.70 0.03 257);    /* slate-400 */
+  --accent:                oklch(0.27 0.03 260);
+  --accent-foreground:     oklch(0.98 0.003 247);
+  --border:                oklch(1 0 0 / 10%);
+  --input:                 oklch(1 0 0 / 12%);
+  --secondary:             oklch(0.27 0.03 260);
+  --secondary-foreground:  oklch(0.98 0.003 247);
 
-  /* Text */
-  --text:        var(--gray-900);  /* 본문/주요 텍스트 */
-  --text-muted:  var(--gray-500);  /* 보조 텍스트 */
-  --text-subtle: var(--gray-400);  /* 캡션/플레이스홀더 */
-  --text-on-brand: var(--gray-0);  /* primary 위 텍스트 */
+  --primary:               oklch(0.62 0.19 260);    /* blue-500 #3b82f6 */
+  --primary-foreground:    oklch(0.16 0.02 265);
+  --ring:                  oklch(0.62 0.19 260);
 
-  /* Border & divider */
-  --border:        var(--gray-200);
-  --border-strong: var(--gray-300);
+  --success:               oklch(0.70 0.15 162);
+  --success-foreground:    oklch(0.16 0.02 265);
+  --warning:               oklch(0.79 0.16 75);
+  --warning-foreground:    oklch(0.16 0.02 265);
+  --destructive:           oklch(0.65 0.20 25);
+  --destructive-foreground:oklch(0.16 0.02 265);
 
-  /* Brand / primary action */
-  --primary:        var(--brand-600);
-  --primary-hover:  var(--brand-700);
-  --primary-active: var(--brand-800);
-  --primary-fg:     var(--gray-0);
-  --primary-subtle: var(--brand-50);   /* 연한 강조 배경 */
+  --primary-subtle:    color-mix(in oklch, var(--primary) 22%, var(--background));
+  --success-subtle:    color-mix(in oklch, var(--success) 22%, var(--background));
+  --warning-subtle:    color-mix(in oklch, var(--warning) 22%, var(--background));
+  --destructive-subtle:color-mix(in oklch, var(--destructive) 20%, var(--background));
 
-  /* Status — SLA / 지표 (text · bg · border 3종) */
-  --success:        var(--green-600);
-  --success-fg:     var(--gray-0);
-  --success-subtle: var(--green-50);
+  --chart-2: oklch(0.70 0.16 255);
+  --chart-5: oklch(0.70 0.03 257);
 
-  --warning:        var(--amber-600);
-  --warning-fg:     var(--gray-900);
-  --warning-subtle: var(--amber-50);
-
-  --danger:         var(--red-600);
-  --danger-fg:      var(--gray-0);
-  --danger-subtle:  var(--red-50);
-
-  --info:           var(--sky-600);
-  --info-fg:        var(--gray-0);
-  --info-subtle:    var(--sky-50);
-
-  /* Focus ring (a11y) */
-  --focus-ring: var(--brand-500);
-
-  /* Kakao (고정 브랜드 컬러 — 변경 금지) */
-  --kakao-bg:   #fee500;
-  --kakao-fg:   #191600;
-
-  /* Skeleton / loading */
-  --skeleton-base:      var(--gray-200);
-  --skeleton-highlight: var(--gray-100);
-
-  /* Scrim / overlay */
-  --scrim: rgba(15, 23, 42, 0.45);
+  --scrim: oklch(0 0 0 / 0.6);
 }
 
-/* -----------------------------------------------------------------------------
- * SEMANTIC TOKENS — DARK
- *   시스템 다크 (단, [data-theme="light"] 강제 라이트면 제외)
- * -------------------------------------------------------------------------- */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg:               var(--gray-950);
-    --surface:          var(--gray-900);
-    --surface-elevated: var(--gray-800);
-    --surface-sunken:   #0b1424;
-
-    --text:        var(--gray-50);
-    --text-muted:  var(--gray-400);
-    --text-subtle: var(--gray-500);
-    --text-on-brand: var(--gray-0);
-
-    --border:        var(--gray-800);
-    --border-strong: var(--gray-700);
-
-    --primary:        var(--brand-500);
-    --primary-hover:  var(--brand-400);
-    --primary-active: var(--brand-300);
-    --primary-fg:     var(--gray-950);
-    --primary-subtle: rgba(99, 102, 241, 0.16);
-
-    --success:        var(--green-500);
-    --success-fg:     var(--gray-950);
-    --success-subtle: rgba(16, 185, 129, 0.16);
-
-    --warning:        var(--amber-500);
-    --warning-fg:     var(--gray-950);
-    --warning-subtle: rgba(245, 158, 11, 0.16);
-
-    --danger:         var(--red-500);
-    --danger-fg:      var(--gray-950);
-    --danger-subtle:  rgba(239, 68, 68, 0.16);
-
-    --info:           var(--sky-500);
-    --info-fg:        var(--gray-950);
-    --info-subtle:    rgba(14, 165, 233, 0.16);
-
-    --focus-ring: var(--brand-400);
-
-    --skeleton-base:      var(--gray-800);
-    --skeleton-highlight: var(--gray-700);
-
-    --scrim: rgba(0, 0, 0, 0.6);
-  }
-}
-
-/* 수동 다크 강제 (시스템 라이트여도 적용) — 동일 값 재선언 */
-:root[data-theme="dark"] {
-  --bg:               var(--gray-950);
-  --surface:          var(--gray-900);
-  --surface-elevated: var(--gray-800);
-  --surface-sunken:   #0b1424;
-
-  --text:        var(--gray-50);
-  --text-muted:  var(--gray-400);
-  --text-subtle: var(--gray-500);
-  --text-on-brand: var(--gray-0);
-
-  --border:        var(--gray-800);
-  --border-strong: var(--gray-700);
-
-  --primary:        var(--brand-500);
-  --primary-hover:  var(--brand-400);
-  --primary-active: var(--brand-300);
-  --primary-fg:     var(--gray-950);
-  --primary-subtle: rgba(99, 102, 241, 0.16);
-
-  --success:        var(--green-500);
-  --success-fg:     var(--gray-950);
-  --success-subtle: rgba(16, 185, 129, 0.16);
-
-  --warning:        var(--amber-500);
-  --warning-fg:     var(--gray-950);
-  --warning-subtle: rgba(245, 158, 11, 0.16);
-
-  --danger:         var(--red-500);
-  --danger-fg:      var(--gray-950);
-  --danger-subtle:  rgba(239, 68, 68, 0.16);
-
-  --info:           var(--sky-500);
-  --info-fg:        var(--gray-950);
-  --info-subtle:    rgba(14, 165, 233, 0.16);
-
-  --focus-ring: var(--brand-400);
-
-  --skeleton-base:      var(--gray-800);
-  --skeleton-highlight: var(--gray-700);
-
-  --scrim: rgba(0, 0, 0, 0.6);
-}
-
-/* -----------------------------------------------------------------------------
- * 3) @theme inline — Semantic 토큰을 Tailwind v4 유틸로 노출
- *    예) bg-bg, bg-surface, text-fg, text-muted, border-border,
- *        bg-primary, text-success, rounded-card, shadow-card, text-score ...
- *    inline 이라 다크모드 var 변경이 유틸에 자동 반영됨.
- * -------------------------------------------------------------------------- */
 @theme inline {
-  /* --- Colors --- */
-  --color-bg:               var(--bg);
-  --color-surface:          var(--surface);
-  --color-surface-elevated: var(--surface-elevated);
-  --color-surface-sunken:   var(--surface-sunken);
+  /* ── shadcn 표준 색 유틸 ── */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
 
-  --color-fg:        var(--text);
-  --color-muted:     var(--text-muted);
-  --color-subtle:    var(--text-subtle);
-  --color-on-brand:  var(--text-on-brand);
-
-  --color-border:        var(--border);
-  --color-border-strong: var(--border-strong);
-
-  --color-primary:        var(--primary);
-  --color-primary-hover:  var(--primary-hover);
-  --color-primary-active: var(--primary-active);
-  --color-primary-fg:     var(--primary-fg);
+  /* ── 확장 시맨틱(지표 상태) ── */
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
   --color-primary-subtle: var(--primary-subtle);
-
-  --color-success:        var(--success);
-  --color-success-fg:     var(--success-fg);
   --color-success-subtle: var(--success-subtle);
-
-  --color-warning:        var(--warning);
-  --color-warning-fg:     var(--warning-fg);
   --color-warning-subtle: var(--warning-subtle);
+  --color-destructive-subtle: var(--destructive-subtle);
+  --color-kakao: var(--kakao);
+  --color-kakao-foreground: var(--kakao-foreground);
 
-  --color-danger:         var(--danger);
-  --color-danger-fg:      var(--danger-fg);
-  --color-danger-subtle:  var(--danger-subtle);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
 
-  --color-info:           var(--info);
-  --color-info-fg:        var(--info-fg);
-  --color-info-subtle:    var(--info-subtle);
-
-  --color-focus:   var(--focus-ring);
-  --color-kakao:   var(--kakao-bg);
-  --color-kakao-fg: var(--kakao-fg);
-
-  --color-skeleton-base:      var(--skeleton-base);
+  --color-skeleton-base: var(--skeleton-base);
   --color-skeleton-highlight: var(--skeleton-highlight);
 
-  /* --- Typography (모바일 퍼스트 스케일) --- */
+  /* ── 반경(shadcn 파생 + 자체) ── */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-card: var(--radius);
+  --radius-2xl: calc(var(--radius) + 10px);
+  --radius-full: 9999px;
+
+  /* ── 폰트 ── */
   --font-sans: "Pretendard Variable", "Pretendard", "Apple SD Gothic Neo",
                -apple-system, BlinkMacSystemFont, system-ui, "Noto Sans KR",
                "Malgun Gothic", sans-serif;
   --font-mono: ui-monospace, "SFMono-Regular", "Roboto Mono", monospace;
+  --font-emoji: "Tossface", "Apple Color Emoji", "Segoe UI Emoji",
+                "Noto Color Emoji", sans-serif;
 
-  --text-score:   3.5rem;   /* 56px — SLA 메인 점수 */
+  /* ── 타이포 스케일(고가독 위계, 캐리오버) ── */
+  --text-score:   3.5rem;
   --text-score--line-height: 1;
   --text-score--letter-spacing: -0.02em;
   --text-score--font-weight: 700;
 
-  --text-display: 2.25rem;  /* 36px */
+  --text-display: 2.25rem;
   --text-display--line-height: 1.1;
   --text-display--letter-spacing: -0.02em;
 
-  --text-h1: 1.75rem;       /* 28px */
+  --text-h1: 1.75rem;
   --text-h1--line-height: 1.25;
   --text-h1--letter-spacing: -0.01em;
   --text-h1--font-weight: 700;
 
-  --text-h2: 1.375rem;      /* 22px */
+  --text-h2: 1.375rem;
   --text-h2--line-height: 1.3;
   --text-h2--font-weight: 600;
 
-  --text-h3: 1.125rem;      /* 18px */
+  --text-h3: 1.125rem;
   --text-h3--line-height: 1.4;
   --text-h3--font-weight: 600;
 
-  --text-body: 1rem;        /* 16px — 본문 기준(모바일 가독성) */
+  --text-body: 1rem;
   --text-body--line-height: 1.55;
 
-  --text-sm: 0.875rem;      /* 14px */
-  --text-sm--line-height: 1.5;
-
-  --text-caption: 0.75rem;  /* 12px — 라벨/캡션 */
+  --text-caption: 0.75rem;
   --text-caption--line-height: 1.4;
 
-  /* --- Spacing (4px base) --- */
-  --spacing: 0.25rem;       /* Tailwind v4 spacing 단위 = 4px → p-4=16px */
-
-  /* --- Radius --- */
-  --radius-xs:   4px;
-  --radius-sm:   8px;
-  --radius-md:   12px;
-  --radius-lg:   16px;   /* 카드 기본 */
-  --radius-card: 16px;
-  --radius-xl:   20px;
-  --radius-2xl:  24px;   /* 바텀시트 상단 */
-  --radius-full: 9999px;
-
-  /* --- Shadows (soft / mobile) --- */
+  /* ── 그림자(캐리오버, 모바일 소프트) ── */
   --shadow-xs:   0 1px 2px rgba(15, 23, 42, 0.06);
   --shadow-card: 0 1px 3px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
   --shadow-md:   0 4px 12px rgba(15, 23, 42, 0.10);
   --shadow-lg:   0 12px 28px rgba(15, 23, 42, 0.14);
   --shadow-focus: 0 0 0 3px var(--primary-subtle);
 
-  /* --- Motion (200–300ms microinteraction) --- */
+  /* ── 모션 이징(캐리오버) ── */
   --ease-standard:   cubic-bezier(0.2, 0, 0, 1);
   --ease-emphasized: cubic-bezier(0.3, 0, 0, 1);
   --ease-out:        cubic-bezier(0, 0, 0.2, 1);
 
-  /* --- Layout / container --- */
-  --container-app: 480px;   /* 라이더 앱 최대 폭 — 큰 화면에서도 폰 너비 유지 */
-}
+  /* ── 레이아웃 ── */
+  --container-app: 480px;
+  --spacing: 0.25rem;
 
-/* -----------------------------------------------------------------------------
- * 4) 비-유틸 토큰 (직접 var() 참조용) — @theme 밖
- * -------------------------------------------------------------------------- */
-:root {
-  /* Durations */
-  --dur-fast: 150ms;
-  --dur-base: 200ms;
-  --dur-slow: 300ms;
-
-  /* Touch target (a11y 최소 44px) */
-  --touch-min: 44px;
-
-  /* Z-index scale */
-  --z-base:     0;
-  --z-sticky:   100;   /* 상단 기간 탭 sticky */
-  --z-dropdown: 200;
-  --z-overlay:  300;   /* scrim */
-  --z-modal:    400;   /* 바텀시트/모달 */
-  --z-toast:    500;
-
-  /* Overlay scrim (direct use) */
-  --color-scrim: var(--scrim);
+  /* ─────────────────────────────────────────────────────────────────────
+   * legacy 별칭 — 마이그레이션 중 기존 유틸 유지(완료 후 정리).
+   * NOTE: text-muted 는 shadcn --color-muted(배경)와 충돌 → 컴포넌트에서
+   *       text-muted-foreground 로 직접 교체(별칭 불가).
+   * ─────────────────────────────────────────────────────────────────── */
+  --color-bg: var(--background);
+  --color-surface: var(--card);
+  --color-surface-elevated: var(--popover);
+  --color-surface-sunken: var(--muted);
+  --color-fg: var(--foreground);
+  --color-subtle: var(--muted-foreground);
+  --color-on-brand: var(--primary-foreground);
+  --color-border-strong: var(--border);
+  --color-primary-fg: var(--primary-foreground);
+  --color-success-fg: var(--success-foreground);
+  --color-warning-fg: var(--warning-foreground);
+  --color-danger: var(--destructive);
+  --color-danger-fg: var(--destructive-foreground);
+  --color-danger-subtle: var(--destructive-subtle);
+  --color-info: var(--chart-2);
+  --color-info-subtle: var(--primary-subtle);
+  --color-focus: var(--ring);
+  --color-kakao-fg: var(--kakao-foreground);
 }

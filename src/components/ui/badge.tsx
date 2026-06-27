@@ -1,36 +1,39 @@
 import type { ReactNode } from "react";
-import { cn } from "@/lib/cn";
+import { cva, type VariantProps } from "class-variance-authority";
+import { cn } from "@/lib/utils";
 
-// 01-component-library §E. 상태 칩. 색 단독 의존 금지 → 항상 텍스트/아이콘 동반.
+// shadcn(cva) Badge — 05 §5. 상태 칩(success/warning 확장). 색 단독 의존 금지(텍스트/아이콘 동반).
+const badgeVariants = cva(
+  "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold",
+  {
+    variants: {
+      variant: {
+        success: "bg-success-subtle text-success",
+        warning: "bg-warning-subtle text-warning",
+        danger: "bg-destructive-subtle text-destructive",
+        info: "bg-primary-subtle text-primary",
+        neutral: "bg-muted text-muted-foreground",
+      },
+    },
+    defaultVariants: { variant: "neutral" },
+  },
+);
 
-export type BadgeVariant = "success" | "warning" | "danger" | "info" | "neutral";
+export type BadgeVariant = NonNullable<VariantProps<typeof badgeVariants>["variant"]>;
 
-const VARIANTS: Record<BadgeVariant, string> = {
-  success: "bg-success-subtle text-success",
-  warning: "bg-warning-subtle text-warning",
-  danger: "bg-danger-subtle text-danger",
-  info: "bg-info-subtle text-info",
-  neutral: "bg-surface-sunken text-muted",
-};
-
-interface BadgeProps {
-  variant?: BadgeVariant;
+interface BadgeProps extends VariantProps<typeof badgeVariants> {
   icon?: ReactNode;
   children: ReactNode;
   className?: string;
 }
 
-export function Badge({ variant = "neutral", icon, children, className }: BadgeProps) {
+export function Badge({ variant, icon, children, className }: BadgeProps) {
   return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-caption font-semibold",
-        VARIANTS[variant],
-        className,
-      )}
-    >
+    <span className={cn(badgeVariants({ variant }), className)}>
       {icon}
       {children}
     </span>
   );
 }
+
+export { badgeVariants };
