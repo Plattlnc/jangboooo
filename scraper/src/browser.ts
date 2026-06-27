@@ -10,6 +10,20 @@ import type { Config } from './config'
 import type { Logger } from './logger'
 import { serializeError } from './logger'
 
+/**
+ * 스텔스 설정 — 배민 SPA 는 자동화 브라우저(navigator.webdriver/AutomationControlled)를
+ * 감지하면 데이터 API 호출을 silently 차단한다(로그인은 유지, 표만 안 뜸). 아래 3종으로 우회:
+ * launch args + webdriver 숨김 initScript + 실제 Chrome UA/viewport/locale.
+ */
+const STEALTH_UA =
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
+const STEALTH_ARGS = ['--disable-blink-features=AutomationControlled']
+const STEALTH_CONTEXT = {
+  userAgent: STEALTH_UA,
+  viewport: { width: 1440, height: 900 },
+  locale: 'ko-KR',
+} as const
+
 export class BrowserSession {
   private browser: Browser | null = null
   private context: BrowserContext | null = null
@@ -19,14 +33,25 @@ export class BrowserSession {
     private readonly log: Logger,
   ) {}
 
+  /** webdriver 흔적 제거 initScript 를 컨텍스트에 주입. */
+  private async applyStealth(ctx: BrowserContext): Promise<void> {
+    await ctx.addInitScript(() => {
+      Object.defineProperty(navigator, 'webdriver', { get: () => undefined })
+    })
+    ctx.setDefaultTimeout(this.cfg.navTimeoutMs)
+    ctx.setDefaultNavigationTimeout(this.cfg.navTimeoutMs)
+  }
+
   /** 브라우저/컨텍스트 기동. 저장된 storageState 가 있으면 복원. */
   async start(): Promise<void> {
     if (this.browser) return
-    this.browser = await chromium.launch({ headless: this.cfg.headless })
+    this.browser = await chromium.launch({ headless: this.cfg.headless, args: STEALTH_ARGS })
     const storageState = await this.loadStorageState()
-    this.context = await this.browser.newContext(storageState ? { storageState } : {})
-    this.context.setDefaultTimeout(this.cfg.navTimeoutMs)
-    this.context.setDefaultNavigationTimeout(this.cfg.navTimeoutMs)
+    this.context = await this.browser.newContext({
+      ...STEALTH_CONTEXT,
+      ...(storageState ? { storageState } : {}),
+    })
+    await this.applyStealth(this.context)
     this.log.info('브라우저 기동', { headless: this.cfg.headless, restoredSession: Boolean(storageState) })
   }
 
@@ -66,9 +91,8 @@ export class BrowserSession {
     } catch {
       /* 파일 없을 수 있음 — 무시 */
     }
-    this.context = await this.browser.newContext()
-    this.context.setDefaultTimeout(this.cfg.navTimeoutMs)
-    this.context.setDefaultNavigationTimeout(this.cfg.navTimeoutMs)
+    this.context = await this.browser.newContext({ ...STEALTH_CONTEXT })
+    await this.applyStealth(this.context)
     this.log.info('브라우저 컨텍스트 재생성(세션 초기화)')
   }
 

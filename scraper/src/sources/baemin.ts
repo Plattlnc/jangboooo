@@ -5,7 +5,7 @@
  *
  * 계약: docs/api/baemin-source.md. 세션은 scripts/capture-session.ts 로 캡처.
  */
-import type { Page } from 'playwright'
+import type { Page, Request } from 'playwright'
 import type { Config } from '../config'
 import type { Logger } from '../logger'
 import { dateStringInTz } from '../util'
@@ -65,29 +65,62 @@ function historyQuery(pageNum: number, size: number): string {
   }).toString()
 }
 
-/** 한 페이지 네비 + delivery-status 응답 인터셉트. */
-async function fetchPage(page: Page, cfg: Config, pageNum: number, size: number): Promise<DeliveryStatusResponse> {
-  const url = `${baseUrl(cfg)}${HISTORY_PATH}?${historyQuery(pageNum, size)}`
-  const respPromise = page.waitForResponse(
-    (r) => r.url().includes(DELIVERY_STATUS_PATH) && r.request().method() === 'GET',
-    { timeout: cfg.navTimeoutMs },
-  )
-  await page.goto(url, { waitUntil: 'domcontentloaded' })
-  assertSession(page)
+const API_BASE = 'https://api-deliverycenter.baemin.com'
+const API_PATH = '/v4/management/delivery-status'
 
-  let resp
-  try {
-    resp = await respPromise
-  } catch (err) {
-    assertSession(page) // 로드 중 로그인으로 튕겼을 수 있음
-    throw new Error(`delivery-status 응답 대기 실패(page=${pageNum}): ${(err as Error).message}`)
+/**
+ * 데이터 화면을 띄워 SPA 가 발사하는 delivery-status 요청의 헤더(`center-id`+브라우저 헤더)를 캡처.
+ * 직접 fetch 는 `center-id` 헤더가 없으면 BAD_REQUEST 라, SPA 요청 헤더를 그대로 재사용한다.
+ * SPA 가 호출 자체를 안 하면(스텔스 실패/세션 만료) 에러.
+ */
+async function captureApiHeaders(page: Page, cfg: Config): Promise<Record<string, string>> {
+  let headers: Record<string, string> | null = null
+  const handler = (req: Request) => {
+    if (!headers && req.url().includes(DELIVERY_STATUS_PATH) && req.method() === 'GET') {
+      headers = req.headers()
+    }
   }
+  page.on('request', handler)
+  try {
+    await page.goto(`${baseUrl(cfg)}${HISTORY_PATH}`, { waitUntil: 'networkidle' })
+    assertSession(page)
+    for (let i = 0; i < 30 && !headers; i++) await page.waitForTimeout(500)
+  } finally {
+    page.off('request', handler)
+  }
+  if (!headers) {
+    assertSession(page)
+    throw new Error('delivery-status 요청 미발생 — SPA 가 API 미호출(스텔스/세션 점검 필요)')
+  }
+  return headers
+}
 
-  const status = resp.status()
-  if (status === 401 || status === 403) throw new SessionExpiredError(`HTTP ${status}`)
-  if (!resp.ok()) throw new Error(`delivery-status HTTP ${status} (page=${pageNum})`)
-
-  return (await resp.json()) as DeliveryStatusResponse
+/** 캡처한 헤더로 delivery-status API 를 페이지 컨텍스트에서 직접 호출(쿠키 자동 포함). */
+async function fetchPage(
+  page: Page,
+  headers: Record<string, string>,
+  pageNum: number,
+  size: number,
+): Promise<DeliveryStatusResponse> {
+  const url = `${API_BASE}${API_PATH}?${historyQuery(pageNum, size)}`
+  const res = await page.evaluate(
+    async ({ u, h }) => {
+      const r = await fetch(u, { headers: h, credentials: 'include' })
+      let body: unknown = null
+      try {
+        body = await r.json()
+      } catch {
+        /* 비 JSON */
+      }
+      return { status: r.status, body }
+    },
+    { u: url, h: headers },
+  )
+  if (res.status === 401 || res.status === 403) throw new SessionExpiredError(`HTTP ${res.status}`)
+  if (res.status < 200 || res.status >= 300) {
+    throw new Error(`delivery-status HTTP ${res.status} (page=${pageNum})`)
+  }
+  return res.body as DeliveryStatusResponse
 }
 
 /**
@@ -96,23 +129,23 @@ async function fetchPage(page: Page, cfg: Config, pageNum: number, size: number)
  * 세션 만료 시 SessionExpiredError 를 던진다(호출부에서 스킵 처리).
  */
 export async function fetchSlaData(page: Page, cfg: Config, log: Logger): Promise<ScrapeResult> {
+  const headers = await captureApiHeaders(page, cfg)
   const size = cfg.pageSize
-  const first = await fetchPage(page, cfg, 0, size)
+  const first = await fetchPage(page, headers, 0, size)
 
   const rows = [...first.data]
   const total = typeof first.total === 'number' ? first.total : rows.length
   const serverSize = first.size && first.size > 0 ? first.size : size
   log.info('delivery-status 1페이지', { requestedSize: size, serverSize, total, got: rows.length })
 
-  // size 상한으로 한 콜에 다 못 받았으면 페이지 루프 폴백.
+  // size 상한으로 한 콜에 다 못 받았으면 페이지 루프 폴백(직접 API 는 page/size 를 정상 반영).
   if (rows.length < total) {
     const totalPages = first.totalPage && first.totalPage > 0 ? first.totalPage : Math.ceil(total / serverSize)
     log.warn('size 상한 — 페이지 루프 폴백', { serverSize, totalPages })
     for (let p = 1; p < totalPages; p++) {
-      const r = await fetchPage(page, cfg, p, serverSize)
-      // SPA 가 URL 의 page 쿼리를 무시하면 같은 페이지가 반복됨 → 중복 누적 방지 후 중단.
+      const r = await fetchPage(page, headers, p, serverSize)
       if (typeof r.page === 'number' && r.page !== p) {
-        log.warn('URL 페이지네이션 미반영 — 1페이지 데이터로 진행', { expected: p, got: r.page })
+        log.warn('페이지네이션 미반영 — 누적 중단', { expected: p, got: r.page })
         break
       }
       rows.push(...r.data)
