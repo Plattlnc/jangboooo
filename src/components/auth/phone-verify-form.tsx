@@ -143,7 +143,8 @@ export function PhoneVerifyForm({ onVerify }: PhoneVerifyFormProps) {
         loading={verifying}
         onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
         trailing={
-          <span className={expired ? "text-caption text-danger" : "text-caption text-muted tabular-nums"} aria-live="polite">
+          // DESIGN-QA M2: 매초 갱신 카운트다운은 aria-live 제거(SR 가 초마다 읽지 않도록).
+          <span className={expired ? "text-caption text-danger" : "text-caption text-muted tabular-nums"}>
             {expired ? "만료됨" : `${mmss}`}
           </span>
         }

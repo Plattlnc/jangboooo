@@ -52,7 +52,7 @@ export function PeakHourChart({ data }: PeakHourChartProps) {
           }
           className="flex h-36 items-end gap-px"
         >
-          {data.map((bucket) => {
+          {data.map((bucket, i) => {
             const pct = max === 0 ? 0 : Math.round((bucket.completed / max) * 100);
             const isPeak = peak != null && bucket.hour === peak.start;
             const isActive = active === bucket.hour;
@@ -75,14 +75,14 @@ export function PeakHourChart({ data }: PeakHourChartProps) {
                   style={{
                     height: `${Math.max(pct, 2)}%`,
                     transform: mounted ? "scaleY(1)" : "scaleY(0)",
-                    transitionDelay: `${bucket.hour * 25}ms`,
+                    // DESIGN-QA m2: stagger 는 절대시각(hour) 이 아닌 인덱스 기준.
+                    transitionDelay: `${i * 25}ms`,
                   }}
                 />
-                {bucket.hour % 3 === 0 ? (
-                  <span className="text-[10px] leading-none text-subtle">{bucket.hour}</span>
-                ) : (
-                  <span className="text-[10px] leading-none text-transparent">.</span>
-                )}
+                {/* DESIGN-QA m4: 축 라벨 토큰화(text-caption) + 대비(text-muted). */}
+                <span aria-hidden="true" className="text-caption leading-none text-muted tabular-nums">
+                  {bucket.hour % 3 === 0 ? bucket.hour : " "}
+                </span>
               </div>
             );
           })}

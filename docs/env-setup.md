@@ -130,6 +130,20 @@ playwright 를 올릴 때 두 곳을 함께 변경한다.
 - [ ] 대시보드 SLA 조회 RLS(본인 데이터만). 데이터 없으면 스크래퍼 적재 후 재확인
 - [ ] `SUPABASE_SERVICE_ROLE_KEY` 가 클라이언트 번들에 없는지(브라우저 devtools) 확인
 
+## 데모 접근성 (카카오 로그인 미동작 시)
+
+`/dashboard` 가드는 **Supabase env 유무로 자동 분기**된다(`src/middleware.ts`):
+
+| Supabase env | `/dashboard` 가드 | 데이터 | 데모 |
+|--------------|------------------|--------|------|
+| **미설정** | 비활성 (`NextResponse.next()`) | mock 폴백(`_lib/queries.ts`) | **로그인 없이 접근** — 목 데이터로 화면 데모 가능 |
+| **설정** | 활성 — 미인증 시 `/login?next=/dashboard` 리다이렉트 | 실 Supabase | 카카오 로그인 미동작이면 대시보드 **접근 불가**(우회 없음) |
+
+**첫 배포 권장(카카오 미비 시):**
+- ⓐ Supabase env **없이** 먼저 배포 → 로그인 불필요·목 데이터로 UI 데모 → 카카오·DB 준비되면 env 채워 실데이터 자동 전환. (단 env 없으면 SLA 실데이터·본인인증은 동작 안 함.)
+- ⓑ 또는 카카오 로그인 먼저 검증 후 env 포함 배포.
+- 가드 완화(미인증 허용)는 인증 로직 변경 → frontend/backend 영역. 데모용 임시 우회는 별도 합의 필요(devops 임의 변경 안 함).
+
 ## 로컬 개발
 
 - 웹: 루트에서 `.env.local` 사용(Node 20+ `--env-file` 또는 Next 기본 로딩).

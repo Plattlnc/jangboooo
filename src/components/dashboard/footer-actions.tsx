@@ -33,6 +33,7 @@ export function FooterActions() {
         >
           새로고침
         </Button>
+        {/* TODO(m8): 문의/도움 연결 (별도 후속). 현재 placeholder. */}
         <Button variant="ghost" size="md" leftIcon={<Help size={18} />}>
           도움이 필요해요
         </Button>
