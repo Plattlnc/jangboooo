@@ -62,6 +62,22 @@ export const PREV_PERIOD_LABEL: Record<SlaPeriod, string> = {
   month: "지난달",
 };
 
+// QA-002: "이번 {기간}…" 보간 시 라벨에 이미 '이번'이 들어가 '이번 이번 주' 중복 + 조사 오류 발생.
+// → 문장별 주어를 완성형으로 고정(중복 제거 + 받침 조사 처리).
+/** "…은/는 조금 낮지만" 주어(주제격). */
+export const PERIOD_SUBJECT_TOPIC: Record<SlaPeriod, string> = {
+  today: "오늘은",
+  week: "이번 주는",
+  month: "이번 달은",
+};
+
+/** "…엔 조금 낮아요" 시간 부사(처소격). */
+export const PERIOD_SUBJECT_LOCATIVE: Record<SlaPeriod, string> = {
+  today: "오늘은",
+  week: "이번 주엔",
+  month: "이번 달엔",
+};
+
 /** 갱신 시각 → "방금 업데이트됨 / {n}분 전 업데이트" + stale 여부(>3분). */
 export function formatUpdatedAt(
   iso: string | null,
@@ -105,7 +121,7 @@ export function selectMotivation(
     if (left > 0) {
       return {
         tone: "warning",
-        message: `이번 ${PERIOD_LABEL[period]}은 조금 낮지만, 아직 ${left}일 남았어요`,
+        message: `${PERIOD_SUBJECT_TOPIC[period]} 조금 낮지만, 아직 ${left}일 남았어요`,
       };
     }
   }

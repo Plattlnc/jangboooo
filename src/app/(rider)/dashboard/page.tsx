@@ -8,8 +8,10 @@ import { MotivationBanner } from "@/components/dashboard/motivation-banner";
 import { StatGrid } from "@/components/dashboard/stat-grid";
 import { PeakHourChart } from "@/components/dashboard/peak-hour-chart";
 import { FooterActions } from "@/components/dashboard/footer-actions";
+import { Badge } from "@/components/ui/badge";
 import { getDashboardData } from "@/app/(rider)/_lib/queries";
 import { parsePeriod, PERIOD_LABEL, selectMotivation } from "@/app/(rider)/_lib/metrics";
+import { DEMO_MODE } from "@/lib/demo";
 
 interface DashboardPageProps {
   // Next 16: searchParams 는 비동기.
@@ -29,6 +31,12 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
   return (
     <div className="flex flex-col gap-5 pt-4">
+      {/* #13 데모 모드 표시 — 예시 데이터임을 명시. */}
+      {DEMO_MODE ? (
+        <div className="flex justify-center">
+          <Badge variant="info">데모 모드 · 예시 데이터</Badge>
+        </div>
+      ) : null}
       {/* PROVISIONAL: 라이더명은 backend 라이더 프로필 도착 후 연결. 현재 기본값. */}
       <DashboardHeader name="라이더" lastCapturedAt={summary.last_captured_at} />
       <PeriodTabs active={period} />
