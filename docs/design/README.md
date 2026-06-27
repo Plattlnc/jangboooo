@@ -28,10 +28,19 @@
 4. **상태는 빠짐없이.** 모든 인터랙티브/데이터 컴포넌트는 default·hover·active·focus·disabled·loading·error·empty 를 정의한다.
 5. **다크모드 자동.** 토큰이 `prefers-color-scheme` + `[data-theme]` 로 전환 → 컴포넌트는 별도 분기 불필요.
 
+## 브랜드 표기 (서비스명)
+
+- **사용자 노출 서비스명: `배달장부2`** (확정 2026-06-28). 코드네임 `jangboooo` 는 내부/레포용 — UI 노출 금지.
+- 노출 위치(전부 `배달장부2`):
+  - 로그인 S1 로고/워드마크 영역 ([02-screen-login.md](./02-screen-login.md) §S1)
+  - 문서 `<title>` / `metadata.title` (frontend `src/app/layout.tsx` — 스캐폴드 "Create Next App" 교체 필요)
+  - 브라우저 탭 / PWA 앱 이름 / OG 타이틀 (cmo `docs/seo-checklist.md` 와 정합)
+- 로고 비주얼 미확정 → 당분간 워드마크(텍스트) "배달장부2", 타이포 `text-h1`/`text-display` + `text-fg`.
+
 ## 브랜딩 연동 상태
 
-- 색/네이밍/톤의 **브랜드 휴(brand hue)** 는 `tokens.css` 상단 `PROVISIONAL` 블록에 임시값(인디고).
-- cmo 브랜딩 가이드 도착 시 `--brand-50..900` 1개 블록만 교체하면 전 화면 반영됨.
+- 브랜드 휴(brand hue): cmo 브랜딩 §6 반영 완료 — **신뢰 블루**(`--brand-600 #2563eb`). `tokens.css` 의 `--brand-50..900` 1개 블록만 교체하면 전 화면 반영.
+- 무드: **dark-first**(야간/도로 가독), 레드 절제→앰버 우선, 숫자 우선 (00-foundations 반영).
 - Kakao 컬러(`--kakao-bg #fee500`)는 **고정 브랜드 자산** — 변경 금지.
 
 ## 유틸 네이밍 빠른 참조
