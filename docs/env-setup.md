@@ -75,11 +75,11 @@ playwright 를 올릴 때 두 곳을 함께 변경한다.
    - `anon public` → `NEXT_PUBLIC_SUPABASE_ANON_KEY`
    - `service_role` → `SUPABASE_SERVICE_ROLE_KEY` (**비밀** — 서버/워커 전용, 클라이언트 금지)
 
-2. 마이그레이션 — `supabase/migrations/` 3개를 **순서대로** 적용. 순서 의존:
-   `0001_core_schema`(테이블) → `0002_rls`(0001 필요) → `0003_rpc`(0001/0002 필요). 어기면 실패.
+2. 마이그레이션 — `supabase/migrations/` 4개를 **순서대로** 적용. 순서 의존:
+   `0001_core_schema`(테이블) → `0002_rls`(0001 필요) → `0003_rpc`(0001/0002 필요) → `0004_baemin_mapping`(sla_snapshots 에 `peak_*`·`breakdown` 추가 — 스크래퍼 배민 매핑 적재에 필수). 어기면 실패.
 
    **방법 A — SQL Editor (권장, 현재 CLI 미초기화):**
-   Dashboard → SQL Editor → 0001 → 0002 → 0003 파일 내용을 차례로 붙여넣고 RUN.
+   Dashboard → SQL Editor → 0001 → 0002 → 0003 → 0004 파일 내용을 차례로 붙여넣고 RUN.
 
    **방법 B — Supabase CLI:**
    ```bash
@@ -129,7 +129,7 @@ playwright 를 올릴 때 두 곳을 함께 변경한다.
 ## 배포 체크리스트
 
 **사전(키 주입 전):**
-- [ ] Supabase 프로젝트 생성 + 마이그레이션 0001→0002→0003 적용·검증
+- [ ] Supabase 프로젝트 생성 + 마이그레이션 0001→0002→0003→0004 적용·검증
 - [ ] 카카오 개발자 앱: 로그인용(Supabase Provider) + 본인확인용 키/동의항목(phone_number)
 - [ ] Vercel 프로젝트 임포트(Framework=Next.js, Root=루트)
 

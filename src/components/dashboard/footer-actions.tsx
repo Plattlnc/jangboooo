@@ -5,12 +5,14 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Toast, ToastViewport } from "@/components/ui/toast";
 import { Refresh, Help } from "@/components/ui/icons";
+import { signOutRider } from "@/actions/auth";
 
-// 03 §G. 새로고침(전체 리패치) + 도움. 카피 SSOT: docs/copy/dashboard.md §7, microcopy.md.
+// 03 §G. 새로고침(전체 리패치) + 도움 + 로그아웃. 카피 SSOT: docs/copy/dashboard.md §7, microcopy.md.
 export function FooterActions() {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [showToast, setShowToast] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   function refresh() {
     startTransition(() => {
@@ -18,6 +20,15 @@ export function FooterActions() {
     });
     setShowToast(true);
     window.setTimeout(() => setShowToast(false), 3000);
+  }
+
+  async function logout() {
+    setLoggingOut(true);
+    try {
+      await signOutRider();
+    } finally {
+      router.push("/login");
+    }
   }
 
   return (
@@ -36,6 +47,9 @@ export function FooterActions() {
         {/* TODO(m8): 문의/도움 연결 (별도 후속). 현재 placeholder. */}
         <Button variant="ghost" size="md" leftIcon={<Help size={18} />}>
           도움이 필요해요
+        </Button>
+        <Button variant="ghost" size="md" loading={loggingOut} onClick={logout}>
+          로그아웃
         </Button>
       </div>
       {showToast ? (

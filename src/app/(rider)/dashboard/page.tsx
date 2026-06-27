@@ -21,7 +21,7 @@ interface DashboardPageProps {
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
   const { period: rawPeriod } = await searchParams;
   const period = parsePeriod(rawPeriod);
-  const { summary, previous, hourly } = await getDashboardData(period);
+  const { summary, previous, hourly, riderName } = await getDashboardData(period);
 
   const motivation = selectMotivation(
     summary.sla_score,
@@ -37,8 +37,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           <Badge variant="info">데모 모드 · 예시 데이터</Badge>
         </div>
       ) : null}
-      {/* PROVISIONAL: 라이더명은 backend 라이더 프로필 도착 후 연결. 현재 기본값. */}
-      <DashboardHeader name="라이더" lastCapturedAt={summary.last_captured_at} />
+      <DashboardHeader name={riderName ?? "라이더"} lastCapturedAt={summary.last_captured_at} />
       <PeriodTabs active={period} />
       <SlaScore score={summary.sla_score} periodLabel={PERIOD_LABEL[period]} />
       {motivation ? (

@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { LoginFlow } from "@/components/auth/login-flow";
+import { RiderLoginForm } from "@/components/auth/rider-login-form";
 
 export const metadata: Metadata = {
   title: "로그인 · 배달장부2",
 };
 
-// 02 로그인/본인인증. 화면 흐름은 LoginFlow(client)가 담당.
+// #20 로그인: 라이더 ID + 비밀번호(4자리). 카카오/본인인증 흐름 폐기.
 export default function LoginPage() {
-  return <LoginFlow />;
+  return <RiderLoginForm />;
 }
