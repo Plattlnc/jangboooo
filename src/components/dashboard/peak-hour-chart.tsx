@@ -63,7 +63,7 @@ export function PeakHourChart({ data }: PeakHourChartProps) {
             return (
               <div key={bucket.hour} className="flex flex-1 flex-col items-center justify-end gap-1">
                 {isActive ? (
-                  <span className="text-caption tabular-nums text-fg">{bucket.completed}</span>
+                  <span className="text-caption tabular-nums text-foreground">{bucket.completed}</span>
                 ) : null}
                 <button
                   type="button"

@@ -30,7 +30,7 @@ export const Field = forwardRef<HTMLInputElement, FieldProps>(function Field(
 
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor={inputId} className="text-sm font-medium text-fg">
+      <label htmlFor={inputId} className="text-sm font-medium text-foreground">
         {label}
       </label>
       <div className="relative">
@@ -41,12 +41,12 @@ export const Field = forwardRef<HTMLInputElement, FieldProps>(function Field(
           aria-invalid={invalid || undefined}
           aria-describedby={helper || error ? describedById : undefined}
           className={cn(
-            "h-12 w-full rounded-md bg-surface-sunken px-4 text-body text-fg",
+            "h-12 w-full rounded-md bg-muted px-4 text-body text-foreground",
             "border transition-[border-color,box-shadow] duration-150",
-            "placeholder:text-subtle",
+            "placeholder:text-muted-foreground",
             "focus:border-primary focus:shadow-focus focus:outline-none",
             "disabled:opacity-50 disabled:cursor-not-allowed",
-            invalid ? "border-danger" : success ? "border-success" : "border-border",
+            invalid ? "border-destructive" : success ? "border-success" : "border-border",
             Boolean(trailing || loading || success || invalid) && "pr-12",
             className,
           )}
@@ -56,11 +56,11 @@ export const Field = forwardRef<HTMLInputElement, FieldProps>(function Field(
           {trailing}
           {loading ? <Spinner size="sm" /> : null}
           {!loading && success ? <Check className="text-success" size={20} /> : null}
-          {!loading && invalid ? <Alert className="text-danger" size={20} /> : null}
+          {!loading && invalid ? <Alert className="text-destructive" size={20} /> : null}
         </div>
       </div>
       {error ? (
-        <p id={describedById} role="alert" className="text-caption text-danger">
+        <p id={describedById} role="alert" className="text-caption text-destructive">
           {error}
         </p>
       ) : helper ? (

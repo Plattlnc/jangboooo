@@ -35,14 +35,14 @@ export function SegmentedTabs<T extends string>({
       role="tablist"
       aria-label={ariaLabel}
       className={cn(
-        "relative flex w-full rounded-full bg-surface-sunken p-1",
+        "relative flex w-full rounded-full bg-muted p-1",
         className,
       )}
     >
       {/* 슬라이드 인디케이터 */}
       <span
         aria-hidden="true"
-        className="absolute top-1 bottom-1 rounded-full bg-surface shadow-xs transition-transform duration-200 ease-[var(--ease-standard)]"
+        className="absolute top-1 bottom-1 rounded-full bg-card shadow-xs transition-transform duration-200 ease-[var(--ease-standard)]"
         style={{
           width: `calc(${pct}% - 4px)`,
           left: 2,
@@ -60,7 +60,7 @@ export function SegmentedTabs<T extends string>({
             onClick={() => onChange(opt.value)}
             className={cn(
               "relative z-[1] flex-1 touch-target rounded-full px-3 text-sm transition-colors duration-150 active:scale-[.98]",
-              selected ? "text-fg font-semibold" : "text-muted-foreground hover:text-fg",
+              selected ? "text-foreground font-semibold" : "text-muted-foreground hover:text-foreground",
             )}
           >
             {opt.label}

@@ -8,8 +8,8 @@ export type ToastVariant = "success" | "danger" | "info";
 
 const ICON = {
   success: <Check className="text-success" size={20} />,
-  danger: <Alert className="text-danger" size={20} />,
-  info: <Info className="text-info" size={20} />,
+  danger: <Alert className="text-destructive" size={20} />,
+  info: <Info className="text-primary" size={20} />,
 };
 
 interface ToastProps {
@@ -24,13 +24,13 @@ export function Toast({ variant = "info", message, className }: ToastProps) {
       role="status"
       aria-live={variant === "danger" ? "assertive" : "polite"}
       className={cn(
-        "pointer-events-auto flex items-center gap-2 rounded-md bg-surface-elevated px-4 py-3 shadow-lg",
+        "pointer-events-auto flex items-center gap-2 rounded-md bg-popover px-4 py-3 shadow-lg",
         "border border-border",
         className,
       )}
     >
       <span className="shrink-0">{ICON[variant]}</span>
-      <span className="text-sm text-fg">{message}</span>
+      <span className="text-sm text-foreground">{message}</span>
     </div>
   );
 }

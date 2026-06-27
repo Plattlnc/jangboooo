@@ -29,7 +29,7 @@ export function KakaoLoginButton({ onClick, loading, disabled, error }: KakaoLog
         카카오로 시작하기
       </Button>
       {error ? (
-        <p role="alert" className="text-caption text-danger">
+        <p role="alert" className="text-caption text-destructive">
           {error}
         </p>
       ) : null}

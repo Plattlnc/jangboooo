@@ -1,3 +1,4 @@
+@import url("https://cdn.jsdelivr.net/gh/toss/tossface@1.6.1/dist/tossface.css");
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "../styles/tokens.css";
@@ -10,13 +11,9 @@
    (토큰은 tokens.css 의 .dark 블록이 자동 전환. next-themes attribute="class") */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* tossface 이모지 폰트 (05 §4) — 미로딩 시 OS 이모지로 폴백(레이아웃 영향 0).
-   PROVISIONAL: 공식 배포 URL 확정 시 교체. */
-@font-face {
-  font-family: "Tossface";
-  font-display: swap;
-  src: url("https://cdn.jsdelivr.net/gh/toss/tossface/dist/tossface.woff2") format("woff2");
-}
+/* tossface 이모지 폰트 (05 §4) — 공식 분할 서브셋 CSS 를 최상단에서 @import(파일 상단).
+   font-family "Tossface" + unicode-range 로 이모지 코드포인트만 로드(본문 Pretendard 영향 0).
+   미로딩 시 .emoji 의 --font-emoji 폴백 체인으로 OS 이모지 표시. */
 
 /* -----------------------------------------------------------------------------
  * Base layer — 모바일 퍼스트 리셋/기본값
