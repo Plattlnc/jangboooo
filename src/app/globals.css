@@ -1,26 +1,99 @@
 @import "tailwindcss";
+@import "../styles/tokens.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* JS config(content/darkMode 등 툴링 호환) 연결 — Tailwind v4 는 CSS-first 이지만
+   tailwind.config.ts 의 content 글롭/darkMode 전략을 명시적으로 로드한다. */
+@config "../../tailwind.config.ts";
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+/* 속성 기반 다크 변형: data-theme="dark" 하위에서 dark: 유틸 활성화.
+   (토큰 자체는 tokens.css 가 자동 전환하므로 dark: 는 예외 케이스 보정용) */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* -----------------------------------------------------------------------------
+ * Base layer — 모바일 퍼스트 리셋/기본값
+ * -------------------------------------------------------------------------- */
+@layer base {
+  html {
+    /* iOS 줌/탭 하이라이트/스크롤 보정 */
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: var(--text-body);
+    line-height: 1.55;
+    /* 노치/홈 인디케이터 safe-area */
+    padding: env(safe-area-inset-top) env(safe-area-inset-right)
+             env(safe-area-inset-bottom) env(safe-area-inset-left);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* 숫자 지표(SLA 점수/카운트)는 tabular 정렬로 떨림 방지 */
+  .tabular-nums,
+  [data-numeric] {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+  }
+
+  /* 포커스 가시성 (a11y) — 키보드 탐색 시에만 링 표시 */
+  :focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* 모션 민감 사용자 보호 */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* -----------------------------------------------------------------------------
+ * Utilities — 자주 쓰는 패턴 헬퍼
+ * -------------------------------------------------------------------------- */
+@layer utilities {
+  /* 앱 컨테이너: 큰 화면에서도 폰 너비(480px) 유지, 가운데 정렬 */
+  .app-container {
+    width: 100%;
+    max-width: var(--container-app);
+    margin-inline: auto;
+  }
+
+  /* 최소 터치 영역 보장 (44x44) */
+  .touch-target {
+    min-width: var(--touch-min);
+    min-height: var(--touch-min);
+  }
+
+  /* 스켈레톤 시머 (로딩 상태) */
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      var(--skeleton-base) 25%,
+      var(--skeleton-highlight) 37%,
+      var(--skeleton-base) 63%
+    );
+    background-size: 400% 100%;
+    animation: skeleton-shimmer 1.4s ease infinite;
+    border-radius: var(--radius-sm);
+  }
+  @keyframes skeleton-shimmer {
+    0% { background-position: 100% 50%; }
+    100% { background-position: 0 50%; }
+  }
 }
