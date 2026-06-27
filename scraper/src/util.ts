@@ -14,6 +14,35 @@ export function dateStringInTz(timeZone = 'Asia/Seoul', d: Date = new Date()): s
   }).format(d)
 }
 
+/** 주어진 예산(ms) 초과 시 reject. 사이클 시간 상한(다음 틱 스킵)에 사용. */
+export class TimeoutError extends Error {
+  constructor(ms: number, label: string) {
+    super(`타임아웃(${ms}ms) 초과: ${label}`)
+    this.name = 'TimeoutError'
+  }
+}
+
+/**
+ * promise 가 ms 안에 끝나지 않으면 TimeoutError 로 reject.
+ * (in-flight 작업을 강제 취소하진 않지만, navTimeout 으로 개별 동작이 이미
+ *  유한하고 upsert 는 멱등이라 늦게 끝난 작업이 겹쳐도 무해하다.)
+ */
+export function withTimeout<T>(promise: Promise<T>, ms: number, label = 'operation'): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new TimeoutError(ms, label)), ms)
+    promise.then(
+      (v) => {
+        clearTimeout(timer)
+        resolve(v)
+      },
+      (e) => {
+        clearTimeout(timer)
+        reject(e)
+      },
+    )
+  })
+}
+
 /**
  * ms 만큼 대기. signal 이 abort 되면 즉시 resolve(반복 루프 조기 종료용).
  */

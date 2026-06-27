@@ -31,18 +31,27 @@ src/
   sources/grider.ts  ★ 사이트 어댑터(로그인/파서) — 인증 샘플 대기 TODO
 ```
 
-## 골격 모드 (현재 상태)
+## 소스 시스템 (확정)
 
-`ADMIN_PORTAL_URL / ID / PASSWORD` 중 하나라도 비면 **골격 모드**로 동작:
-워커는 정상 기동·상주하되 수집을 스킵하고 그 사실을 로깅한다. 덕분에 자격증명·
-셀렉터 확정 전에도 Railway 배포/상주 동작을 검증할 수 있다.
+`https://jangboo.grider.ai/dashboard` — **PHP 서버렌더 앱**(`/` → 302 → `/index.php`,
+세션쿠키 기반, SPA 아님). 스크래퍼는 Playwright 폼 로그인 → 세션 유지 →
+서버렌더 HTML 테이블 파싱.
 
-채워야 완성되는 부분(인증 샘플 = 실제 URL·로그인 폼·SLA 테이블 마크업 도착 후):
-- `src/sources/grider.ts` 의 `isLoggedIn` / `ensureLoggedIn`(로그인 폼 셀렉터)
-- `src/sources/grider.ts` 의 `fetchSlaData`(테이블/네트워크 응답 → `ScrapeResult` 매핑)
+## 3가지 동작 모드
 
-해당 지점은 `// TODO(auth-sample):` 로 표시되어 있고, 그 전엔 `NotImplementedError`
-를 던져 사이클이 안전하게 스킵된다(재시도하지 않음).
+| 모드 | 조건 | 동작 |
+|------|------|------|
+| **골격** | `ADMIN_PORTAL_*` 미설정 | 상주만, 수집 스킵(로깅). 배포/상주 검증용 |
+| **MOCK** | `SCRAPE_MOCK=true` | grider 미접속, mock 파서 → Supabase 적재 파이프라인 end-to-end 검증(**운영 금지**) |
+| **실수집** | 포털 설정 + 비-mock | 로그인 → 파싱 → 멱등 upsert (셀렉터 채운 뒤 동작) |
+
+채워야 완성되는 부분(**인증 샘플** = 실제 로그인 폼·SLA 테이블 마크업 도착 후, backend 공동):
+- `src/sources/grider.ts` 의 `isLoggedIn` / `ensureLoggedIn`(PHP 로그인 폼 셀렉터)
+- `src/sources/grider.ts` 의 `fetchSlaData`(서버렌더 테이블 → `ScrapeResult` 매핑)
+
+해당 지점은 `// TODO(selector): 인증 샘플 필요` 로 표시되어 있고, 그 전엔
+`NotImplementedError` 를 던져 사이클이 안전하게 스킵된다(재시도하지 않음).
+적재 레이어 검증은 그 사이 `mockScrapeResult()`(MOCK 모드)로 수행한다.
 
 ## 로컬 실행
 

@@ -5,7 +5,7 @@
 import type { Logger } from './logger'
 import { serializeError } from './logger'
 import { withRetry } from './retry'
-import { delay } from './util'
+import { delay, withTimeout, TimeoutError } from './util'
 
 export type LoopOptions = {
   intervalSeconds: number
@@ -25,14 +25,23 @@ export async function runLoop(opts: LoopOptions): Promise<void> {
   while (!signal.aborted) {
     const started = Date.now()
     try {
-      await withRetry(opts.cycle, {
-        retries: maxRetries,
-        signal,
-        log,
-        shouldRetry: opts.shouldRetry,
-      })
+      // 한 틱 전체(재시도 포함)를 주기 예산으로 상한. 초과 시 다음 틱으로 스킵.
+      await withTimeout(
+        withRetry(opts.cycle, {
+          retries: maxRetries,
+          signal,
+          log,
+          shouldRetry: opts.shouldRetry,
+        }),
+        periodMs,
+        'scrape-cycle',
+      )
     } catch (err) {
-      log.error('사이클 최종 실패(다음 주기 재시도)', serializeError(err))
+      if (err instanceof TimeoutError) {
+        log.warn('사이클이 주기 예산 초과 — 다음 틱으로 스킵', { budgetMs: periodMs })
+      } else {
+        log.error('사이클 최종 실패(다음 주기 재시도)', serializeError(err))
+      }
     }
 
     if (signal.aborted) break

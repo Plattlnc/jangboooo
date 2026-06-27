@@ -30,16 +30,20 @@ async function main(): Promise<void> {
     runOnce: cfg.runOnce,
     intervalSeconds: cfg.intervalSeconds,
     portalConfigured: cfg.portal.configured,
+    mock: cfg.mock,
     timezone: cfg.timezone,
   })
-  if (!cfg.portal.configured) {
+  if (cfg.mock) {
+    log.warn('MOCK 모드 활성 — 운영 금지. grider 미접속, 가짜 데이터로 적재 파이프라인만 검증.')
+  } else if (!cfg.portal.configured) {
     log.warn('ADMIN_PORTAL_* 미설정 → 골격 모드(수집 스킵). 인증 샘플 도착 후 자격증명/셀렉터 채울 것.')
   }
 
   const db = createDb(cfg)
   const session = new BrowserSession(cfg, log)
-  // 골격 모드(포털 미설정)에선 브라우저를 띄우지 않는다 — 가볍게 상주만.
-  if (cfg.portal.configured) {
+  // 실제 수집(포털 설정 + 비-mock)일 때만 브라우저 기동. 그 외엔 가볍게 상주.
+  const needsBrowser = cfg.portal.configured && !cfg.mock
+  if (needsBrowser) {
     await session.start()
   }
 

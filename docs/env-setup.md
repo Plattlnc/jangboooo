@@ -21,15 +21,16 @@ jangboooo 는 두 런타임으로 나뉜다.
 | `SUPABASE_SERVICE_ROLE_KEY` | ✅² | ✅ | RLS 우회. 서버/워커 전용 |
 | `KAKAO_REST_API_KEY` / `KAKAO_CLIENT_SECRET` | ✅ | — | 카카오 간편로그인 |
 | `KAKAO_IDENTITY_*` / `IDENTITY_VERIFY_*` | ✅ | — | 휴대폰 본인인증 |
-| `ADMIN_PORTAL_URL` | — | ✅ | grider 포털 URL (**미확정**) |
-| `ADMIN_PORTAL_ID` / `ADMIN_PORTAL_PASSWORD` | — | ✅ | grider 관리자 계정 (**미확정**) |
-| `SCRAPE_INTERVAL_SECONDS` | — | ✅(기본 60) | 수집 주기(초) |
+| `ADMIN_PORTAL_URL` | — | ✅ | grider 포털 URL (확정: `https://jangboo.grider.ai/dashboard`) |
+| `ADMIN_PORTAL_ID` / `ADMIN_PORTAL_PASSWORD` | — | ✅ | grider 관리자 계정 (**미확정** — 인증 샘플 대기) |
+| `SCRAPE_INTERVAL_SECONDS` | — | ✅(기본 60) | 수집 주기(초) = 한 틱 시간 예산 |
 | `SCRAPE_TIMEZONE` | — | ✅(기본 Asia/Seoul) | 영업일(`snapshot_date`) 판정 TZ |
 | `SCRAPE_MAX_RETRIES` | — | ✅(기본 3) | 사이클 재시도 횟수 |
 | `SCRAPE_NAV_TIMEOUT_MS` | — | ✅(기본 30000) | Playwright 타임아웃(ms) |
 | `HEADLESS` | — | ✅(기본 true) | 헤드리스 여부 |
 | `STORAGE_STATE_PATH` | — | ✅(기본 `./.session/...`) | 로그인 세션 영속 경로 |
 | `LOG_LEVEL` | — | ✅(기본 info) | debug/info/warn/error |
+| `SCRAPE_MOCK` | — | ✅(기본 false) | **운영 금지**. true 면 grider 미접속·mock 적재로 파이프라인 검증 |
 
 ¹ 워커는 `SUPABASE_URL` 우선, 없으면 `NEXT_PUBLIC_SUPABASE_URL` 사용.
 ² 웹은 서버 액션/라우트에서만 사용(클라이언트 번들 노출 금지).
@@ -43,8 +44,10 @@ jangboooo 는 두 런타임으로 나뉜다.
    - `scraper/railway.json` 이 `DOCKERFILE` 빌더 + `scraper/Dockerfile` 을 지정한다.
 3. **Variables** 탭에 위 매트릭스의 워커 컬럼(✅) 값을 입력.
    - 자격증명(`ADMIN_PORTAL_*`) 미입력 시 **골격 모드**로 상주(수집 스킵) — 배포·기동 검증 가능.
+   - 적재 파이프라인을 실데이터 없이 점검하려면 일시적으로 `SCRAPE_MOCK=true`(검증 후 제거, 운영 금지).
 4. 배포 후 **Logs** 에서 JSON 로그 확인:
    - 정상: `"워커 시작"` → (골격 모드면) `"골격 모드 — ADMIN_PORTAL_* 미설정..."`.
+   - MOCK: `"MOCK 모드 ..."` → `"사이클 완료" {riders:2, snapshots:2, hourly:4}`.
    - 자격증명 채운 뒤: `"로그인 시도"` → `"사이클 완료" {riders, snapshots, hourly}`.
 
 ### Dockerfile/Playwright 버전 동기화
