@@ -36,6 +36,8 @@ const EnvSchema = z.object({
   HEADLESS: boolish.default(true),
   STORAGE_STATE_PATH: z.string().min(1).default('./.session/storage-state.json'),
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
+  // 운영 금지. true 면 grider 미접속·mock 파서로 적재 파이프라인만 검증.
+  SCRAPE_MOCK: boolish.default(false),
 })
 
 export type Config = {
@@ -55,6 +57,7 @@ export type Config = {
   storageStatePath: string
   logLevel: LogLevel
   runOnce: boolean
+  mock: boolean
 }
 
 /** process.argv 에 --once 가 있으면 1회 실행 후 종료. */
@@ -97,5 +100,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env, argv: readonly 
     storageStatePath: e.STORAGE_STATE_PATH,
     logLevel: e.LOG_LEVEL,
     runOnce: hasOnceFlag(argv),
+    mock: e.SCRAPE_MOCK,
   }
 }
