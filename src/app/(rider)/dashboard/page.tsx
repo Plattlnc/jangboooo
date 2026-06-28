@@ -8,6 +8,7 @@ import { StatCards } from "@/components/dashboard/stat-cards";
 import { PeakCard } from "@/components/dashboard/peak-card";
 import { GoalCard } from "@/components/dashboard/goal-card";
 import { RefreshButton } from "@/components/dashboard/refresh-button";
+import { EmergencyAccidentButton } from "@/components/dashboard/emergency-accident-button";
 import { Badge } from "@/components/ui/badge";
 import { getDashboardData } from "@/app/(rider)/_lib/queries";
 import {
@@ -55,6 +56,13 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       <StatCards completed={summary.completed} rejected={summary.rejected} canceled={canceled} />
       <PeakCard buckets={buckets} />
       <GoalCard goals={centerGoals} />
+      <EmergencyAccidentButton
+        riderId={summary.admin_rider_id ?? "DEMO-001"}
+        riderName={riderName ?? "라이더"}
+        riderPhone="010-1234-5678"
+        vehiclePlate="12가3456"
+        insurerCode="db"
+      />
       <RefreshButton />
     </div>
   );
