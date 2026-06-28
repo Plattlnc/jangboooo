@@ -100,6 +100,15 @@ async function main(): Promise<void> {
         cycle,
         // 세션 만료는 재시도 무의미(무인 복구 불가) → 즉시 다음 주기로.
         shouldRetry: (err) => !isSessionExpired(err),
+        // 브라우저 크래시/disconnect 복구: 실수집 모드일 때만 사이클 전 재기동 보장.
+        ensureHealthy: needsBrowser ? () => session.ensureStarted() : undefined,
+        // 자가치유: N회 연속 실패 시 브라우저 정리 후 exit(1) → Railway 재시작 정책이 회복.
+        maxConsecutiveFailures: cfg.maxConsecutiveFailures,
+        onFatal: async (failures) => {
+          log.error('연속 실패로 워커 종료(exit 1) — 컨테이너 재시작 기대', { failures })
+          await session.close().catch(() => {})
+          process.exit(1)
+        },
       })
     }
   } finally {

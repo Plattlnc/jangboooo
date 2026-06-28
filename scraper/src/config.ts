@@ -34,6 +34,9 @@ const EnvSchema = z.object({
   SCRAPE_INTERVAL_SECONDS: z.coerce.number().int().positive().default(60),
   SCRAPE_TIMEZONE: z.string().min(1).default('Asia/Seoul'),
   SCRAPE_MAX_RETRIES: z.coerce.number().int().min(0).default(3),
+  // 자가치유: 같은 사이클이 N회 연속 실패하면 process.exit(1) → Railway 재시작 정책이
+  // 새 컨테이너로 회복(브라우저/세션 등 누적 손상 상태를 깨끗이 리셋). 0 이면 비활성.
+  SCRAPE_MAX_CONSECUTIVE_FAILURES: z.coerce.number().int().min(0).default(5),
   SCRAPE_NAV_TIMEOUT_MS: z.coerce.number().int().positive().default(30_000),
   // delivery-status 한 콜에 받을 행 수. size 크게 주면 1콜로 전체(서버 상한 시 페이지 루프).
   SCRAPE_PAGE_SIZE: z.coerce.number().int().positive().default(200),
@@ -57,6 +60,8 @@ export type Config = {
   intervalSeconds: number
   timezone: string
   maxRetries: number
+  /** 연속 실패 임계치. 도달 시 워커가 exit(1)로 자가치유(0=비활성). */
+  maxConsecutiveFailures: number
   navTimeoutMs: number
   pageSize: number
   headless: boolean
@@ -98,6 +103,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env, argv: readonly 
     intervalSeconds: e.SCRAPE_INTERVAL_SECONDS,
     timezone: e.SCRAPE_TIMEZONE,
     maxRetries: e.SCRAPE_MAX_RETRIES,
+    maxConsecutiveFailures: e.SCRAPE_MAX_CONSECUTIVE_FAILURES,
     navTimeoutMs: e.SCRAPE_NAV_TIMEOUT_MS,
     pageSize: e.SCRAPE_PAGE_SIZE,
     headless: e.HEADLESS,
