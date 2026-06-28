@@ -1,16 +1,23 @@
-// 대시보드 (03-screen-dashboard). 데이터는 _lib/queries 목 스텁.
-// PROVISIONAL: backend fetch 레이어 도착 시 getDashboardData 만 교체.
+// 대시보드 (06-dashboard-redesign / Figma "Project newcar"). 데이터는 _lib/queries.
+// 메인 지표 = 수락률 원형 게이지(SLA 점수 폐기). backend 헤드라인 = acceptance_rate.
 
-import { DashboardHeader } from "@/components/dashboard/dashboard-header";
+import { GreetingBlock } from "@/components/dashboard/greeting-block";
 import { PeriodTabs } from "@/components/dashboard/period-tabs";
-import { SlaScore } from "@/components/dashboard/sla-score";
-import { MotivationBanner } from "@/components/dashboard/motivation-banner";
-import { StatGrid } from "@/components/dashboard/stat-grid";
-import { PeakHourChart } from "@/components/dashboard/peak-hour-chart";
-import { FooterActions } from "@/components/dashboard/footer-actions";
+import { AcceptanceGauge } from "@/components/dashboard/acceptance-gauge";
+import { StatCards } from "@/components/dashboard/stat-cards";
+import { PeakCard } from "@/components/dashboard/peak-card";
+import { RefreshButton } from "@/components/dashboard/refresh-button";
 import { Badge } from "@/components/ui/badge";
 import { getDashboardData } from "@/app/(rider)/_lib/queries";
-import { parsePeriod, PERIOD_LABEL, selectMotivation } from "@/app/(rider)/_lib/metrics";
+import {
+  parsePeriod,
+  GAUGE_LABEL,
+  gaugeNote,
+  aggregatePeakBuckets,
+  formatDashboardDate,
+  formatUpdatedAt,
+  liveStatus,
+} from "@/app/(rider)/_lib/metrics";
 import { DEMO_MODE } from "@/lib/demo";
 
 interface DashboardPageProps {
@@ -21,31 +28,32 @@ interface DashboardPageProps {
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
   const { period: rawPeriod } = await searchParams;
   const period = parsePeriod(rawPeriod);
-  const { summary, previous, hourly, riderName } = await getDashboardData(period);
+  const { summary, hourly, riderName } = await getDashboardData(period);
 
-  const motivation = selectMotivation(
-    summary.sla_score,
-    previous?.sla_score ?? null,
-    period,
-  );
+  const dateText = formatDashboardDate(new Date());
+  const live = liveStatus(formatUpdatedAt(summary.last_captured_at).stale);
+  const canceled = summary.dispatch_canceled + summary.delivery_canceled;
+  const buckets = aggregatePeakBuckets(hourly);
 
   return (
-    <div className="flex flex-col gap-5 pt-4">
-      {/* #13 데모 모드 표시 — 예시 데이터임을 명시. */}
+    <div className="flex flex-col gap-5">
+      <GreetingBlock name={riderName ?? "라이더"} dateText={dateText} live={live} />
+      <PeriodTabs active={period} />
+
       {DEMO_MODE ? (
         <div className="flex justify-center">
           <Badge variant="info">데모 모드 · 예시 데이터</Badge>
         </div>
       ) : null}
-      <DashboardHeader name={riderName ?? "라이더"} lastCapturedAt={summary.last_captured_at} />
-      <PeriodTabs active={period} />
-      <SlaScore score={summary.sla_score} periodLabel={PERIOD_LABEL[period]} />
-      {motivation ? (
-        <MotivationBanner tone={motivation.tone} message={motivation.message} />
-      ) : null}
-      <StatGrid summary={summary} previous={previous} period={period} />
-      <PeakHourChart data={hourly} />
-      <FooterActions />
+
+      <AcceptanceGauge
+        rate={summary.acceptance_rate}
+        label={GAUGE_LABEL[period]}
+        note={gaugeNote(summary.acceptance_rate, period)}
+      />
+      <StatCards completed={summary.completed} rejected={summary.rejected} canceled={canceled} />
+      <PeakCard buckets={buckets} />
+      <RefreshButton />
     </div>
   );
 }

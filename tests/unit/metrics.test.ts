@@ -1,61 +1,80 @@
 import { describe, it, expect } from "vitest";
 import {
-  slaGrade,
-  acceptanceStatus,
-  deltaTone,
+  parsePeriod,
+  isSlaPeriod,
+  gaugeBand,
+  gaugeNote,
+  aggregatePeakBuckets,
   formatUpdatedAt,
-  daysLeftInPeriod,
-  selectMotivation,
-  peakWindow,
+  liveStatus,
+  formatDashboardDate,
   PERIOD_LABEL,
-  PREV_PERIOD_LABEL,
+  GAUGE_LABEL,
 } from "@/app/(rider)/_lib/metrics";
 
-// 지표 → 상태색/등급/델타 변환 로직. 임계값과 색 방향이 SSOT(03 §E)와 일치하는지 고정.
+// 대시보드 개편(06) 지표 변환. SLA 점수 제거 → 수락률 게이지/피크 버킷/날짜 표기 SSOT 고정.
 
-describe("slaGrade — 등급/색 임계값 (≥90 우수 / 70–89 주의 / <70 위험)", () => {
-  it("경계값: 90은 우수, 89는 주의, 70은 주의, 69는 위험", () => {
-    expect(slaGrade(90)).toEqual({ label: "우수", status: "success" });
-    expect(slaGrade(89)).toEqual({ label: "주의", status: "warning" });
-    expect(slaGrade(70)).toEqual({ label: "주의", status: "warning" });
-    expect(slaGrade(69)).toEqual({ label: "위험", status: "danger" });
+describe("parsePeriod / isSlaPeriod", () => {
+  it("유효 값은 통과, 그 외/배열/undefined 는 today 로 정규화", () => {
+    expect(parsePeriod("week")).toBe("week");
+    expect(parsePeriod(["month"])).toBe("month");
+    expect(parsePeriod("bogus")).toBe("today");
+    expect(parsePeriod(undefined)).toBe("today");
   });
-
-  it("해피/극단: 100 우수, 0 위험", () => {
-    expect(slaGrade(100).status).toBe("success");
-    expect(slaGrade(0).status).toBe("danger");
-  });
-});
-
-describe("acceptanceStatus — 수락률 임계값 (0~100%, ≥95 우수 / 85–94 주의 / <85 위험)", () => {
-  // 단위는 backend 계약(sla-api.md §4/§6)과 동일한 0~100 퍼센트.
-  it("경계값: 95 success / 94 warning / 85 warning / 84 danger", () => {
-    expect(acceptanceStatus(95)).toBe("success");
-    expect(acceptanceStatus(94)).toBe("warning");
-    expect(acceptanceStatus(85)).toBe("warning");
-    expect(acceptanceStatus(84)).toBe("danger");
-  });
-
-  it("극단: 100 success, 0 danger", () => {
-    expect(acceptanceStatus(100)).toBe("success");
-    expect(acceptanceStatus(0)).toBe("danger");
+  it("isSlaPeriod 타입가드", () => {
+    expect(isSlaPeriod("today")).toBe(true);
+    expect(isSlaPeriod("year")).toBe(false);
+    expect(isSlaPeriod(3)).toBe(false);
   });
 });
 
-describe("deltaTone — 델타 색 방향 (화살표=실제증감, 색=의미)", () => {
-  it("0 은 항상 neutral", () => {
-    expect(deltaTone(0, "up")).toBe("neutral");
-    expect(deltaTone(0, "down")).toBe("neutral");
+describe("gaugeBand — 수락률 밴드 (≥80 high / 40–79 mid / 0–39 low)", () => {
+  it("경계값", () => {
+    expect(gaugeBand(80)).toBe("high");
+    expect(gaugeBand(79)).toBe("mid");
+    expect(gaugeBand(40)).toBe("mid");
+    expect(gaugeBand(39)).toBe("low");
+  });
+  it("극단: 100 high, 0 low", () => {
+    expect(gaugeBand(100)).toBe("high");
+    expect(gaugeBand(0)).toBe("low");
+  });
+});
+
+describe("gaugeNote — 게이지 보조 문구 (조건부)", () => {
+  it("≥90 칭찬 / 70–89 생략(null) / <70 기간별 안내 / null 입력 null", () => {
+    expect(gaugeNote(95, "today")).toBe("콜을 잘 잡고 있어요");
+    expect(gaugeNote(85, "today")).toBeNull();
+    expect(gaugeNote(60, "week")).toBe("이번 주엔 조금 낮아요");
+    expect(gaugeNote(60, "today")).toBe("오늘엔 조금 낮아요");
+    expect(gaugeNote(null, "today")).toBeNull();
+  });
+});
+
+describe("aggregatePeakBuckets — 0~23시 → 4버킷 합계", () => {
+  it("고정 순서/라벨로 4버킷 반환", () => {
+    const buckets = aggregatePeakBuckets([]);
+    expect(buckets.map((b) => b.key)).toEqual(["morning", "afternoon", "evening", "midnight"]);
+    expect(buckets.map((b) => b.label)).toEqual([
+      "아침·점심 피크",
+      "오후 비피크",
+      "저녁 피크",
+      "심야 비피크",
+    ]);
+    expect(buckets.every((b) => b.count === 0)).toBe(true);
   });
 
-  it("긍정지표(good=up): 증가=success, 감소=warning", () => {
-    expect(deltaTone(5, "up")).toBe("success");
-    expect(deltaTone(-5, "up")).toBe("warning");
-  });
-
-  it("부정지표(good=down): 감소=success, 증가=warning", () => {
-    expect(deltaTone(-3, "down")).toBe("success");
-    expect(deltaTone(3, "down")).toBe("warning");
+  it("시간대별 완료가 해당 버킷에 합산", () => {
+    const buckets = aggregatePeakBuckets([
+      { hour: 8, completed: 2 },
+      { hour: 12, completed: 3 }, // morning
+      { hour: 15, completed: 4 }, // afternoon
+      { hour: 19, completed: 5 }, // evening
+      { hour: 2, completed: 1 }, // midnight
+      { hour: 23, completed: 6 }, // midnight
+    ]);
+    const byKey = Object.fromEntries(buckets.map((b) => [b.key, b.count]));
+    expect(byKey).toEqual({ morning: 5, afternoon: 4, evening: 5, midnight: 7 });
   });
 });
 
@@ -63,7 +82,6 @@ describe("formatUpdatedAt — 신선도 표기 + stale(>3분)", () => {
   it("null 이면 정보 없음 + stale", () => {
     expect(formatUpdatedAt(null)).toEqual({ text: "업데이트 정보 없음", stale: true });
   });
-
   it("0분 이하면 '방금', not stale", () => {
     const now = Date.parse("2026-06-28T09:00:00Z");
     expect(formatUpdatedAt("2026-06-28T09:00:30Z", now)).toEqual({
@@ -71,107 +89,38 @@ describe("formatUpdatedAt — 신선도 표기 + stale(>3분)", () => {
       stale: false,
     });
   });
-
   it("경계: 3분 전은 not stale, 4분 전은 stale", () => {
     const now = Date.parse("2026-06-28T09:00:00Z");
-    expect(formatUpdatedAt("2026-06-28T08:57:00Z", now)).toEqual({
-      text: "3분 전 업데이트",
-      stale: false,
-    });
-    expect(formatUpdatedAt("2026-06-28T08:56:00Z", now)).toEqual({
-      text: "4분 전 업데이트",
-      stale: true,
-    });
+    expect(formatUpdatedAt("2026-06-28T08:57:00Z", now).stale).toBe(false);
+    expect(formatUpdatedAt("2026-06-28T08:56:00Z", now).stale).toBe(true);
   });
 });
 
-describe("daysLeftInPeriod", () => {
-  it("today 는 항상 0", () => {
-    expect(daysLeftInPeriod("today")).toBe(0);
-  });
-
-  it("week: 월요일이면 6일 남음, 일요일이면 0일", () => {
-    const monday = Date.parse("2026-06-22T12:00:00"); // 2026-06-22 = 월
-    const sunday = Date.parse("2026-06-28T12:00:00"); // 2026-06-28 = 일
-    expect(daysLeftInPeriod("week", monday)).toBe(6);
-    expect(daysLeftInPeriod("week", sunday)).toBe(0);
-  });
-
-  it("month: 6/28 기준 6월(30일)은 2일 남음, 말일이면 0", () => {
-    expect(daysLeftInPeriod("month", Date.parse("2026-06-28T12:00:00"))).toBe(2);
-    expect(daysLeftInPeriod("month", Date.parse("2026-06-30T12:00:00"))).toBe(0);
+describe("liveStatus — 헤더 인디케이터 문구/톤", () => {
+  it("정상(not stale) / 지연(stale)", () => {
+    expect(liveStatus(false)).toEqual({ label: "실시간 업데이트 중", tone: "live" });
+    expect(liveStatus(true)).toEqual({ label: "갱신이 조금 늦어지고 있어요", tone: "muted" });
   });
 });
 
-describe("selectMotivation — 동기부여 배너 선택", () => {
-  const sunday = Date.parse("2026-06-28T12:00:00"); // 일요일 → week 남은일수 0
-  const wednesday = Date.parse("2026-06-24T12:00:00"); // 수요일(월=22) → week 남은일수 4
-
-  it("입력이 null 이면 null", () => {
-    expect(selectMotivation(null, 80, "week", sunday)).toBeNull();
-    expect(selectMotivation(80, null, "week", sunday)).toBeNull();
+describe("formatDashboardDate — YY년 M월 D일 (요일) 오전/오후 h:mm", () => {
+  it("오후 시각(UTC 고정)", () => {
+    const d = new Date("2026-06-28T14:08:00Z"); // 일요일
+    expect(formatDashboardDate(d, "UTC")).toBe("26년 6월 28일 (일) 오후 2:08");
   });
-
-  it("주간 SLA 상승이면 success 배너", () => {
-    const r = selectMotivation(90, 85, "week", wednesday);
-    expect(r?.tone).toBe("success");
-  });
-
-  it("SLA 하락 & 남은 기간 있으면 warning 배너(남은일수 메시지)", () => {
-    const r = selectMotivation(80, 90, "week", wednesday);
-    expect(r?.tone).toBe("warning");
-    expect(r?.message).toContain("4일");
-    // QA-002 수정 반영: 주어 완성형(PERIOD_SUBJECT_TOPIC.week="이번 주는") — 이중 '이번'/조사 오류 해소.
-    expect(r?.message).toContain("이번 주는");
-    expect(r?.message).not.toContain("이번 이번");
-  });
-
-  it("SLA 하락이지만 남은 기간 0이면 null (today / 주말 week)", () => {
-    expect(selectMotivation(80, 90, "today", sunday)).toBeNull();
-    expect(selectMotivation(80, 90, "week", sunday)).toBeNull();
-  });
-
-  it("주간 동률(상승 아님)이고 하락도 아니면 null", () => {
-    expect(selectMotivation(85, 85, "week", wednesday)).toBeNull();
+  it("오전 시각 + 분 2자리", () => {
+    const d = new Date("2026-06-28T01:05:00Z");
+    expect(formatDashboardDate(d, "UTC")).toBe("26년 6월 28일 (일) 오전 1:05");
   });
 });
 
-describe("peakWindow — 피크 1구간 추출", () => {
-  it("빈 배열이면 null", () => {
-    expect(peakWindow([])).toBeNull();
-  });
-
-  it("전부 0이면 null (실적 없음)", () => {
-    const flat = Array.from({ length: 24 }, (_, hour) => ({ hour, completed: 0 }));
-    expect(peakWindow(flat)).toBeNull();
-  });
-
-  it("최댓값 시각을 start, +1시를 end 로 반환", () => {
-    const data = [
-      { hour: 11, completed: 6 },
-      { hour: 18, completed: 11 },
-      { hour: 19, completed: 8 },
-    ];
-    expect(peakWindow(data)).toEqual({ start: 18, end: 19, max: 11 });
-  });
-
-  it("동률이면 먼저 등장한 시각을 선택(strict > )", () => {
-    const data = [
-      { hour: 12, completed: 9 },
-      { hour: 18, completed: 9 },
-    ];
-    expect(peakWindow(data)?.start).toBe(12);
-  });
-
-  it("23시 피크면 end 가 0으로 래핑", () => {
-    const data = [{ hour: 23, completed: 4 }];
-    expect(peakWindow(data)).toEqual({ start: 23, end: 0, max: 4 });
-  });
-});
-
-describe("기간 라벨 상수", () => {
-  it("PERIOD_LABEL / PREV_PERIOD_LABEL 3종 모두 정의", () => {
+describe("라벨 상수", () => {
+  it("PERIOD_LABEL / GAUGE_LABEL 3종 정의", () => {
     expect(PERIOD_LABEL).toEqual({ today: "오늘", week: "이번 주", month: "이번 달" });
-    expect(PREV_PERIOD_LABEL).toEqual({ today: "어제", week: "지난주", month: "지난달" });
+    expect(GAUGE_LABEL).toEqual({
+      today: "오늘 수락률",
+      week: "이번 주 수락률",
+      month: "이번 달 수락률",
+    });
   });
 });

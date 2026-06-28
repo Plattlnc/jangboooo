@@ -236,10 +236,13 @@
   --radius-full: 9999px;
 
   /* ── 폰트 ── */
-  /* "Tossface" 선두 — @font-face unicode-range(이모지 코드포인트만)로 텍스트엔 영향 0. */
-  --font-sans: "Tossface", "Pretendard Variable", "Pretendard", "Apple SD Gothic Neo",
+  /* Pretendard 선두 — 텍스트/숫자/한글은 Pretendard 가 담당. "Tossface" 는 폴백 말미로.
+   * (Tossface @font-face 의 unicode-range 가 U+30-39=숫자 0~9 키캡 코드포인트를 포함 →
+   *  선두에 두면 평범한 숫자까지 Tossface 로 렌더되어 자간이 벌어짐. 이모지는 뒤에서 폴백 처리.) */
+  --font-sans: "Pretendard Variable", "Pretendard", "Apple SD Gothic Neo",
                -apple-system, BlinkMacSystemFont, system-ui, "Noto Sans KR",
-               "Malgun Gothic", sans-serif;
+               "Malgun Gothic", "Tossface", "Apple Color Emoji", "Segoe UI Emoji",
+               "Noto Color Emoji", sans-serif;
   --font-mono: ui-monospace, "SFMono-Regular", "Roboto Mono", monospace;
   --font-emoji: "Tossface", "Apple Color Emoji", "Segoe UI Emoji",
                 "Noto Color Emoji", sans-serif;
