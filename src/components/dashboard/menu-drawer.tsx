@@ -6,17 +6,20 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/cn";
 import { signOutRider } from "@/actions/auth";
 import { NAV_GROUPS } from "@/lib/nav";
-import { MOCK_PROFILE, MOCK_CASH } from "@/lib/mock/profile";
+import { MOCK_CASH } from "@/lib/mock/profile";
+import type { RiderProfile } from "@/app/(rider)/_lib/rider-profile";
 
 // 시안 드로어 — 프로필(인디고 그라데이션) + 그룹 네비(활성표시) + 캐시 카드 + 로그아웃.
 // 라우트 이동은 next/link. 활성 판정은 usePathname. 로그아웃만 서버액션 실동작.
+// 상단 회원정보는 로그인 라이더 정보(profile)로 통일.
 
 interface MenuDrawerProps {
   open: boolean;
   onClose: () => void;
+  profile: RiderProfile;
 }
 
-export function MenuDrawer({ open, onClose }: MenuDrawerProps) {
+export function MenuDrawer({ open, onClose, profile }: MenuDrawerProps) {
   const pathname = usePathname();
 
   // Esc 닫기.
@@ -55,16 +58,11 @@ export function MenuDrawer({ open, onClose }: MenuDrawerProps) {
         <div className="bg-gradient-to-br from-[#4F6AF5] to-[#5d77ff] px-[18px] pb-[18px] pt-[22px] text-white">
           <div className="flex items-center gap-3">
             <div className="grid size-12 place-items-center rounded-[15px] bg-white/20 text-[18px] font-black">
-              {MOCK_PROFILE.initial}
+              {profile.initial}
             </div>
             <div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-[17px] font-black">{MOCK_PROFILE.name}</span>
-                <span className="rounded-full bg-jb-amber px-[7px] py-0.5 text-[10px] font-black text-[#7a5800]">
-                  {MOCK_PROFILE.grade}
-                </span>
-              </div>
-              <div className="tnum mt-0.5 text-xs opacity-90">UID {MOCK_PROFILE.uid}</div>
+              <div className="text-[17px] font-black">{profile.name}</div>
+              <div className="tnum mt-0.5 text-xs opacity-90">UID {profile.uid}</div>
             </div>
           </div>
         </div>
