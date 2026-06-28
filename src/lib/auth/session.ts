@@ -35,7 +35,12 @@ function bytesToB64url(bytes: Uint8Array): string {
   return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
 }
 function b64urlToBytes(s: string): Uint8Array {
-  const b64 = s.replace(/-/g, '+').replace(/_/g, '/') + '=='.slice((s.length + 3) % 4)
+  // 패딩 복원: base64url(무패딩) → 길이를 4의 배수로 맞춘다.
+  // (구버전 `'=='.slice((s.length+3)%4)` 는 len%4===2 일 때 패딩을 1개만 붙여
+  //  atob 가 'Invalid character' throw → verifySessionToken 이 null 반환 →
+  //  미들웨어가 /dashboard 를 조용히 /login 으로 되돌리는 회귀를 유발했다.)
+  const pad = s.length % 4 === 0 ? '' : '='.repeat(4 - (s.length % 4))
+  const b64 = s.replace(/-/g, '+').replace(/_/g, '/') + pad
   const bin = atob(b64)
   const out = new Uint8Array(bin.length)
   for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i)

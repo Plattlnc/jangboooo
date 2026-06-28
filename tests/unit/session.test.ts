@@ -16,6 +16,17 @@ describe("createSessionToken / verifySessionToken", () => {
     await expect(verifySessionToken(token)).resolves.toEqual({ adminRiderId: "R-42" });
   });
 
+  it("라운드트립 회귀: 모든 payload 길이(base64url len%4 전 버킷)에서 복원", async () => {
+    // 과거 b64urlToBytes 패딩 버그는 payload base64url 길이 % 4 === 2 일 때만
+    // atob 가 throw → verify 가 null → 미들웨어가 /dashboard 를 조용히 /login 으로
+    // 되돌렸다(특정 길이의 라이더 ID 만 로그인 불가, 무증상). ID 길이를 넓게 훑어 재발 차단.
+    for (let n = 1; n <= 64; n++) {
+      const rid = "RIDER_" + "X".repeat(n);
+      const token = await createSessionToken(rid);
+      await expect(verifySessionToken(token)).resolves.toEqual({ adminRiderId: rid });
+    }
+  });
+
   it("서명 위조 → null", async () => {
     const token = await createSessionToken("R-1");
     const tampered = token.slice(0, -2) + (token.endsWith("aa") ? "bb" : "aa");
