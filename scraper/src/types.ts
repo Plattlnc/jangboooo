@@ -16,6 +16,20 @@ export type RiderUpsert = {
   phone?: string | null
   region?: string | null
   is_active?: boolean
+  /** 소속 협력사(센터) ID — delivery-status 의 center-id 헤더값(예 DP2504250236). */
+  center_id?: string | null
+}
+
+/** center_peak_goals upsert: 센터 × 영업일 × 피크 공동목표. */
+export type CenterGoalUpsert = {
+  center_id: string
+  center_name?: string | null
+  snapshot_date: string // YYYY-MM-DD
+  peak_key: 'ml' | 'pl' | 'd' | 'pd'
+  current: number | null
+  goal: number | null
+  pct: number | null
+  captured_at?: string
 }
 
 /** sla_snapshots.breakdown jsonb (푸드/비마트/스토어 세부). */

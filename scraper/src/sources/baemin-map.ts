@@ -70,8 +70,14 @@ function toSnapshot(row: DeliveryStatusRow, snapshotDate: string): SlaSnapshotUp
 /**
  * delivery-status 행 배열 → ScrapeResult.
  * snapshotDate 는 호출부가 TZ 영업일로 결정해 주입(계약상 "오늘 누적" 가정).
+ * centerId(있으면) 는 delivery-status 요청의 center-id 헤더값 — riders.center_id 로 스탬프
+ * (공동목표 RPC 가 라이더→센터 해석에 사용).
  */
-export function mapDeliveryStatus(rows: DeliveryStatusRow[], snapshotDate: string): ScrapeResult {
+export function mapDeliveryStatus(
+  rows: DeliveryStatusRow[],
+  snapshotDate: string,
+  centerId?: string | null,
+): ScrapeResult {
   const riders: RiderUpsert[] = []
   const snapshots: SlaSnapshotUpsert[] = []
   const hourly: HourlyStatUpsert[] = []
@@ -84,6 +90,7 @@ export function mapDeliveryStatus(rows: DeliveryStatusRow[], snapshotDate: strin
       name: row.name ?? null,
       phone: row.phoneNumber ?? null,
       is_active: true,
+      ...(centerId ? { center_id: centerId } : {}),
     })
 
     snapshots.push(toSnapshot(row, snapshotDate))

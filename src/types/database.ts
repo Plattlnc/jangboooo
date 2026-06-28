@@ -20,6 +20,8 @@ export type RiderRow = {
   phone_norm: string | null
   region: string | null
   is_active: boolean
+  /** 소속 협력사(센터) ID (0006). 공동목표 RPC 의 라이더→센터 해석에 사용. */
+  center_id: string | null
   created_at: string
   updated_at: string
 }
@@ -113,6 +115,33 @@ export type RiderHourlyRow = {
   completed: number
 }
 
+/** center_peak_goals 행 (0006). */
+export type CenterPeakGoalRow = {
+  id: number
+  center_id: string
+  center_name: string | null
+  snapshot_date: string
+  peak_key: 'ml' | 'pl' | 'd' | 'pd'
+  current: number | null
+  goal: number | null
+  pct: number | null
+  captured_at: string
+}
+
+/** get_center_goals_for RPC 반환 행 (0007). 항상 4행(ml→pl→d→pd 순서). */
+export type CenterGoalRow = {
+  peak_key: 'ml' | 'pl' | 'd' | 'pd'
+  peak_order: number
+  /** 디자인 확정 라벨(아침점심/오후논피크/저녁피크/심야논피크). frontend 가 덮어쓸 수 있음. */
+  label: string
+  current: number | null
+  goal: number | null
+  /** 소스 표기 퍼센트(0~100, 100 상한). 데이터 없으면 null → UI '—'. */
+  pct: number | null
+  snapshot_date: string | null
+  center_id: string | null
+}
+
 // ── Supabase 클라이언트 제네릭용 Database 타입 ─────────────────
 type RpcArgs = { p_period: SlaPeriod; p_ref?: string | null }
 type RpcForArgs = { p_admin_rider_id: string; p_period: SlaPeriod; p_ref?: string | null }
@@ -149,6 +178,13 @@ export type Database = {
         Update: Partial<Omit<RiderHourlyStatsRow, 'id'>>
         Relationships: []
       }
+      center_peak_goals: {
+        Row: CenterPeakGoalRow
+        Insert: Pick<CenterPeakGoalRow, 'center_id' | 'snapshot_date' | 'peak_key'> &
+          Partial<Omit<CenterPeakGoalRow, 'id' | 'center_id' | 'snapshot_date' | 'peak_key'>>
+        Update: Partial<Omit<CenterPeakGoalRow, 'id'>>
+        Relationships: []
+      }
     }
     Views: Empty
     Functions: {
@@ -160,6 +196,11 @@ export type Database = {
       get_rider_summary_for: { Args: RpcForArgs; Returns: RiderSummaryRow[] }
       get_rider_daily_for: { Args: RpcForArgs; Returns: RiderDailyRow[] }
       get_rider_hourly_for: { Args: RpcForArgs; Returns: RiderHourlyRow[] }
+      // 공동목표(달성현황 beta, 0007): 라이더 센터의 4피크. service_role 전용.
+      get_center_goals_for: {
+        Args: { p_admin_rider_id: string; p_ref?: string | null }
+        Returns: CenterGoalRow[]
+      }
       current_admin_rider_id: { Args: Empty; Returns: string | null }
       normalize_phone: { Args: { p_phone: string }; Returns: string | null }
     }
