@@ -8,11 +8,36 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
-import { parseLookerGoals, parseBatchedBody } from '../src/sources/baemin-goals'
+import { parseLookerGoals, parseBatchedBody, isValidCenterGoals } from '../src/sources/baemin-goals'
 import { PEAK_KEYS, PEAK_LABELS } from '../src/sources/baemin-goals-types'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const fixture = readFileSync(join(here, 'fixtures', 'looker-batched-single-center.txt'), 'utf8')
+
+/** 테스트용 단일센터 5컬럼 응답 빌더(피크 셀 문자열 4개). */
+function makeBody(centerLabel: string, cells: [string, string, string, string]): unknown {
+  return {
+    dataResponse: [
+      {
+        dataSubset: [
+          {
+            dataset: {
+              tableDataset: {
+                column: [
+                  { stringColumn: { values: [centerLabel] } },
+                  { stringColumn: { values: [cells[0]] } },
+                  { stringColumn: { values: [cells[1]] } },
+                  { stringColumn: { values: [cells[2]] } },
+                  { stringColumn: { values: [cells[3]] } },
+                ],
+              },
+            },
+          },
+        ],
+      },
+    ],
+  }
+}
 
 test('XSSI 프리픽스 제거 후 JSON 파싱', () => {
   const obj = parseBatchedBody(fixture) as { dataResponse: unknown[] }
@@ -94,4 +119,34 @@ test('피크 컬럼이 4개 아님/깨진 응답 → 빈 결과(견고)', () => 
     { stringColumn: { values: ['1/2 (50%)'] } },
   ] } } }] }] }
   assert.deepEqual(parseLookerGoals([three]), [])
+})
+
+// ── 0% 초기화 회귀(P1) ────────────────────────────────────────
+test('유효성: 실 HAR 은 유효(goal>0), 플레이스홀더 0/0 은 무효', () => {
+  assert.equal(isValidCenterGoals(parseLookerGoals([fixture])[0]!), true)
+  const placeholder = parseLookerGoals([makeBody('표준 - DP2504250236', ['0/0 (0%)', '0/0 (0%)', '0/0 (0%)', '0/0 (0%)'])])
+  assert.equal(placeholder.length, 1) // 패턴은 통과(=파싱됨)…
+  assert.equal(isValidCenterGoals(placeholder[0]!), false) // …그러나 goal 전부 0 → 무효
+})
+
+test('current=0 단독은 유효(영업일 초) — goal>0 이면 OK', () => {
+  const start = parseLookerGoals([makeBody('표준 - DP1', ['0/336 (0%)', '0/336 (0%)', '0/384 (0%)', '0/480 (0%)'])])
+  assert.equal(isValidCenterGoals(start[0]!), true)
+})
+
+test('덮어쓰기 방지: 플레이스홀더(0/0)는 좋은 값을 덮지 못함(순서 무관)', () => {
+  const good = makeBody('표준 - DP2504250236', ['810/528 (100%)', '389/352 (100%)', '0/560 (0%)', '0/480 (0%)'])
+  const empty = makeBody('표준 - DP2504250236', ['0/0 (0%)', '0/0 (0%)', '0/0 (0%)', '0/0 (0%)'])
+  for (const order of [[good, empty], [empty, good]]) {
+    const c = parseLookerGoals(order)[0]!
+    assert.equal(isValidCenterGoals(c), true)
+    assert.deepEqual(c.peaks.map((p) => [p.current, p.goal]), [[810, 528], [389, 352], [0, 560], [0, 480]])
+  }
+})
+
+test('유효끼리는 마지막 우선(최신 갱신 반영)', () => {
+  const older = makeBody('표준 - DP1', ['10/100 (10%)', '10/100 (10%)', '10/100 (10%)', '10/100 (10%)'])
+  const newer = makeBody('표준 - DP1', ['90/100 (90%)', '90/100 (90%)', '90/100 (90%)', '90/100 (90%)'])
+  const c = parseLookerGoals([older, newer])[0]!
+  assert.equal(c.peaks[0]!.current, 90)
 })
