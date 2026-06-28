@@ -27,9 +27,12 @@
   --secondary-foreground:  oklch(0.21 0.04 265);
 
   /* ── Brand / semantic ── */
-  --primary:               oklch(0.55 0.22 263);    /* 신뢰 블루 #2563eb */
-  --primary-foreground:    oklch(0.985 0 0);
-  --ring:                  oklch(0.55 0.22 263);
+  /* ⚠️ 2026-06-28 대시보드 Figma 개편(docs/design/06-dashboard-redesign): primary 를 azure #009DFF 로 전환.
+   *    구 신뢰블루 #2563eb / cmo 브랜딩과 상이 → lead/cmo 승인 대기(06 §0-1).
+   *    #009DFF 는 fill/대형 그래픽 전용. 텍스트는 --primary-strong 사용(흰 on #009DFF = 2.89, AA 미달). */
+  --primary:               oklch(0.678 0.180 247.4); /* #009DFF — Figma azure */
+  --primary-foreground:    oklch(0.985 0 0);          /* ⚠️ AA 미달(2.89) — AppBar/탭 흰텍스트 이슈 06 §0-2 */
+  --ring:                  oklch(0.678 0.180 247.4);
 
   --success:               oklch(0.52 0.12 160);    /* WCAG AA on white(5.17) — uxui RE-QA L2 */
   --success-foreground:    oklch(0.985 0 0);
@@ -42,6 +45,33 @@
   --success-subtle:    color-mix(in oklch, var(--success) 14%, var(--background));
   --warning-subtle:    color-mix(in oklch, var(--warning) 16%, var(--background));
   --destructive-subtle:color-mix(in oklch, var(--destructive) 12%, var(--background));
+
+  /* ══ 대시보드 Figma 개편 토큰 (06-dashboard-redesign) — Light ══
+   * 규칙: fill/대형 그래픽 = Figma 원색 / 텍스트·소형 UI = *-strong (WCAG AA, 06 §6). */
+  --primary-strong:     oklch(0.521 0.137 247.2);  /* #006DB3 — primary 텍스트(흰위 5.47/카드 5.06) */
+  --danger:             oklch(0.681 0.208 27.1);   /* #FF554C — 거절 강조(fill/대형) */
+  --danger-strong:      oklch(0.578 0.228 30.5);   /* #E11900 — 거절 텍스트(흰 4.84) */
+  --live:               oklch(0.638 0.205 144.2);  /* #00A925 — 라이브 점(그린) */
+
+  --surface-card:       color-mix(in oklch, oklch(0.379 0 0) 5%, var(--background));  /* #424242 5% ≈ #F6F6F6 */
+  --surface-card-border:oklch(0.457 0.118 246.1);  /* #005B94 — 카드 1px 외곽선 */
+  --bar-track:          oklch(0.928 0 0);          /* #E7E7E7 — 피크 막대 트랙 */
+
+  /* 수락률 게이지: 트랙 + 밴드 fill(원색) + 밴드 % 텍스트(AA) */
+  --gauge-track:        color-mix(in oklch, var(--primary) 10%, var(--background));   /* 트랙 = primary 10% */
+  --gauge-high:         oklch(0.678 0.180 247.4);  /* ≥80% #009DFF */
+  --gauge-mid:          oklch(0.770 0.133 238.9);  /* 40–79% #57BFFF */
+  --gauge-low:          oklch(0.825 0.101 236.6);  /* 0–39% #83D0FF */
+  --gauge-high-text:    oklch(0.521 0.137 247.2);  /* #006DB3 (5.06) */
+  --gauge-mid-text:     oklch(0.583 0.132 242.8);  /* #1A82C2 (3.87, 대형텍스트 AA) */
+  --gauge-low-text:     oklch(0.603 0.130 241.4);  /* #2289C7 (3.55, 대형텍스트 AA) */
+
+  /* 텍스트 위계(Figma 그레이 → AA 보정) */
+  --text-secondary:     oklch(0.428 0 0);          /* #4F4F4F — 카드 라벨(7.58) */
+  --text-muted-strong:  oklch(0.538 0 0);          /* #6E6E6E — 날짜/캡션 AA(5.10). Figma #999/#000@50% 대체 */
+  --text-disabled:      oklch(0.650 0 0);          /* #8F8F8F — 드로어 비활성(1.4.3 예외) */
+
+  --radius-card25:      1.5625rem;                 /* 25px — Figma 카드/탭 공통(기존 14px --radius 는 타 컴포넌트 보존) */
 
   --chart-1: var(--primary);
   --chart-2: oklch(0.62 0.19 260);
@@ -88,9 +118,10 @@
   --secondary:             oklch(0.27 0.03 260);
   --secondary-foreground:  oklch(0.98 0.003 247);
 
-  --primary:               oklch(0.62 0.19 260);    /* blue-500 #3b82f6 */
-  --primary-foreground:    oklch(0.16 0.02 265);     /* 어두운 글자 — uxui 실측 5.21 PASS(흰 3.57 FAIL) */
-  --ring:                  oklch(0.62 0.19 260);
+  /* 대시보드 개편: azure 계열로 정렬(Figma 다크 변형 없음 → 기존 다크 정책상 밝게+어두운 글자) */
+  --primary:               oklch(0.70 0.16 244);     /* azure (다크용 밝은 #009DFF 계열) */
+  --primary-foreground:    oklch(0.16 0.02 265);     /* 어두운 글자 */
+  --ring:                  oklch(0.70 0.16 244);
 
   --success:               oklch(0.70 0.15 162);     /* 밝음 → 어두운 글자 */
   --success-foreground:    oklch(0.16 0.02 265);
@@ -106,6 +137,28 @@
 
   --chart-2: oklch(0.70 0.16 255);
   --chart-5: oklch(0.70 0.03 257);
+
+  /* ══ 대시보드 개편 토큰 — Dark (Figma 다크 변형 없음 → 다크 정책에 맞춰 보강) ══ */
+  --primary-strong:     oklch(0.78 0.14 240);  /* 다크 카드 위 밝은 azure 텍스트 */
+  --danger:             oklch(0.70 0.19 27);
+  --danger-strong:      oklch(0.74 0.19 28);   /* 다크 위 밝은 빨강 텍스트 */
+  --live:               oklch(0.72 0.18 145);
+
+  --surface-card:       color-mix(in oklch, oklch(1 0 0) 6%, var(--background));  /* 다크: 흰 6% */
+  --surface-card-border:oklch(0.55 0.12 245);
+  --bar-track:          color-mix(in oklch, oklch(1 0 0) 12%, var(--background));
+
+  --gauge-track:        color-mix(in oklch, var(--primary) 16%, var(--background));
+  --gauge-high:         oklch(0.70 0.16 244);
+  --gauge-mid:          oklch(0.770 0.133 238.9);
+  --gauge-low:          oklch(0.825 0.101 236.6);
+  --gauge-high-text:    oklch(0.80 0.13 242);
+  --gauge-mid-text:     oklch(0.82 0.11 240);
+  --gauge-low-text:     oklch(0.85 0.09 238);
+
+  --text-secondary:     oklch(0.78 0.02 257);
+  --text-muted-strong:  oklch(0.68 0.03 257);
+  --text-disabled:      oklch(0.50 0.02 260);
 
   --scrim: oklch(0 0 0 / 0.6);
 }
@@ -143,6 +196,26 @@
   --color-destructive-subtle: var(--destructive-subtle);
   --color-kakao: var(--kakao);
   --color-kakao-foreground: var(--kakao-foreground);
+
+  /* ── 대시보드 Figma 개편 유틸(06) ── */
+  --color-primary-strong: var(--primary-strong);
+  --color-danger: var(--danger);
+  --color-danger-strong: var(--danger-strong);
+  --color-live: var(--live);
+  --color-surface-card: var(--surface-card);
+  --color-surface-card-border: var(--surface-card-border);
+  --color-bar-track: var(--bar-track);
+  --color-gauge-track: var(--gauge-track);
+  --color-gauge-high: var(--gauge-high);
+  --color-gauge-mid: var(--gauge-mid);
+  --color-gauge-low: var(--gauge-low);
+  --color-gauge-high-text: var(--gauge-high-text);
+  --color-gauge-mid-text: var(--gauge-mid-text);
+  --color-gauge-low-text: var(--gauge-low-text);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted-strong: var(--text-muted-strong);
+  --color-text-disabled: var(--text-disabled);
+  --radius-card25: var(--radius-card25);
 
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
