@@ -12,7 +12,9 @@
     "once": "tsx src/index.ts --once",
     "dev": "tsx watch src/index.ts",
     "capture": "tsx scripts/capture-session.ts",
+    "capture:google": "tsx scripts/capture-google-session.ts",
     "backfill": "tsx scripts/backfill.ts",
+    "test": "tsx --test tests/**/*.test.ts",
     "typecheck": "tsc --noEmit",
     "postinstall": "playwright install chromium"
   },

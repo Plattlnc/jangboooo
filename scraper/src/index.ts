@@ -9,11 +9,13 @@ import { access, mkdir, writeFile } from 'node:fs/promises'
 import { dirname } from 'node:path'
 import { loadConfig, type Config } from './config'
 import { createLogger, serializeError, type Logger } from './logger'
-import { createDb } from './supabase'
+import { createDb, upsertCenterPeakGoals } from './supabase'
 import { BrowserSession } from './browser'
 import { runScrapeCycle } from './scrape'
 import { runLoop } from './scheduler'
 import { isSessionExpired } from './sources/baemin'
+import { collectCenterGoals } from './sources/baemin-goals-session'
+import { delay } from './util'
 
 /**
  * Railway 등 영속 FS 없는 환경: STORAGE_STATE_B64 가 있고 세션 파일이 없으면
@@ -87,11 +89,21 @@ async function main(): Promise<void> {
 
   const cycle = (): Promise<unknown> => runScrapeCycle({ cfg, log, db, session })
 
+  // 공동목표(달성현황 beta): 구글 세션이 있을 때만, 배달현황과 독립된 느린 주기로 best-effort 수집.
+  const goalsEnabled = cfg.goals.configured && !cfg.mock
+  if (!goalsEnabled) {
+    log.info('공동목표 수집 비활성(GOOGLE_STORAGE_STATE_B64 미설정 또는 mock)')
+  }
+  let goalLoopDone: Promise<void> | undefined
+
   try {
     if (cfg.runOnce) {
       log.info('1회 실행 모드')
       await cycle()
+      if (goalsEnabled) await collectAndUpsertGoals(cfg, db, log)
     } else {
+      // 배달현황 루프와 동시 실행(독립). 종료신호는 같은 controller.signal 로 함께 멈춘다.
+      if (goalsEnabled) goalLoopDone = runGoalLoop(cfg, db, log, controller.signal)
       await runLoop({
         intervalSeconds: cfg.intervalSeconds,
         maxRetries: cfg.maxRetries,
@@ -112,8 +124,37 @@ async function main(): Promise<void> {
       })
     }
   } finally {
+    await goalLoopDone?.catch(() => {}) // 공동목표 루프 정리(브라우저 close) 대기
     await session.close()
   }
+}
+
+/** 공동목표 1회 수집+적재(best-effort, 절대 throw 안 함). */
+async function collectAndUpsertGoals(cfg: Config, db: ReturnType<typeof createDb>, log: Logger): Promise<void> {
+  try {
+    const rows = await collectCenterGoals(cfg, log)
+    const n = await upsertCenterPeakGoals(db, rows)
+    if (n > 0) log.info('공동목표 적재', { rows: n })
+  } catch (err) {
+    log.error('공동목표 수집/적재 실패(스킵, 다음 주기 재시도)', serializeError(err))
+  }
+}
+
+/** 공동목표 독립 루프. 배달현황(1분)보다 느린 주기(최소 10분)로 수집. signal 로 종료. */
+async function runGoalLoop(
+  cfg: Config,
+  db: ReturnType<typeof createDb>,
+  log: Logger,
+  signal: AbortSignal,
+): Promise<void> {
+  const periodMs = Math.max(cfg.intervalSeconds, 600) * 1_000 // 목표는 천천히 변함 → 최소 10분
+  log.info('공동목표 루프 시작', { periodMs })
+  while (!signal.aborted) {
+    await collectAndUpsertGoals(cfg, db, log)
+    if (signal.aborted) break
+    await delay(periodMs, signal)
+  }
+  log.info('공동목표 루프 종료')
 }
 
 main().catch((err) => {

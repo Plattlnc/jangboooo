@@ -4,7 +4,7 @@
  */
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import type { Config } from './config'
-import type { HourlyStatUpsert, RiderUpsert, SlaSnapshotUpsert } from './types'
+import type { CenterGoalUpsert, HourlyStatUpsert, RiderUpsert, SlaSnapshotUpsert } from './types'
 
 export type Db = SupabaseClient
 
@@ -49,5 +49,15 @@ export async function upsertHourlyStats(db: Db, rows: HourlyStatUpsert[]): Promi
     .from('rider_hourly_stats')
     .upsert(rows, { onConflict: 'admin_rider_id,snapshot_date,hour' })
   if (error) throw new SupabaseUpsertError('rider_hourly_stats', error)
+  return rows.length
+}
+
+/** center_peak_goals 멱등 upsert (키: center_id, snapshot_date, peak_key). */
+export async function upsertCenterPeakGoals(db: Db, rows: CenterGoalUpsert[]): Promise<number> {
+  if (rows.length === 0) return 0
+  const { error } = await db
+    .from('center_peak_goals')
+    .upsert(rows, { onConflict: 'center_id,snapshot_date,peak_key' })
+  if (error) throw new SupabaseUpsertError('center_peak_goals', error)
   return rows.length
 }

@@ -159,7 +159,7 @@ export async function fetchHistoryDay(
       if (rows.length >= total) break
     }
   }
-  const result = mapDeliveryStatus(rows, day)
+  const result = mapDeliveryStatus(rows, day, headers['center-id'] ?? null)
   log.info('과거 백필 1일', { day, total, riders: result.riders.length, snapshots: result.snapshots.length })
   return result
 }
@@ -195,7 +195,7 @@ export async function fetchSlaData(page: Page, cfg: Config, log: Logger): Promis
   }
 
   const snapshotDate = businessDayInTz(cfg.timezone)
-  const result = mapDeliveryStatus(rows, snapshotDate)
+  const result = mapDeliveryStatus(rows, snapshotDate, headers['center-id'] ?? null)
   log.info('배민 수집 완료', {
     snapshotDate,
     total,
