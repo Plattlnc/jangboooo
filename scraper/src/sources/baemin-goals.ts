@@ -58,12 +58,33 @@ function isCenterColumn(col: LookerColumn): boolean {
 }
 
 /**
+ * 센터 공동목표가 "유효"한가 = 피크 중 하나라도 goal>0.
+ * 로딩/플레이스홀더 응답은 셀이 "0/0 (0%)" 라 패턴은 통과하지만 goal 이 전부 0 → 무효.
+ * (current=0 자체는 영업일 초 정상값이므로 무효 판정 기준은 goal 이다.)
+ */
+export function isValidCenterGoals(c: CenterGoals): boolean {
+  return c.peaks.some((p) => p.goal != null && p.goal > 0)
+}
+
+/**
  * batchedDataV2 응답들(원문 문자열 또는 파싱된 객체)에서 센터별 4피크 공동목표를 추출.
  * 5컬럼 [센터, ml, pl, d, pd] 형태의 tableDataset 을 찾아 행 단위로 매핑.
- * 같은 센터가 여러 응답/행에 나오면 마지막 값이 우선(최신 가정).
+ * 같은 센터가 여러 응답/행에 나오면 **유효(goal>0) 값을 우선**하고, 유효끼리는 마지막이 우선.
+ * (로딩/플레이스홀더 "0/0 (0%)" 응답이 좋은 값을 0 으로 덮어쓰는 회귀 방지.)
  */
 export function parseLookerGoals(bodies: Array<string | unknown>): CenterGoals[] {
   const byCenter = new Map<string, CenterGoals>()
+  const setBest = (cand: CenterGoals): void => {
+    const prev = byCenter.get(cand.center_id)
+    if (!prev) {
+      byCenter.set(cand.center_id, cand)
+      return
+    }
+    // 유효 후보가 무효 기존을 덮을 수 있고, 무효 후보는 유효 기존을 못 덮는다.
+    if (isValidCenterGoals(cand) || !isValidCenterGoals(prev)) {
+      byCenter.set(cand.center_id, cand)
+    }
+  }
 
   for (const body of bodies) {
     let parsed: unknown
@@ -100,7 +121,7 @@ export function parseLookerGoals(bodies: Array<string | unknown>): CenterGoals[]
             pct: cell?.pct ?? null,
           }
         })
-        byCenter.set(centerId, { center_id: centerId, center_name: label.trim(), peaks })
+        setBest({ center_id: centerId, center_name: label.trim(), peaks })
       }
     }
   }
