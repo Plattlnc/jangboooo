@@ -1,26 +1,8 @@
-// 지표 → 상태색/등급/델타 변환. 00-foundations §1 · 03-screen-dashboard §E.
-// frontend 가 색을 자의로 고르지 않도록 임계값/방향을 여기서 고정한다.
+// 대시보드(개편) 지표 → 표시 변환. SSOT: docs/design/06-dashboard-redesign.md.
+// SLA 점수 제거(2026-06-28) → 메인 지표는 수락률(acceptance_rate) 원형 게이지.
+// frontend 가 색/밴드/버킷 경계를 자의로 고르지 않도록 임계값을 여기서 고정한다.
 
-import type { SlaPeriod } from "@/types/database";
-
-export type StatusColor = "success" | "warning" | "danger";
-
-/** SLA 점수 → 등급 라벨 + 상태색 (≥90 우수 / 70–89 주의 / <70 위험). */
-export function slaGrade(score: number): { label: string; status: StatusColor } {
-  if (score >= 90) return { label: "우수", status: "success" };
-  if (score >= 70) return { label: "주의", status: "warning" };
-  return { label: "위험", status: "danger" };
-}
-
-/**
- * 수락률(%) → 상태색 (≥95 우수 / 85–94 주의 / <85 위험).
- * 단위는 backend 계약과 동일 0~100 퍼센트(sla-api.md §6).
- */
-export function acceptanceStatus(pct: number): StatusColor {
-  if (pct >= 95) return "success";
-  if (pct >= 85) return "warning";
-  return "danger";
-}
+import type { RiderHourlyRow, SlaPeriod } from "@/types/database";
 
 // ── 기간(period) 유틸 — 클라이언트 안전(서버 의존 없음). ────────────
 export const SLA_PERIODS: readonly SlaPeriod[] = ["today", "week", "month"];
@@ -35,50 +17,68 @@ export function parsePeriod(raw: string | string[] | undefined): SlaPeriod {
   return isSlaPeriod(value) ? value : "today";
 }
 
-export type GoodDirection = "up" | "down";
-export type DeltaTone = "success" | "warning" | "neutral";
-
-/**
- * 델타 색 방향 (03 §E — frontend 자의 금지).
- * 긍정지표(완료/수락률/SLA): 증가=success, 감소=warning.
- * 부정지표(거절/취소): 감소=success, 증가=warning. 화살표는 실제 증감, 색만 의미 기준.
- */
-export function deltaTone(delta: number, good: GoodDirection): DeltaTone {
-  if (delta === 0) return "neutral";
-  const improved = good === "up" ? delta > 0 : delta < 0;
-  return improved ? "success" : "warning";
-}
-
+/** 기간 탭 라벨. */
 export const PERIOD_LABEL: Record<SlaPeriod, string> = {
   today: "오늘",
   week: "이번 주",
   month: "이번 달",
 };
 
-/** "지난 {기간}" 표현용. */
-export const PREV_PERIOD_LABEL: Record<SlaPeriod, string> = {
-  today: "어제",
-  week: "지난주",
-  month: "지난달",
+/** 게이지 라벨(기간 연동). 카피 SSOT: docs/copy/dashboard.md §3. */
+export const GAUGE_LABEL: Record<SlaPeriod, string> = {
+  today: "오늘 수락률",
+  week: "이번 주 수락률",
+  month: "이번 달 수락률",
 };
 
-// QA-002: "이번 {기간}…" 보간 시 라벨에 이미 '이번'이 들어가 '이번 이번 주' 중복 + 조사 오류 발생.
-// → 문장별 주어를 완성형으로 고정(중복 제거 + 받침 조사 처리).
-/** "…은/는 조금 낮지만" 주어(주제격). */
-export const PERIOD_SUBJECT_TOPIC: Record<SlaPeriod, string> = {
-  today: "오늘은",
-  week: "이번 주는",
-  month: "이번 달은",
-};
+// ── 수락률 게이지 밴드 (06 §D — frontend 자의 금지) ────────────────
+export type GaugeBand = "high" | "mid" | "low";
 
-/** "…엔 조금 낮아요" 시간 부사(처소격). */
-export const PERIOD_SUBJECT_LOCATIVE: Record<SlaPeriod, string> = {
-  today: "오늘은",
-  week: "이번 주엔",
-  month: "이번 달엔",
-};
+/** 수락률(0~100%) → 밴드. ≥80 high · 40–79 mid · 0–39 low. */
+export function gaugeBand(rate: number): GaugeBand {
+  if (rate >= 80) return "high";
+  if (rate >= 40) return "mid";
+  return "low";
+}
 
-/** 갱신 시각 → "방금 업데이트됨 / {n}분 전 업데이트" + stale 여부(>3분). */
+/** 게이지 보조 문구(하단 1줄·조건부). 카피 SSOT: dashboard.md §3. */
+export function gaugeNote(rate: number | null, period: SlaPeriod): string | null {
+  if (rate == null) return null;
+  if (rate >= 90) return "콜을 잘 잡고 있어요";
+  if (rate >= 70) return null; // 보통 — 숫자만
+  return `${PERIOD_LABEL[period]}엔 조금 낮아요`;
+}
+
+// ── 피크타임 4버킷 집계 (06 §F / §8) ──────────────────────────────
+// ⚠️ 버킷 시간 경계는 backend 와 미확정(06 §9-3). 아래는 잠정값 — 확정 시 교체.
+export interface PeakBucket {
+  key: "morning" | "afternoon" | "evening" | "midnight";
+  label: string;
+  count: number;
+}
+
+const PEAK_BUCKETS: { key: PeakBucket["key"]; label: string; hours: number[] }[] = [
+  { key: "morning", label: "아침·점심 피크", hours: [6, 7, 8, 9, 10, 11, 12, 13] },
+  { key: "afternoon", label: "오후 비피크", hours: [14, 15, 16] },
+  { key: "evening", label: "저녁 피크", hours: [17, 18, 19, 20, 21] },
+  { key: "midnight", label: "심야 비피크", hours: [22, 23, 0, 1, 2, 3, 4, 5] },
+];
+
+/** 0~23시 완료 분포 → 4버킷 합계(고정 라벨·순서). */
+export function aggregatePeakBuckets(hourly: RiderHourlyRow[]): PeakBucket[] {
+  const byHour = new Map<number, number>();
+  for (const row of hourly) byHour.set(row.hour, (byHour.get(row.hour) ?? 0) + row.completed);
+  return PEAK_BUCKETS.map(({ key, label, hours }) => ({
+    key,
+    label,
+    count: hours.reduce((sum, h) => sum + (byHour.get(h) ?? 0), 0),
+  }));
+}
+
+// ── 실시간 상태 (헤더 인디케이터). 카피 SSOT: dashboard.md §6. ──────
+export type LiveTone = "live" | "muted";
+
+/** 갱신 시각 → 신선도 표기 + stale 여부(>3분). */
 export function formatUpdatedAt(
   iso: string | null,
   now: number = Date.now(),
@@ -89,60 +89,33 @@ export function formatUpdatedAt(
   return { text: `${diffMin}분 전 업데이트`, stale: diffMin > 3 };
 }
 
-/** 기간 종료까지 남은 일수(회복 여지 카피용). today 는 0. */
-export function daysLeftInPeriod(period: SlaPeriod, now: number = Date.now()): number {
-  const d = new Date(now);
-  if (period === "today") return 0;
-  if (period === "week") {
-    const mondayIndex = (d.getDay() + 6) % 7; // Mon=0 … Sun=6
-    return 6 - mondayIndex;
-  }
-  const lastDay = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
-  return Math.max(0, lastDay - d.getDate());
+/** stale 여부 → 라이브 인디케이터 문구/톤. */
+export function liveStatus(stale: boolean): { label: string; tone: LiveTone } {
+  return stale
+    ? { label: "갱신이 조금 늦어지고 있어요", tone: "muted" }
+    : { label: "실시간 업데이트 중", tone: "live" };
 }
+
+// ── 헤더 날짜·시각 표기 (06 §B). 카피 SSOT: microcopy.md §시간 표기. ──
+const WEEKDAY = ["일", "월", "화", "수", "목", "금", "토"] as const;
 
 /**
- * 동기부여 배너 선택 (03 §D). 조건 충족 시 1개만, 아니면 null.
- * - 호조(주간 SLA 상승): success
- * - 회복 여지(SLA 하락 & 남은 기간 있음): warning
+ * `YY년 M월 D일 (요일) 오전/오후 h:mm` 포맷. 기본 Asia/Seoul.
+ * Intl.formatToParts 로 TZ 정확한 각 필드 추출 후 한국어 표기로 조립.
  */
-export function selectMotivation(
-  current: number | null,
-  prev: number | null,
-  period: SlaPeriod,
-  now: number = Date.now(),
-): { tone: "success" | "warning"; message: string } | null {
-  if (current == null || prev == null) return null;
-  if (period === "week" && current > prev) {
-    return { tone: "success", message: "이번 주, 어제의 나보다 한 걸음 더 갔어요" };
-  }
-  if (current < prev) {
-    const left = daysLeftInPeriod(period, now);
-    if (left > 0) {
-      return {
-        tone: "warning",
-        message: `${PERIOD_SUBJECT_TOPIC[period]} 조금 낮지만, 아직 ${left}일 남았어요`,
-      };
-    }
-  }
-  return null;
-}
-
-/** 시간대 분포에서 피크 1구간(최댓값 시각) 추출. */
-export function peakWindow(hourly: { hour: number; completed: number }[]): {
-  start: number;
-  end: number;
-  max: number;
-} | null {
-  if (hourly.length === 0) return null;
-  let max = 0;
-  let peakHour = 0;
-  for (const b of hourly) {
-    if (b.completed > max) {
-      max = b.completed;
-      peakHour = b.hour;
-    }
-  }
-  if (max === 0) return null;
-  return { start: peakHour, end: (peakHour + 1) % 24, max };
+export function formatDashboardDate(date: Date, timeZone = "Asia/Seoul"): string {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "2-digit",
+    month: "numeric",
+    day: "numeric",
+    weekday: "short",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).formatToParts(date);
+  const get = (t: Intl.DateTimeFormatPartTypes) => parts.find((p) => p.type === t)?.value ?? "";
+  const wd = WEEKDAY[new Date(date.toLocaleString("en-US", { timeZone })).getDay()];
+  const period = get("dayPeriod").toUpperCase().includes("PM") ? "오후" : "오전";
+  return `${get("year")}년 ${get("month")}월 ${get("day")}일 (${wd}) ${period} ${get("hour")}:${get("minute")}`;
 }
