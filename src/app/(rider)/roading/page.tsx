@@ -9,11 +9,14 @@ export const dynamic = "force-dynamic";
 
 export default async function RoadingPage() {
   const profile = await getRiderProfile();
+  // 목 프로필(uid "MOCK-*")은 데모 — ROADING 운영 데이터 오염 방지용으로 표기 전달.
+  const isDemo = profile.uid.startsWith("MOCK-");
   return (
     <RoadingEmbed
       riderId={profile.uid}
       riderName={profile.name}
       riderPhone={profile.phone}
+      isDemo={isDemo}
     />
   );
 }
