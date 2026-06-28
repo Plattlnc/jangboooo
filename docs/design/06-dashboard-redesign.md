@@ -42,6 +42,12 @@ Figma 아트보드 402×836. 앱은 `app-container`(max 480) 중앙. **콘텐츠
 │  오후논피크   ▭▭▭▭▭░░  11건                          │
 │  저녁피크     ▭░░░░░░  2건                           │
 │  심야논피크   ░░░░░░░  0건                           │
+├─ GoalCard (350×~160, 동일 디자인) ─────────────────┤
+│  공동목표 달성현황                                    │
+│  아침점심피크 ▭▭▭▭▭▭░  280/336 (83%)                 │   ← 진행바(현재/목표) + "현재/목표 (%)"
+│  오후논피크   ▭▭▭▭▭▭▭  336/336 (100%) ✓             │   ← 100% = success 강조
+│  저녁피크     ▭░░░░░░  40/336 (12%)                  │
+│  심야논피크   ░░░░░░░  0/336 (0%)                    │
 ├─ FooterActions (우정렬) ───────────────────────────┤
 │                              [ ↻ 새로고침 ]          │
 └────────────────────────────────────────────────────┘
@@ -113,6 +119,28 @@ Figma 아트보드 402×836. 앱은 `app-container`(max 480) 중앙. **콘텐츠
 - 버킷(라벨 고정): **아침점심피크 / 오후논피크 / 저녁피크 / 심야논피크**. 시간 범위 매핑은 backend 와 확정 필요(§미해결).
 - 마이크로: 막대 채움 width 0.5s `--ease-standard`, 행별 60ms stagger. reduced-motion 시 즉시.
 - 상태: loading(막대 skeleton ×4) / empty(전부 0건, 빈 트랙) / error("불러오지 못했어요").
+
+### F-2. GoalCard (공동목표 달성현황) — PeakCard **바로 아래**, 동일 카드 디자인
+
+> 피크타임 카드와 **컨테이너·타이포·간격·색을 100% 동일**하게 쓴다(기존 토큰 재사용, 신규 토큰 0). 차이는 *값 = 진행 바(현재/목표) + "현재/목표 (퍼센트%)" 텍스트* 뿐.
+
+- **컨테이너**: 폭 `350` r25, bg `--surface-card`, 1px `--surface-card-border`, 내부 `p-5`, 행 `gap-3`. (= PeakCard 와 동일 클래스: `rounded-card25 border border-surface-card-border bg-surface-card p-5`.) 높이는 콘텐츠 가변(≈160, 값 텍스트는 1줄 유지).
+- **라벨**: "공동목표 달성현황" `700 / 14` `--text-secondary`(#4F4F4F).
+- **4 행**(각): [버킷명] + [진행 바] + [값].
+  - **버킷명** `600 / 12` `--text-muted-strong`(#6E6E6E), 고정폭 `w-20`(80px). 라벨은 **PeakCard 와 동일 표기로 통일**: **아침점심피크 / 오후논피크 / 저녁피크 / 심야논피크** (코디 약식 "오후논피/심야논피"는 풀 표기로 맞춤).
+  - **진행 바**: PeakCard 와 **동일 트랙/진행** — 트랙 `h-2.5 flex-1 rounded-full bg-bar-track`(#E7E7E7), 진행 `h-full rounded-full bg-primary`(#009DFF). `flex-1` 로 가변(값 칼럼이 넓어 PeakCard 보다 바가 약간 짧음 — 402 기준 OK).
+    - 채움 규칙: `pct = goal > 0 ? round(current / goal * 100) : 0`. **바 width = min(100, pct)%**(목표 초과여도 바는 100% 캡). 마운트 시 0→width, 0.5s `--ease-standard`, 행별 60ms stagger(PeakCard 와 동일).
+  - **값** `700 / 12` tabular-nums, 고정폭 `w-28`(≈112px, 우정렬, `whitespace-nowrap`). 형식 **`현재/목표 (퍼센트%)`** — 예: `0/336 (0%)` · `168/336 (50%)` · `336/336 (100%)`. % 는 바 width 와 달리 **실제값 표시 가능**(예 `350/336 (104%)`).
+    - 색: 기본 `--primary-strong`(#006DB3, AA 5.06).
+- **100% 도달 시각 처리(제안)**: 진행 바 `bg-success`(기존 토큰) + 값 텍스트 `text-success` + 끝에 체크 `✓`(또는 "달성" 캡션). 신규 토큰 없이 기존 `--success`(라이트 AA 5.17 / 다크 어두운 글자) 재사용. 100% 초과도 동일(달성 처리).
+
+- **상태**
+  - **default**: 위와 같이 4행 표시.
+  - **loading**: 바 자리 `skeleton` ×4(PeakCard 와 동일), 값 칼럼은 폭 유지한 skeleton.
+  - **empty / 목표 미설정**(`goal === 0 || goal == null`): 진행 바 **빈 트랙**(0%), 값 = `{current}/0 (—)` 또는 캡션 "목표 미설정"(`12` `--text-muted-strong`). 퍼센트는 `—`(0 나눗셈 회피).
+  - **error**: 카드 내 "불러오지 못했어요" `--text-muted-strong`(PeakCard error 와 통일).
+- **접근성**: 진행 바 `role="img"` `aria-label="{버킷} 목표 {goal}건 중 {current}건 달성 ({pct}%)"`. 값 텍스트 tabular-nums 로 자리 정렬. 대비 — primary-strong/success 모두 surface-card 위 AA PASS(§6). 카드 자체 표시 전용(비인터랙티브).
+- **데이터 계약(가정, backend 확정 시 갱신)**: 버킷별 `{ key, label, current:number, goal:number|null }`. `pct = goal>0 ? round(current/goal*100) : null`. `goal∈{0,null}` → 미설정 처리. (backend-goal-research 진행 중 — §9.)
 
 ### G. FooterActions — 우정렬
 - **새로고침 버튼**: pill, 흰 bg, 1px `--border`, `↻ refresh-cw`(stroke 1.5) + "새로고침" `700 / 14` `--foreground`. 높이 ≥44.
@@ -226,6 +254,7 @@ Figma 아트보드 402×836. 앱은 `app-container`(max 480) 중앙. **콘텐츠
 - `completed` → 완료 · `rejected` → 거절 · `canceled`(배차+배달 취소 합산) → 취소.
   - ⚠️ 구안(03)은 배차취소/배달취소 분리 + 수락률 카드 존재. **개편안은 3카드(완료/거절/취소)**로 축소 — backend 응답/합산 규칙 확인 필요.
 - `get_rider_hourly` → 4 피크 버킷 집계(아침점심/오후논/저녁/심야논). 버킷 시간 경계 미확정(§미해결).
+- **GoalCard(공동목표)** ← 버킷별 `{ current, goal }`(가정). `pct = goal>0 ? round(current/goal*100) : null`, `goal∈{0,null}` → 미설정. backend-goal-research 진행 중 → 계약 확정 시 §F-2/§9 갱신.
 - 헤더 날짜·"실시간 업데이트 중" ← `last_captured_at` / 실시간 연결 상태.
 
 ---
@@ -238,4 +267,5 @@ Figma 아트보드 402×836. 앱은 `app-container`(max 480) 중앙. **콘텐츠
 4. **피크 막대 스케일 규칙** — 본 명세는 `count/max`. Figma 목업은 고정 스케일(여유) — 확정 필요.
 5. **드로어 폭** — Figma 137 vs 권장 `min(72vw,280px)`.
 6. **stat 카드 합산** — 취소 = 배차+배달 취소 합산 여부(backend).
+7. **GoalCard 데이터 계약**(§F-2) — 버킷별 `current/goal` 필드명·타입, goal 0/null 의미, 목표 초과(100%+) 허용 여부 = backend-goal-research 확정 필요. (명세는 `current/goal, %=round(current/goal*100), goal=0|null→미설정` 가정으로 작성.)
 ```
