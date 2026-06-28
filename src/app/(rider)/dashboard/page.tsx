@@ -1,61 +1,24 @@
-// 대시보드 (06-dashboard-redesign / Figma "Project newcar"). 데이터는 _lib/queries.
-// 메인 지표 = 수락률 원형 게이지(SLA 점수 폐기). backend 헤드라인 = acceptance_rate.
+// 홈 · SLA 대시보드 (시안 재설계 · 실데이터 연동).
+// 서버에서 오늘/주간 두 기간을 조회 → 뷰모델로 변환 → 탭 전환은 클라이언트(HomeScreen).
+// env(Supabase service_role) 미설정 시 getDashboardData 가 결정적 목으로 폴백.
 
-import { GreetingBlock } from "@/components/dashboard/greeting-block";
-import { PeriodTabs } from "@/components/dashboard/period-tabs";
-import { AcceptanceGauge } from "@/components/dashboard/acceptance-gauge";
-import { StatCards } from "@/components/dashboard/stat-cards";
-import { PeakCard } from "@/components/dashboard/peak-card";
-import { GoalCard } from "@/components/dashboard/goal-card";
-import { RefreshButton } from "@/components/dashboard/refresh-button";
-import { Badge } from "@/components/ui/badge";
 import { getDashboardData } from "@/app/(rider)/_lib/queries";
-import {
-  parsePeriod,
-  GAUGE_LABEL,
-  gaugeNote,
-  aggregatePeakBuckets,
-  formatDashboardDate,
-  formatUpdatedAt,
-  liveStatus,
-} from "@/app/(rider)/_lib/metrics";
-import { DEMO_MODE } from "@/lib/demo";
+import { HomeScreen } from "@/components/screens/home-screen";
+import { toHomeMetrics, toHomeProfile, homeDateShort } from "@/components/screens/home-view";
 
-interface DashboardPageProps {
-  // Next 16: searchParams 는 비동기.
-  searchParams: Promise<{ period?: string | string[] }>;
-}
+// 매 요청 최신 스냅샷 반영(스크래퍼 1분 주기). 정적 캐시 방지.
+export const dynamic = "force-dynamic";
 
-export default async function DashboardPage({ searchParams }: DashboardPageProps) {
-  const { period: rawPeriod } = await searchParams;
-  const period = parsePeriod(rawPeriod);
-  const { summary, hourly, riderName, centerGoals } = await getDashboardData(period);
-
-  const dateText = formatDashboardDate(new Date());
-  const live = liveStatus(formatUpdatedAt(summary.last_captured_at).stale);
-  const canceled = summary.dispatch_canceled + summary.delivery_canceled;
-  const buckets = aggregatePeakBuckets(hourly);
+export default async function DashboardPage() {
+  const [today, week] = await Promise.all([getDashboardData("today"), getDashboardData("week")]);
 
   return (
-    <div className="flex flex-col gap-5">
-      <GreetingBlock name={riderName ?? "라이더"} dateText={dateText} live={live} />
-      <PeriodTabs active={period} />
-
-      {DEMO_MODE ? (
-        <div className="flex justify-center">
-          <Badge variant="info">데모 모드 · 예시 데이터</Badge>
-        </div>
-      ) : null}
-
-      <AcceptanceGauge
-        rate={summary.acceptance_rate}
-        label={GAUGE_LABEL[period]}
-        note={gaugeNote(summary.acceptance_rate, period)}
-      />
-      <StatCards completed={summary.completed} rejected={summary.rejected} canceled={canceled} />
-      <PeakCard buckets={buckets} />
-      <GoalCard goals={centerGoals} />
-      <RefreshButton />
-    </div>
+    <HomeScreen
+      today={toHomeMetrics(today, "today")}
+      week={toHomeMetrics(week, "week")}
+      todayDateShort={homeDateShort(today, "today")}
+      weekDateShort={homeDateShort(week, "week")}
+      profile={toHomeProfile(today)}
+    />
   );
 }

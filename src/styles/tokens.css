@@ -27,12 +27,11 @@
   --secondary-foreground:  oklch(0.21 0.04 265);
 
   /* ── Brand / semantic ── */
-  /* ⚠️ 2026-06-28 대시보드 Figma 개편(docs/design/06-dashboard-redesign): primary 를 azure #009DFF 로 전환.
-   *    구 신뢰블루 #2563eb / cmo 브랜딩과 상이 → lead/cmo 승인 대기(06 §0-1).
-   *    #009DFF 는 fill/대형 그래픽 전용. 텍스트는 --primary-strong 사용(흰 on #009DFF = 2.89, AA 미달). */
-  --primary:               oklch(0.678 0.180 247.4); /* #009DFF — Figma azure */
-  --primary-foreground:    oklch(0.985 0 0);          /* ⚠️ AA 미달(2.89) — AppBar/탭 흰텍스트 이슈 06 §0-2 */
-  --ring:                  oklch(0.678 0.180 247.4);
+  /* 2026-06-29 시안(배달 장부) 전면 재설계: primary 를 indigo #4F6AF5 로 통일.
+   *    구 azure #009DFF(Figma) → 시안 인디고로 교체(사용자 승인). 시안 팔레트는 아래 "시안 팔레트" 블록 참조. */
+  --primary:               #4F6AF5;                    /* 시안 indigo */
+  --primary-foreground:    oklch(0.985 0 0);
+  --ring:                  #4F6AF5;
 
   --success:               oklch(0.52 0.12 160);    /* WCAG AA on white(5.17) — uxui RE-QA L2 */
   --success-foreground:    oklch(0.985 0 0);
@@ -45,6 +44,30 @@
   --success-subtle:    color-mix(in oklch, var(--success) 14%, var(--background));
   --warning-subtle:    color-mix(in oklch, var(--warning) 16%, var(--background));
   --destructive-subtle:color-mix(in oklch, var(--destructive) 12%, var(--background));
+
+  /* ══════════════════════════════════════════════════════════════════════════
+   * 시안 팔레트 (배달 장부 전면 재설계 · 2026-06-29) — Light
+   * 시안이 인라인 hex 통짜 디자인이라, 반복 등장하는 브랜드/시맨틱 색을 토큰화.
+   * 일회성 틴트는 화면에서 arbitrary hex 사용. fill/텍스트 모두 시안 원색 유지(목업 충실).
+   * Tailwind 유틸은 아래 @theme inline 의 --color-jb-* 참조(bg-jb-indigo, text-jb-ink 등).
+   * ════════════════════════════════════════════════════════════════════════ */
+  --jb-indigo:        #4F6AF5;  --jb-indigo-tint:  #eef1fe;  --jb-indigo-tint2: #eaeefe;
+  --jb-green:         #1E9E5A;  --jb-green-tint:   #e7f5ee;
+  --jb-red:           #D9342B;  --jb-red-tint:     #fbe9e8;
+  --jb-orange:        #E8590C;  --jb-orange-tint:  #fdf0e6;
+  --jb-teal:          #0EA5A5;  --jb-teal-tint:    #e3f6f6;
+  --jb-coral:         #FF3B5C;  --jb-flame:        #FF6B35;
+  --jb-gold:          #FFB300;  --jb-amber:        #FFD43B;
+  --jb-ink:           #1a1d2e;  /* 본문/제목 */
+  --jb-ink-soft:      #5b6660;  /* 보조 텍스트 */
+  --jb-ink-mute:      #9b9588;  /* 캡션/비활성 */
+  --jb-hero-from:     #262c52;  --jb-hero-to:      #15172f;  /* 홈 히어로 그라데이션 */
+  --jb-surface:       #f6f7f9;  /* 콘텐츠 배경 */
+  --jb-card:          #ffffff;
+  --jb-line:          #eef0f3;  /* 카드 외곽선 */
+  --jb-line-soft:     #f0f1f4;  /* 옅은 구분선 */
+  --jb-track:         #eceef3;  /* 진행바 트랙 */
+  --jb-tab-bg:        #eceef1;  /* 탭 컨테이너 */
 
   /* ══ 대시보드 Figma 개편 토큰 (06-dashboard-redesign) — Light ══
    * 규칙: fill/대형 그래픽 = Figma 원색 / 텍스트·소형 UI = *-strong (WCAG AA, 06 §6). */
@@ -225,6 +248,32 @@
 
   --color-skeleton-base: var(--skeleton-base);
   --color-skeleton-highlight: var(--skeleton-highlight);
+
+  /* ── 시안 팔레트 유틸 (배달 장부 재설계) ── */
+  --color-jb-indigo: var(--jb-indigo);
+  --color-jb-indigo-tint: var(--jb-indigo-tint);
+  --color-jb-indigo-tint2: var(--jb-indigo-tint2);
+  --color-jb-green: var(--jb-green);
+  --color-jb-green-tint: var(--jb-green-tint);
+  --color-jb-red: var(--jb-red);
+  --color-jb-red-tint: var(--jb-red-tint);
+  --color-jb-orange: var(--jb-orange);
+  --color-jb-orange-tint: var(--jb-orange-tint);
+  --color-jb-teal: var(--jb-teal);
+  --color-jb-teal-tint: var(--jb-teal-tint);
+  --color-jb-coral: var(--jb-coral);
+  --color-jb-flame: var(--jb-flame);
+  --color-jb-gold: var(--jb-gold);
+  --color-jb-amber: var(--jb-amber);
+  --color-jb-ink: var(--jb-ink);
+  --color-jb-ink-soft: var(--jb-ink-soft);
+  --color-jb-ink-mute: var(--jb-ink-mute);
+  --color-jb-surface: var(--jb-surface);
+  --color-jb-card: var(--jb-card);
+  --color-jb-line: var(--jb-line);
+  --color-jb-line-soft: var(--jb-line-soft);
+  --color-jb-track: var(--jb-track);
+  --color-jb-tab-bg: var(--jb-tab-bg);
 
   /* ── 반경(shadcn 파생 + 자체) ── */
   --radius-sm: calc(var(--radius) - 4px);

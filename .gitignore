@@ -47,3 +47,6 @@ next-env.d.ts
 
 # CI workflow는 PAT workflow 스코프 발급 후 추가(현재 보류)
 .github/
+
+# 시안 원본 번들(22MB, 레퍼런스용) — 커밋 제외
+/배달 장부*.html
