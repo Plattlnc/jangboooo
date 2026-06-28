@@ -55,6 +55,25 @@ export class BrowserSession {
     this.log.info('브라우저 기동', { headless: this.cfg.headless, restoredSession: Boolean(storageState) })
   }
 
+  /** 브라우저/컨텍스트가 살아있는지(크래시·disconnect 미발생). */
+  isHealthy(): boolean {
+    return Boolean(this.browser?.isConnected() && this.context)
+  }
+
+  /**
+   * 사이클 직전 호출 — 브라우저가 죽어있으면(크래시/OOM/disconnect) 정리 후 재기동.
+   * 좀비/리소스 누수 방지를 위해 재기동 전 기존 핸들을 best-effort close 한다.
+   * 정상 상태면 즉시 반환(추가 비용 없음).
+   */
+  async ensureStarted(): Promise<void> {
+    if (this.isHealthy()) return
+    if (this.browser) {
+      this.log.warn('브라우저 비정상 감지(크래시/disconnect) — 정리 후 재기동')
+      await this.close() // browser=null, context=null 로 정리(내부 catch 로 무해)
+    }
+    await this.start()
+  }
+
   /** 새 페이지 발급(사이클마다 생성 후 close 권장). */
   async newPage(): Promise<Page> {
     if (!this.context) throw new Error('BrowserSession.start() 선행 필요')
