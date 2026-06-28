@@ -1,5 +1,9 @@
 # 03 · 대시보드 화면
 
+> ⛔ **SUPERSEDED (2026-06-28).** 이 SLA-점수 안은 Figma 개편으로 폐기되었다.
+> 현행 SSOT: **[06-dashboard-redesign.md](./06-dashboard-redesign.md)** (메인 = 오늘 수락률 원형 게이지).
+> 아래 내용은 히스토리 참고용.
+
 라이더가 폰으로 "오늘 나 잘하고 있나?"에 **3초 안에** 답하는 화면. 숫자가 주인공, 색은 보조.
 데이터: backend `get_rider_summary`(기간 요약) · `get_rider_hourly`(시간대) — `src/types/database.ts`.
 카피 SSOT: `docs/copy/dashboard.md`. 토큰/상태: [01-component-library.md], 기준: [00-foundations.md].
