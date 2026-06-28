@@ -47,7 +47,18 @@ const EnvSchema = z.object({
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
   // 운영 금지. true 면 배민 미접속·mock 파서로 적재 파이프라인만 검증.
   SCRAPE_MOCK: boolish.default(false),
+
+  // ── 달성현황(beta) = 구글 Looker Studio 임베드 리포트 (best-effort) ──
+  // 배민 세션과 별개의 "구글 로그인 세션"이 필요. storageState 패턴은 배민과 동일.
+  // 셋 다(또는 B64) 없으면 공동목표 수집은 스킵(배달현황 수집엔 영향 없음).
+  GOAL_REPORT_URL: optionalNonEmpty, // 미설정 시 DEFAULT_GOAL_REPORT_URL 사용
+  GOOGLE_STORAGE_STATE_PATH: z.string().min(1).default('./.session/google-state.json'),
+  GOOGLE_STORAGE_STATE_B64: optionalNonEmpty,
 })
+
+/** 달성현황(beta) Looker 임베드 리포트 기본 URL (리포트 ID 는 공개 임베드 식별자, 시크릿 아님). */
+export const DEFAULT_GOAL_REPORT_URL =
+  'https://lookerstudio.google.com/embed/reporting/8e0baa56-bce8-4ba4-90b1-6bab8ecce149/page/p_7259p9pbyd'
 
 export type Config = {
   supabaseUrl: string
@@ -67,6 +78,13 @@ export type Config = {
   headless: boolean
   storageStatePath: string
   storageStateB64?: string
+  /** 공동목표(달성현황 beta) 수집 설정. configured=false 면 스킵. */
+  goals: {
+    configured: boolean
+    reportUrl: string
+    googleStorageStatePath: string
+    googleStorageStateB64?: string
+  }
   logLevel: LogLevel
   runOnce: boolean
   mock: boolean
@@ -109,6 +127,14 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env, argv: readonly 
     headless: e.HEADLESS,
     storageStatePath: e.STORAGE_STATE_PATH,
     storageStateB64: e.STORAGE_STATE_B64,
+    goals: {
+      // 구글 세션(B64)이 주입돼야 수집 시도(운영=Railway). 미설정이면 스킵(best-effort).
+      // 로컬은 capture 스크립트가 만든 파일을 B64 로 주입해 검증.
+      configured: Boolean(e.GOOGLE_STORAGE_STATE_B64),
+      reportUrl: e.GOAL_REPORT_URL ?? DEFAULT_GOAL_REPORT_URL,
+      googleStorageStatePath: e.GOOGLE_STORAGE_STATE_PATH,
+      googleStorageStateB64: e.GOOGLE_STORAGE_STATE_B64,
+    },
     logLevel: e.LOG_LEVEL,
     runOnce: hasOnceFlag(argv),
     mock: e.SCRAPE_MOCK,
