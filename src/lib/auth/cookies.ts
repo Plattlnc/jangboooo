@@ -32,8 +32,19 @@ export async function setRiderSession(adminRiderId: string): Promise<void> {
   })
 }
 
-/** 로그아웃. */
+/**
+ * 로그아웃 — 세션 쿠키를 안전하게 제거.
+ * delete(name) 만으로는 발급 시 속성(path '/')과 어긋날 여지가 있어,
+ * 설정 때와 동일한 속성으로 만료(maxAge 0)시킨 뒤 이름으로도 삭제한다(이중 안전).
+ */
 export async function clearRiderSession(): Promise<void> {
   const store = await cookies()
-  store.delete(SESSION_COOKIE)
+  store.set(SESSION_COOKIE, '', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 0,
+  })
+  store.delete({ name: SESSION_COOKIE, path: '/' })
 }

@@ -9,14 +9,22 @@ vi.mock("@/lib/auth/cookies", () => ({
   setRiderSession: vi.fn().mockResolvedValue(undefined),
   clearRiderSession: vi.fn().mockResolvedValue(undefined),
 }));
+// next/navigation redirect 는 NEXT_REDIRECT 를 throw 하는 동작을 모사.
+vi.mock("next/navigation", () => ({
+  redirect: vi.fn((url: string) => {
+    throw new Error(`NEXT_REDIRECT:${url}`);
+  }),
+}));
 
 import { signInRider, signOutRider } from "@/actions/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { setRiderSession, clearRiderSession } from "@/lib/auth/cookies";
+import { redirect } from "next/navigation";
 
 const mockedCreateAdmin = vi.mocked(createAdminClient);
 const mockedSetSession = vi.mocked(setRiderSession);
 const mockedClearSession = vi.mocked(clearRiderSession);
+const mockedRedirect = vi.mocked(redirect);
 
 /** riders 조회 한 건을 돌려주는 가짜 admin 클라이언트. */
 function fakeAdmin(result: { data: unknown; error: unknown }) {
@@ -134,8 +142,10 @@ describe("signInRider — 보안 계약(스펙 #19)", () => {
 });
 
 describe("signOutRider", () => {
-  it("세션 쿠키 제거 호출", async () => {
-    await signOutRider();
+  it("세션 쿠키 제거 후 /login 으로 리다이렉트", async () => {
+    // redirect 는 NEXT_REDIRECT throw → 정상 반환하지 않음.
+    await expect(signOutRider()).rejects.toThrow("NEXT_REDIRECT:/login");
     expect(mockedClearSession).toHaveBeenCalledOnce();
+    expect(mockedRedirect).toHaveBeenCalledWith("/login");
   });
 });
