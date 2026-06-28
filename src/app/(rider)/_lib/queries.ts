@@ -7,13 +7,13 @@
 //
 // 단위: acceptance_rate/sla_score 는 0~100 퍼센트 — 목 데이터도 동일.
 
-import type { RiderHourlyRow, RiderSummaryRow, SlaPeriod } from "@/types/database";
+import type { CenterGoalRow, RiderHourlyRow, RiderSummaryRow, SlaPeriod } from "@/types/database";
 import { DEMO_MODE } from "@/lib/demo";
 
 // period 유틸의 정식 위치는 _lib/metrics(클라이언트 안전). 기존 import 경로 하위호환 re-export.
 export { SLA_PERIODS, isSlaPeriod, parsePeriod } from "./metrics";
 
-/** 대시보드 한 화면 = 현재 기간 요약 + 직전 기간 요약(델타용) + 시간대 분포 + 라이더 이름. */
+/** 대시보드 한 화면 = 현재 기간 요약 + 직전 기간 요약(델타용) + 시간대 분포 + 라이더 이름 + 공동목표. */
 export interface DashboardData {
   summary: RiderSummaryRow;
   /** 델타(과거의 나) 비교용 직전 기간 요약. 데이터 없으면 null. */
@@ -21,6 +21,8 @@ export interface DashboardData {
   hourly: RiderHourlyRow[];
   /** 세션 라이더 이름(헤더 표시). 미상이면 null. */
   riderName: string | null;
+  /** 센터 공동목표 4피크(ml→pl→d→pd). best-effort — 미수집/실패 시 빈 배열. */
+  centerGoals: CenterGoalRow[];
 }
 
 // 실데이터 경로는 service_role 필요(*_for RPC + riders 조회). 없으면 목 폴백.
@@ -54,9 +56,10 @@ export async function getDashboardData(period: SlaPeriod): Promise<DashboardData
   const adminRiderId = session.adminRiderId;
 
   const { getRiderSummaryFor, getRiderHourlyFor } = await import("@/lib/supabase/queries");
-  const [summary, hourly] = await Promise.all([
+  const [summary, hourly, centerGoals] = await Promise.all([
     getRiderSummaryFor(adminRiderId, period),
     getRiderHourlyFor(adminRiderId, period),
+    getCenterGoals(adminRiderId),
   ]);
 
   // 직전 기간 요약(델타용): 현재 기간 시작일 하루 전을 기준일로 같은 기간 단위 조회.
@@ -66,7 +69,27 @@ export async function getDashboardData(period: SlaPeriod): Promise<DashboardData
     previous = prev && prev.active_days > 0 ? prev : null;
   }
 
-  return { summary, previous, hourly, riderName: await getRiderName(adminRiderId) };
+  return { summary, previous, hourly, riderName: await getRiderName(adminRiderId), centerGoals };
+}
+
+/**
+ * 센터 공동목표(4피크) 조회 — get_center_goals_for RPC(service_role, admin 클라이언트).
+ * 계약: docs/api/center-goals.md. 항상 4행(ml→pl→d→pd). pct 는 소스값(100 상한) 그대로.
+ * best-effort: 스크래퍼 라이브 미검증 + 센터 미매핑 가능성 → 실패/미수집은 빈 배열로 흡수
+ *   (대시보드 핵심 지표에 영향 주지 않게). GoalCard 가 빈 배열 → 빈 상태 표시.
+ */
+async function getCenterGoals(adminRiderId: string): Promise<CenterGoalRow[]> {
+  try {
+    const { createAdminClient } = await import("@/lib/supabase/admin");
+    const admin = createAdminClient();
+    const { data, error } = await admin.rpc("get_center_goals_for", {
+      p_admin_rider_id: adminRiderId,
+    });
+    if (error) return [];
+    return data ?? [];
+  } catch {
+    return [];
+  }
 }
 
 /**
@@ -125,11 +148,20 @@ function mockHourly(period: SlaPeriod): RiderHourlyRow[] {
   return base.map((completed, hour) => ({ hour, completed: completed * scale }));
 }
 
+// 공동목표 목 — 4피크 상태 다양화(부분/달성/0/미수집)로 모든 표시 케이스 검증.
+const MOCK_CENTER_GOALS: CenterGoalRow[] = [
+  { peak_key: "ml", peak_order: 0, label: "아침점심", current: 168, goal: 336, pct: 50, snapshot_date: "2026-06-28", center_id: "MOCK-CENTER" },
+  { peak_key: "pl", peak_order: 1, label: "오후논피크", current: 336, goal: 336, pct: 100, snapshot_date: "2026-06-28", center_id: "MOCK-CENTER" },
+  { peak_key: "d", peak_order: 2, label: "저녁피크", current: 0, goal: 560, pct: 0, snapshot_date: "2026-06-28", center_id: "MOCK-CENTER" },
+  { peak_key: "pd", peak_order: 3, label: "심야논피크", current: null, goal: null, pct: null, snapshot_date: "2026-06-28", center_id: "MOCK-CENTER" },
+];
+
 async function getMockDashboardData(period: SlaPeriod): Promise<DashboardData> {
   return {
     summary: MOCK_SUMMARY[period],
     previous: MOCK_PREVIOUS[period],
     hourly: mockHourly(period),
     riderName: "라이더",
+    centerGoals: MOCK_CENTER_GOALS,
   };
 }
