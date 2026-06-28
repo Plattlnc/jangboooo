@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/cn";
 import { signOutRider } from "@/actions/auth";
 import { NAV_GROUPS } from "@/lib/nav";
-import { MOCK_CASH } from "@/lib/mock/profile";
 import type { RiderProfile } from "@/app/(rider)/_lib/rider-profile";
 
 // 시안 드로어 — 프로필(인디고 그라데이션) + 그룹 네비(활성표시) + 캐시 카드 + 로그아웃.
@@ -118,10 +117,7 @@ export function MenuDrawer({ open, onClose, profile }: MenuDrawerProps) {
               <span className="text-[11px] font-bold text-jb-indigo">내역 ›</span>
             </div>
             <div className="mt-[7px] flex items-end justify-between">
-              <span className="tnum text-[22px] font-black text-jb-ink">
-                {MOCK_CASH.toLocaleString()}
-                <span className="text-sm">원</span>
-              </span>
+              <span className="tnum text-[22px] font-black text-jb-ink">-</span>
               <button
                 type="button"
                 className="rounded-[10px] bg-jb-indigo px-3.5 py-2 text-[12.5px] font-bold text-white"
