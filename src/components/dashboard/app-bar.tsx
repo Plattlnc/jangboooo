@@ -4,11 +4,13 @@ import { useState } from "react";
 import Link from "next/link";
 import { Menu, Siren } from "lucide-react";
 import { MenuDrawer } from "./menu-drawer";
+import type { RiderProfile } from "@/app/(rider)/_lib/rider-profile";
 
 // 시안 헤더 — 흰 배경 56px. 좌:햄버거 / 중:로고("배달 장부") / 우:사고접수(→/roading).
 // 사고접수 버튼은 시안의 빨강 알약 + 펄스 사이렌 아이콘.
+// profile: 서버(레이아웃)에서 조회한 로그인 라이더 정보 → 드로어로 전달.
 
-export function AppBar() {
+export function AppBar({ profile }: { profile: RiderProfile }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -42,7 +44,7 @@ export function AppBar() {
         </Link>
       </header>
 
-      <MenuDrawer open={open} onClose={() => setOpen(false)} />
+      <MenuDrawer open={open} onClose={() => setOpen(false)} profile={profile} />
     </>
   );
 }
