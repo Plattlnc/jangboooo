@@ -75,7 +75,7 @@ export function AcceptanceGauge({ rate, label, note, errorText }: AcceptanceGaug
           />
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className={cn("text-[24px] font-bold leading-none tabular-nums", band.text)}>
+          <span className={cn("text-[24px] font-bold leading-none", band.text)}>
             {display}
           </span>
         </div>
