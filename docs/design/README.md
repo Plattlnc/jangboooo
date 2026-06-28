@@ -10,8 +10,10 @@
 | [00-foundations.md](./00-foundations.md) | 토큰 사용법, 반응형(375/768/1280), 다크모드, 접근성(WCAG AA), 모션 |
 | [01-component-library.md](./01-component-library.md) | 컴포넌트 인벤토리 + 상태별 스타일(default/hover/active/focus/disabled/loading/error/empty) |
 | [02-screen-login.md](./02-screen-login.md) | 로그인 화면 (카카오 간편로그인 + 휴대폰 본인인증 플로우) |
-| [03-screen-dashboard.md](./03-screen-dashboard.md) | 대시보드 (기간 탭 / SLA 점수 / 지표 카드 / 피크시간 차트) |
+| [03-screen-dashboard.md](./03-screen-dashboard.md) | ~~대시보드 (SLA 점수안)~~ **→ [06](./06-dashboard-redesign.md) 으로 대체(superseded)** |
 | [04-brand-assets.md](./04-brand-assets.md) | 브랜드 에셋 (OG / PWA 아이콘 / 파비콘 / manifest·theme 색) — cmo SEO 대응 |
+| [05-shadcn-redesign.md](./05-shadcn-redesign.md) | shadcn 재정렬 (라이트/다크 팔레트 토큰 · Pretendard · tossface 이모지 맵 · 컴포넌트 매핑) |
+| [06-dashboard-redesign.md](./06-dashboard-redesign.md) | **대시보드 Figma 개편 (SSOT)** — 수락률 원형 게이지(밴드 3색)·드로어·치수/타이포·AA 보정·토큰 매핑 |
 
 ## 토큰 소스 (코드)
 
