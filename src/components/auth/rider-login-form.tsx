@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -12,7 +11,6 @@ import { DEMO_MODE } from "@/lib/demo";
 // 실패는 사유 미구분(계정 열거 방지) — 서버 message 그대로 인라인 안내. DEMO_MODE 면 백엔드 우회.
 
 export function RiderLoginForm() {
-  const router = useRouter();
   const [riderId, setRiderId] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -35,15 +33,16 @@ export function RiderLoginForm() {
 
     // 데모 모드: 백엔드 없이 대시보드(목)로 진입.
     if (DEMO_MODE) {
-      router.push("/dashboard");
+      window.location.assign("/dashboard");
       return;
     }
 
     try {
       const res = await signInRider({ riderId: riderId.trim(), password });
       if (res.ok) {
-        // 세션 쿠키는 액션이 설정함 → 대시보드로.
-        router.push("/dashboard");
+        // 세션 쿠키는 액션이 설정함 → 하드 네비게이션으로 쿠키 확실히 실어 대시보드 진입
+        // (client router.push 는 새 쿠키 인식 타이밍 문제로 무한로딩 가능 → window.location).
+        window.location.assign("/dashboard");
         return;
       }
       setLoading(false);
