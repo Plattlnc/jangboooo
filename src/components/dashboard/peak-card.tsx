@@ -39,7 +39,7 @@ export function PeakCard({ buckets }: { buckets: PeakBucket[] }) {
                   style={{ width: mounted ? `${pct}%` : "0%", transitionDelay: `${i * 60}ms` }}
                 />
               </div>
-              <span className="w-10 shrink-0 text-right text-xs font-bold tabular-nums text-primary-strong">
+              <span className="w-10 shrink-0 text-right text-xs font-bold text-primary-strong">
                 {b.count}건
               </span>
             </li>

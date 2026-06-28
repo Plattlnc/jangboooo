@@ -31,7 +31,7 @@ export function StatCards({ completed, rejected, canceled }: StatCardsProps) {
           className="flex aspect-square flex-col items-center justify-center gap-1 rounded-card25 border border-surface-card-border bg-surface-card p-2 text-center"
         >
           <span className="text-sm font-bold text-text-secondary">{item.label}</span>
-          <span className={cn("text-[20px] font-bold tabular-nums", item.valueClass)}>
+          <span className={cn("text-[20px] font-bold", item.valueClass)}>
             {item.value == null ? "—" : `${item.value.toLocaleString("ko-KR")}건`}
           </span>
         </div>
