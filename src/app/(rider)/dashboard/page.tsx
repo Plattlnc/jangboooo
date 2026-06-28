@@ -6,6 +6,7 @@ import { PeriodTabs } from "@/components/dashboard/period-tabs";
 import { AcceptanceGauge } from "@/components/dashboard/acceptance-gauge";
 import { StatCards } from "@/components/dashboard/stat-cards";
 import { PeakCard } from "@/components/dashboard/peak-card";
+import { GoalCard } from "@/components/dashboard/goal-card";
 import { RefreshButton } from "@/components/dashboard/refresh-button";
 import { Badge } from "@/components/ui/badge";
 import { getDashboardData } from "@/app/(rider)/_lib/queries";
@@ -28,7 +29,7 @@ interface DashboardPageProps {
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
   const { period: rawPeriod } = await searchParams;
   const period = parsePeriod(rawPeriod);
-  const { summary, hourly, riderName } = await getDashboardData(period);
+  const { summary, hourly, riderName, centerGoals } = await getDashboardData(period);
 
   const dateText = formatDashboardDate(new Date());
   const live = liveStatus(formatUpdatedAt(summary.last_captured_at).stale);
@@ -53,6 +54,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       />
       <StatCards completed={summary.completed} rejected={summary.rejected} canceled={canceled} />
       <PeakCard buckets={buckets} />
+      <GoalCard goals={centerGoals} />
       <RefreshButton />
     </div>
   );
