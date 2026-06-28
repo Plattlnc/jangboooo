@@ -56,10 +56,10 @@ describe("aggregatePeakBuckets — 0~23시 → 4버킷 합계", () => {
     const buckets = aggregatePeakBuckets([]);
     expect(buckets.map((b) => b.key)).toEqual(["morning", "afternoon", "evening", "midnight"]);
     expect(buckets.map((b) => b.label)).toEqual([
-      "아침·점심 피크",
-      "오후 비피크",
-      "저녁 피크",
-      "심야 비피크",
+      "아침점심피크",
+      "오후논피크",
+      "저녁피크",
+      "심야논피크",
     ]);
     expect(buckets.every((b) => b.count === 0)).toBe(true);
   });
