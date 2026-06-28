@@ -1,5 +1,6 @@
 'use server'
 
+import { redirect } from 'next/navigation'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { setRiderSession, clearRiderSession } from '@/lib/auth/cookies'
 import { constantTimeEqual } from '@/lib/auth/session'
@@ -47,7 +48,12 @@ export async function signInRider(input: unknown): Promise<SignInResult> {
   return { ok: true, adminRiderId: rider.admin_rider_id, name: rider.name }
 }
 
-/** 로그아웃: 세션 쿠키 제거. */
+/**
+ * 로그아웃: 서명 세션 쿠키를 안전하게 제거하고 /login 으로 리다이렉트.
+ * redirect() 는 NEXT_REDIRECT 를 throw 하므로 정상 반환하지 않는다(서버측 네비게이션).
+ * 클라이언트가 별도 네비게이션을 해도 동일 경로(/login)라 무해.
+ */
 export async function signOutRider(): Promise<void> {
   await clearRiderSession()
+  redirect('/login')
 }

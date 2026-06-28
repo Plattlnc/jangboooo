@@ -38,7 +38,7 @@
   - 결과 `SignInResult`: `{ ok:true, adminRiderId, name }` 또는 `{ ok:false, code, message }`.
   - `SignInErrorCode`: `INVALID_INPUT | RIDER_NOT_FOUND | INVALID_PASSWORD | SERVER_ERROR` (미식별/비번불일치 구분 — #19 스펙).
   - 이름표시: `getRiderName(adminRiderId)` (server-only, service_role).
-- 로그아웃: server action `signOutRider()` — 세션 쿠키 삭제.
+- 로그아웃: server action `signOutRider()` — 세션 쿠키 **안전 제거(만료 maxAge 0 + 삭제)** 후 `/login` 으로 **server redirect**. `redirect()` 가 NEXT_REDIRECT 를 throw 하므로 **정상 반환 없음**(`Promise<void>`, 인자 없음). 호출측은 별도 네비게이션 불필요(해도 동일 경로라 무해).
 - 세션:
   - 서명/검증(Edge+Node): `src/lib/auth/session.ts` — `createSessionToken / verifySessionToken / SESSION_COOKIE`. HMAC-SHA256(Web Crypto), `SESSION_SECRET` env(≥16자) 필요.
   - 쿠키 헬퍼(server-only): `src/lib/auth/cookies.ts` — `getRiderSession()`→`{adminRiderId}|null`, `setRiderSession`, `clearRiderSession`.
