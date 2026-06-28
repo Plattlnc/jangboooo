@@ -56,8 +56,8 @@ describe("PeakCard — 피크타임 4버킷", () => {
     ]);
     render(<PeakCard buckets={buckets} />);
     expect(screen.getByText("피크타임 완료 현황")).toBeInTheDocument();
-    expect(screen.getByText("아침·점심 피크")).toBeInTheDocument();
-    expect(screen.getByText("저녁 피크")).toBeInTheDocument();
+    expect(screen.getByText("아침점심피크")).toBeInTheDocument();
+    expect(screen.getByText("저녁피크")).toBeInTheDocument();
     expect(screen.getByText("14건")).toBeInTheDocument();
     expect(screen.getByText("11건")).toBeInTheDocument();
   });
