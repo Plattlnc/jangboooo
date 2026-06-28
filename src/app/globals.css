@@ -88,6 +88,21 @@
     min-height: var(--touch-min);
   }
 
+  /* 시안(배달 장부): 표 형태 숫자 정렬 — 지표/금액/시각 */
+  .tnum {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+  }
+
+  /* 시안: 라이브 점/사이렌 펄스 */
+  .animate-pulse-dot {
+    animation: jb-pulse-dot 1.4s infinite;
+  }
+  @keyframes jb-pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+  }
+
   /* tossface 이모지 액센트 (05 §4) — 장식 전용, 의미는 텍스트가 전달. */
   .emoji {
     font-family: var(--font-emoji);
