@@ -29,6 +29,9 @@ export default function DashboardLoading() {
       {/* PeakCard */}
       <Skeleton className="h-40 w-full rounded-card25" />
 
+      {/* GoalCard */}
+      <Skeleton className="h-40 w-full rounded-card25" />
+
       {/* RefreshButton (우정렬) */}
       <div className="flex justify-end pb-8 pt-1">
         <Skeleton className="h-11 w-28 rounded-md" />

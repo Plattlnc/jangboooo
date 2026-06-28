@@ -49,6 +49,16 @@ export function gaugeNote(rate: number | null, period: SlaPeriod): string | null
   return `${PERIOD_LABEL[period]}엔 조금 낮아요`;
 }
 
+// ── 4피크 라벨 SSOT — PeakCard·GoalCard 통일(인접 카드 동일 표기). ────
+// peak_key(backend center-goals 계약: ml/pl/d/pd) 기준. 두 카드가 모두 이 맵을 참조해 분기 방지.
+export type PeakKey = "ml" | "pl" | "d" | "pd";
+export const PEAK_LABEL: Record<PeakKey, string> = {
+  ml: "아침점심피크",
+  pl: "오후논피크",
+  d: "저녁피크",
+  pd: "심야논피크",
+};
+
 // ── 피크타임 4버킷 집계 (06 §F / §8) ──────────────────────────────
 // ⚠️ 버킷 시간 경계는 backend 와 미확정(06 §9-3). 아래는 잠정값 — 확정 시 교체.
 export interface PeakBucket {
@@ -57,20 +67,21 @@ export interface PeakBucket {
   count: number;
 }
 
-const PEAK_BUCKETS: { key: PeakBucket["key"]; label: string; hours: number[] }[] = [
-  { key: "morning", label: "아침·점심 피크", hours: [6, 7, 8, 9, 10, 11, 12, 13] },
-  { key: "afternoon", label: "오후 비피크", hours: [14, 15, 16] },
-  { key: "evening", label: "저녁 피크", hours: [17, 18, 19, 20, 21] },
-  { key: "midnight", label: "심야 비피크", hours: [22, 23, 0, 1, 2, 3, 4, 5] },
+// PeakBucket.key(시간대) ↔ peak_key(센터목표) 매핑으로 라벨 SSOT(PEAK_LABEL) 공유.
+const PEAK_BUCKETS: { key: PeakBucket["key"]; peakKey: PeakKey; hours: number[] }[] = [
+  { key: "morning", peakKey: "ml", hours: [6, 7, 8, 9, 10, 11, 12, 13] },
+  { key: "afternoon", peakKey: "pl", hours: [14, 15, 16] },
+  { key: "evening", peakKey: "d", hours: [17, 18, 19, 20, 21] },
+  { key: "midnight", peakKey: "pd", hours: [22, 23, 0, 1, 2, 3, 4, 5] },
 ];
 
 /** 0~23시 완료 분포 → 4버킷 합계(고정 라벨·순서). */
 export function aggregatePeakBuckets(hourly: RiderHourlyRow[]): PeakBucket[] {
   const byHour = new Map<number, number>();
   for (const row of hourly) byHour.set(row.hour, (byHour.get(row.hour) ?? 0) + row.completed);
-  return PEAK_BUCKETS.map(({ key, label, hours }) => ({
+  return PEAK_BUCKETS.map(({ key, peakKey, hours }) => ({
     key,
-    label,
+    label: PEAK_LABEL[peakKey],
     count: hours.reduce((sum, h) => sum + (byHour.get(h) ?? 0), 0),
   }));
 }
