@@ -14,7 +14,7 @@ import type { Logger } from '../logger'
 import { serializeError } from '../logger'
 import { businessDayInTz } from '../util'
 import type { CenterGoalUpsert } from '../types'
-import { parseLookerGoals } from './baemin-goals'
+import { isValidCenterGoals, parseLookerGoals } from './baemin-goals'
 
 const GOOGLE_UA =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
@@ -79,15 +79,22 @@ export async function collectCenterGoals(cfg: Config, log: Logger): Promise<Cent
     await page.goto(cfg.goals.reportUrl, { waitUntil: 'networkidle' }).catch((err) => {
       log.warn('Looker 리포트 네비 경고(계속 시도)', serializeError(err))
     })
-    // 피크 문자열이 담긴 응답이 올 때까지 대기(최대 ~20s).
-    for (let i = 0; i < 40 && !bodies.some((b) => PEAK_CELL_GLOBAL.test(b)); i++) {
+    // 데이터가 렌더된 "유효 목표(goal>0)" 응답이 올 때까지 대기(최대 ~30s).
+    // 로딩 중에는 "0/0 (0%)" 플레이스홀더가 오므로, 패턴만 보지 말고 파싱 결과의 유효성으로 판단.
+    let centers = parseLookerGoals(bodies)
+    for (let i = 0; i < 60 && !centers.some(isValidCenterGoals); i++) {
       await page.waitForTimeout(500)
+      centers = parseLookerGoals(bodies)
     }
 
-    const centers = parseLookerGoals(bodies)
-    if (centers.length === 0) {
-      log.warn('공동목표 응답 미확보 — 구글 세션 만료/리포트 변경 가능(재캡처 필요할 수 있음)', {
+    // (B) 비파괴 가드: 유효(goal>0) 센터만 채택. 없으면 upsert 스킵(기존 값 보존) — 0 으로 덮어쓰지 않음.
+    const validCenters = centers.filter(isValidCenterGoals)
+    if (validCenters.length === 0) {
+      const sawPeakCell = bodies.some((b) => PEAK_CELL_GLOBAL.test(b))
+      log.warn('공동목표 유효데이터 없음 — 스킵(기존 유지)', {
         batchedResponses: bodies.length,
+        parsedCenters: centers.length, // >0 인데 전부 무효면 로딩/0초기화, 0이면 세션만료/접근불가
+        sawPeakCell, // false 면 세션 만료/접근불가 가능, true 면 로딩/플레이스홀더 가능
       })
       return []
     }
@@ -95,7 +102,7 @@ export async function collectCenterGoals(cfg: Config, log: Logger): Promise<Cent
     const snapshot_date = businessDayInTz(cfg.timezone)
     const captured_at = new Date().toISOString()
     const rows: CenterGoalUpsert[] = []
-    for (const c of centers) {
+    for (const c of validCenters) {
       for (const p of c.peaks) {
         rows.push({
           center_id: c.center_id,
@@ -109,7 +116,7 @@ export async function collectCenterGoals(cfg: Config, log: Logger): Promise<Cent
         })
       }
     }
-    log.info('공동목표 수집 완료', { centers: centers.length, rows: rows.length, snapshot_date })
+    log.info('공동목표 수집 완료', { centers: validCenters.length, rows: rows.length, snapshot_date })
     return rows
   } finally {
     await browser.close().catch(() => {})
