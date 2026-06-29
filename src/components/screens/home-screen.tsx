@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import type { HomeMetrics } from "@/lib/mock/home";
 import type { HomeProfile } from "./home-view";
 import { GoalIconArt } from "./goal-icon-art";
@@ -90,6 +91,33 @@ export function HomeScreen({
   const today = tab === "today";
   const m = today ? todayM : weekM;
   const v = useHomeView(m);
+  const router = useRouter();
+
+  // 라이브 갱신: 스크래퍼 1분 주기에 맞춰 60s 폴링(server refetch). 탭 숨김 시 중단(낭비 방지).
+  // router.refresh()는 서버 컴포넌트만 재실행 → 탭 선택 등 클라 상태는 보존.
+  useEffect(() => {
+    const REFRESH_MS = 60_000;
+    let id: ReturnType<typeof setInterval> | null = null;
+    const start = () => {
+      if (id == null) id = setInterval(() => router.refresh(), REFRESH_MS);
+    };
+    const stop = () => {
+      if (id != null) {
+        clearInterval(id);
+        id = null;
+      }
+    };
+    const onVis = () => (document.visibilityState === "visible" ? start() : stop());
+    if (document.visibilityState === "visible") start();
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      stop();
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, [router]);
+
+  // 공동목표 유효 데이터 여부: 빈 배열(RPC 실패/[]) 또는 전부 null(미수집) → 빈 상태로 안내.
+  const hasGoalData = v.goals.length > 0 && v.goals.some((g) => g.pct != null);
 
   const summaryLabel = today ? "오늘 운행 요약" : "주간 운행 요약";
   const dateShort = today ? todayDateShort : weekDateShort;
@@ -107,16 +135,27 @@ export function HomeScreen({
             <span className="tnum whitespace-nowrap text-[11px] text-jb-ink-mute">UID {profile.uid}</span>
           </div>
         </div>
+        {/* 상태 칩 = 탭하면 즉시 새로고침(수동). 자동은 60s 폴링. */}
         {profile.isLive ? (
-          <span className="inline-flex shrink-0 items-center gap-1 bg-jb-green-tint px-[9px] py-1 text-[11px] font-bold text-jb-green">
+          <button
+            type="button"
+            onClick={() => router.refresh()}
+            title="탭하면 새로고침"
+            className="inline-flex shrink-0 items-center gap-1 bg-jb-green-tint px-[9px] py-1 text-[11px] font-bold text-jb-green"
+          >
             <span className="animate-pulse-dot size-[5px] bg-jb-green" />
             실시간
-          </span>
+          </button>
         ) : (
-          <span className="inline-flex shrink-0 items-center gap-1 bg-jb-track px-[9px] py-1 text-[11px] font-bold text-jb-ink-mute">
+          <button
+            type="button"
+            onClick={() => router.refresh()}
+            title="탭하면 새로고침"
+            className="inline-flex shrink-0 items-center gap-1 bg-jb-track px-[9px] py-1 text-[11px] font-bold text-jb-ink-mute"
+          >
             <span className="size-[5px] bg-jb-ink-mute" />
             갱신지연
-          </span>
+          </button>
         )}
       </div>
 
@@ -215,8 +254,21 @@ export function HomeScreen({
           구간별 달성률 <span className="text-jb-indigo">· 협력사 공동목표</span>
         </div>
         <div className="my-[1px] mb-1 text-[11.5px] text-jb-ink-mute">구간 목표 대비 초과 달성 시 가점이 적립돼요</div>
-        <div>
-          {v.goals.map((g) => (
+        {!hasGoalData ? (
+          <div className="flex flex-col items-center gap-1.5 py-4 text-center">
+            <span className="text-[12.5px] font-bold text-jb-ink-soft">아직 집계된 공동목표가 없어요</span>
+            <span className="text-[11px] text-jb-ink-mute">수집되면 자동으로 표시돼요</span>
+            <button
+              type="button"
+              onClick={() => router.refresh()}
+              className="mt-0.5 bg-jb-indigo-tint px-3 py-1 text-[11.5px] font-bold text-jb-indigo"
+            >
+              새로고침
+            </button>
+          </div>
+        ) : (
+          <div>
+            {v.goals.map((g) => (
             <div key={g.label} className="mb-0.5 flex gap-[11px]">
               <div className="relative shrink-0">
                 {g.badge ? (
@@ -255,8 +307,9 @@ export function HomeScreen({
                 </div>
               </div>
             </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="mt-1 pb-0.5 text-center text-[11px] text-jb-ink-mute">
