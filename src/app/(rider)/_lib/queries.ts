@@ -85,9 +85,26 @@ async function getCenterGoals(adminRiderId: string): Promise<CenterGoalRow[]> {
     const { data, error } = await admin.rpc("get_center_goals_for", {
       p_admin_rider_id: adminRiderId,
     });
-    if (error) return [];
+    if (error) {
+      // 조용히 [] 로 흡수하지 말 것 — 원인(마이그레이션 미적용 42883 / 권한 / 매핑)을 로그로 노출.
+      console.error(
+        "[center-goals] get_center_goals_for RPC 실패:",
+        error.code,
+        error.message,
+        error.details ?? "",
+      );
+      return [];
+    }
+    // 데이터는 4행을 반환하나 전부 null 이면 미수집(스크래퍼/센터 매핑) 신호 — 가시화.
+    const filled = (data ?? []).filter((g) => g.pct != null).length;
+    if (filled === 0) {
+      console.warn(
+        `[center-goals] rider=${adminRiderId}: RPC 4행 반환했으나 유효값 0 — center_peak_goals 미적재 또는 center_id 미매핑 의심`,
+      );
+    }
     return data ?? [];
-  } catch {
+  } catch (e) {
+    console.error("[center-goals] 예기치 못한 예외:", e);
     return [];
   }
 }
