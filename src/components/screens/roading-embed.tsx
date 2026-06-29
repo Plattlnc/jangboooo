@@ -24,6 +24,10 @@ interface Props {
   riderPhone: string | null;
   /** 목 프로필(데모) 여부 — ROADING 운영 데이터 오염 방지용 표기 */
   isDemo?: boolean;
+  /** 임베드할 ROADING 경로 (기본 /step1=사고접수 위자드, /history=접수 내역 등) */
+  path?: string;
+  /** iframe 제목/접근성 라벨 */
+  title?: string;
 }
 
 interface PostMessageData {
@@ -32,7 +36,14 @@ interface PostMessageData {
   accidentId?: string | null;
 }
 
-export function RoadingEmbed({ riderId, riderName, riderPhone, isDemo = false }: Props) {
+export function RoadingEmbed({
+  riderId,
+  riderName,
+  riderPhone,
+  isDemo = false,
+  path = "/step1",
+  title = "ROADING 사고접수",
+}: Props) {
   const [status, setStatus] = useState<"loading" | "loaded" | "error">("loading");
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -44,7 +55,7 @@ export function RoadingEmbed({ riderId, riderName, riderPhone, isDemo = false }:
     });
     if (riderPhone) params.set("phone", riderPhone);
     if (isDemo) params.set("demo", "1");
-    return `${ROADING_ORIGIN}/step1?${params.toString()}`;
+    return `${ROADING_ORIGIN}${path}?${params.toString()}`;
   })();
 
   // ROADING iframe → 부모 메시지 수신. origin 검증 필수.
@@ -84,7 +95,7 @@ export function RoadingEmbed({ riderId, riderName, riderPhone, isDemo = false }:
     <div className="relative -mx-[26px] -mb-8" style={{ height: frameHeight }}>
       <iframe
         src={iframeUrl}
-        title="ROADING 사고접수"
+        title={title}
         allow="camera; geolocation; clipboard-write"
         className="block h-full w-full border-0"
         onLoad={handleLoaded}
@@ -94,14 +105,14 @@ export function RoadingEmbed({ riderId, riderName, riderPhone, isDemo = false }:
       {status === "loading" && (
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-3 bg-white">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-gray-600" />
-          <p className="text-sm text-gray-500">ROADING 사고접수를 불러오는 중…</p>
+          <p className="text-sm text-gray-500">{title}을(를) 불러오는 중…</p>
         </div>
       )}
 
       {status === "error" && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-white px-6 text-center">
           <p className="text-base font-semibold text-gray-800">
-            사고접수 화면을 불러오지 못했어요
+            화면을 불러오지 못했어요
           </p>
           <p className="text-sm text-gray-500">
             네트워크 상태를 확인하거나 아래 버튼으로 새 창에서 열어주세요.
@@ -112,7 +123,7 @@ export function RoadingEmbed({ riderId, riderName, riderPhone, isDemo = false }:
             rel="noopener noreferrer"
             className="rounded-lg bg-red-500 px-5 py-2.5 text-sm font-semibold text-white"
           >
-            새 창에서 사고접수 열기
+            새 창에서 열기
           </a>
         </div>
       )}

@@ -4,6 +4,7 @@ import {
   ReceiptText,
   Wallet,
   TriangleAlert,
+  ClipboardList,
   Siren,
   Bike,
   Wrench,
@@ -50,6 +51,7 @@ export const NAV_GROUPS: NavGroup[] = [
     title: "안전 · 긴급",
     items: [
       { label: "교통사고접수", href: "/roading", icon: TriangleAlert, tileColor: "#FF3B5C", tileBg: "#ffecef" },
+      { label: "접수 내역", href: "/roading/history", icon: ClipboardList, tileColor: "#4F6AF5", tileBg: "#eef1fe" },
       { label: "긴급출동서비스", href: "/emergency", icon: Siren, tileColor: "#D9342B", tileBg: "#fbe9e8" },
     ],
   },
