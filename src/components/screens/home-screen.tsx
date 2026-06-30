@@ -198,11 +198,8 @@ export function HomeScreen({
 
       {/* 운행 상태 */}
       <div className="mt-2">
-        <div className="mb-1.5 flex items-center justify-between px-0.5">
+        <div className="mb-1.5 px-0.5">
           <span className="text-xs font-black text-jb-ink">운행 상태</span>
-          <span className="text-[11px] font-semibold text-jb-ink-mute">
-            완료율 <span className="tnum font-black text-jb-green">{v.doneRate}%</span>
-          </span>
         </div>
         <div className="border border-jb-line bg-white p-3 shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
           <div className="grid grid-cols-4 gap-[7px]">
