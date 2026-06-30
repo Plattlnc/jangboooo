@@ -4,7 +4,7 @@
  */
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import type { Config } from './config'
-import type { CenterGoalUpsert, HourlyStatUpsert, RiderUpsert, SlaSnapshotUpsert } from './types'
+import type { CenterCurrentUpsert, CenterGoalUpsert, HourlyStatUpsert, RiderUpsert, SlaSnapshotUpsert } from './types'
 
 export type Db = SupabaseClient
 
@@ -53,40 +53,76 @@ export async function upsertHourlyStats(db: Db, rows: HourlyStatUpsert[]): Promi
 }
 
 /**
- * center_peak_goals 멱등 upsert (키: center_id, snapshot_date, peak_key).
- *
- * 비파괴 단조(non-decreasing) 가드: 같은 영업일·피크에서 current(누적 완료)는 줄어들 수 없다.
- * Looker 리포트를 덜 읽어 current=0 인 불완전 스크랩이 기존 정상값을 0 으로 덮어쓰는 회귀
- * (UI 가 간헐적으로 "전부 0" 으로 깜빡임)를 막는다. 새 current 가 기존보다 작으면 그 행은 스킵.
- * 영업일이 바뀌면 snapshot_date 가 달라 새 행으로 0 부터 정상 시작(가드 영향 없음).
+ * center_peak_goals 의 goal(목표)만 upsert — Looker(달성현황 beta) 소스 전용.
+ * current/pct 는 배민 실시간 집계(upsertCenterCurrents)가 소유하므로 여기선 건드리지 않는다.
+ * (지연된 Looker 의 current=0 이 정상 current 를 덮어쓰는 회귀 차단.) 충돌 시 goal·center_name 만 갱신.
  */
-export async function upsertCenterPeakGoals(db: Db, rows: CenterGoalUpsert[]): Promise<number> {
+export async function upsertCenterGoalTargets(db: Db, rows: CenterGoalUpsert[]): Promise<number> {
   if (rows.length === 0) return 0
+  const payload = rows.map((r) => ({
+    center_id: r.center_id,
+    snapshot_date: r.snapshot_date,
+    peak_key: r.peak_key,
+    goal: r.goal,
+    center_name: r.center_name ?? null,
+  }))
+  const { error } = await db
+    .from('center_peak_goals')
+    .upsert(payload, { onConflict: 'center_id,snapshot_date,peak_key' })
+  if (error) throw new SupabaseUpsertError('center_peak_goals(goal)', error)
+  return payload.length
+}
 
+/**
+ * center_peak_goals 의 current/pct 를 배민 실시간 집계로 upsert (1분 주기).
+ * - 비파괴 단조: 같은 (center,date,peak) 에서 새 current 가 기존보다 작으면 스킵(불완전 읽기 방지).
+ * - pct = current/goal×100(100 상한). goal 은 기존 행(Looker)에서 읽어 병합. goal 미설정 시 pct=null.
+ * - goal 컬럼은 건드리지 않음(Looker 소유). 영업일 바뀌면 새 snapshot_date 로 0 부터 정상 누적.
+ */
+export async function upsertCenterCurrents(
+  db: Db,
+  rows: CenterCurrentUpsert[],
+  capturedAt: string,
+): Promise<number> {
+  if (rows.length === 0) return 0
   const centerIds = [...new Set(rows.map((r) => r.center_id))]
   const dates = [...new Set(rows.map((r) => r.snapshot_date))]
   const { data: existing } = await db
     .from('center_peak_goals')
-    .select('center_id, snapshot_date, peak_key, current')
+    .select('center_id, snapshot_date, peak_key, current, goal')
     .in('center_id', centerIds)
     .in('snapshot_date', dates)
 
-  const prevCurrent = new Map<string, number | null>()
+  const prev = new Map<string, { current: number | null; goal: number | null }>()
   for (const e of existing ?? []) {
-    prevCurrent.set(`${e.center_id}|${e.snapshot_date}|${e.peak_key}`, e.current as number | null)
+    prev.set(`${e.center_id}|${e.snapshot_date}|${e.peak_key}`, {
+      current: e.current as number | null,
+      goal: e.goal as number | null,
+    })
   }
 
-  const accepted = rows.filter((r) => {
-    const prev = prevCurrent.get(`${r.center_id}|${r.snapshot_date}|${r.peak_key}`)
-    if (prev == null) return true // 기존 없음/null → 채택
-    if (r.current == null) return false // 새 값 null → 기존 보존
-    return r.current >= prev // 증가/동일만 채택, 감소(불완전 스크랩)는 스킵
-  })
-  if (accepted.length === 0) return 0
+  const payload = rows
+    .filter((r) => {
+      const p = prev.get(`${r.center_id}|${r.snapshot_date}|${r.peak_key}`)
+      return !p || p.current == null || r.current >= p.current // 단조: 증가/동일만
+    })
+    .map((r) => {
+      const goal = prev.get(`${r.center_id}|${r.snapshot_date}|${r.peak_key}`)?.goal ?? null
+      const pct = goal != null && goal > 0 ? Math.min(100, Math.round((r.current / goal) * 100)) : null
+      return {
+        center_id: r.center_id,
+        snapshot_date: r.snapshot_date,
+        peak_key: r.peak_key,
+        current: r.current,
+        pct,
+        captured_at: capturedAt,
+      }
+    })
+  if (payload.length === 0) return 0
 
   const { error } = await db
     .from('center_peak_goals')
-    .upsert(accepted, { onConflict: 'center_id,snapshot_date,peak_key' })
-  if (error) throw new SupabaseUpsertError('center_peak_goals', error)
-  return accepted.length
+    .upsert(payload, { onConflict: 'center_id,snapshot_date,peak_key' })
+  if (error) throw new SupabaseUpsertError('center_peak_goals(current)', error)
+  return payload.length
 }

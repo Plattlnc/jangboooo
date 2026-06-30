@@ -32,6 +32,14 @@ export type CenterGoalUpsert = {
   captured_at?: string
 }
 
+/** 배민 실시간 집계로 산출한 센터 피크별 current(누적 완료). goal/pct 는 upsert 시 병합/산출. */
+export type CenterCurrentUpsert = {
+  center_id: string
+  snapshot_date: string // YYYY-MM-DD
+  peak_key: 'ml' | 'pl' | 'd' | 'pd'
+  current: number
+}
+
 /** sla_snapshots.breakdown jsonb (푸드/비마트/스토어 세부). */
 export type SlaCategoryCounts = {
   complete: number
@@ -79,6 +87,8 @@ export type ScrapeResult = {
   riders: RiderUpsert[]
   snapshots: SlaSnapshotUpsert[]
   hourly: HourlyStatUpsert[]
+  /** 센터 피크별 실시간 current(배민 합산). centerId 있을 때만. */
+  centerPeakCurrents?: CenterCurrentUpsert[]
 }
 
 /** 적재 건수 요약(로깅용). */
@@ -86,4 +96,5 @@ export type UpsertCounts = {
   riders: number
   snapshots: number
   hourly: number
+  centerCurrents?: number
 }

@@ -6,7 +6,7 @@ import type { Config } from './config'
 import type { Logger } from './logger'
 import type { BrowserSession } from './browser'
 import type { Db } from './supabase'
-import { upsertHourlyStats, upsertRiders, upsertSlaSnapshots } from './supabase'
+import { upsertCenterCurrents, upsertHourlyStats, upsertRiders, upsertSlaSnapshots } from './supabase'
 import { ensureSession, fetchSlaData, isSessionExpired, mockScrapeResult } from './sources/baemin'
 import type { ScrapeResult, UpsertCounts } from './types'
 
@@ -28,6 +28,10 @@ async function persistResult(db: Db, result: ScrapeResult, log: Logger): Promise
     riders: await upsertRiders(db, result.riders),
     snapshots: await upsertSlaSnapshots(db, snapshots),
     hourly: await upsertHourlyStats(db, hourly),
+  }
+  // 공동목표 current 를 배민 실시간 집계로 갱신(goal 은 Looker 가 별도 소유).
+  if (result.centerPeakCurrents?.length) {
+    counts.centerCurrents = await upsertCenterCurrents(db, result.centerPeakCurrents, capturedAt)
   }
   log.info('사이클 완료', counts)
   return counts

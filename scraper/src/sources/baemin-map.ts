@@ -12,6 +12,7 @@
  */
 import type { DeliveryStatusRow } from './baemin-types'
 import type {
+  CenterCurrentUpsert,
   HourlyStatUpsert,
   RiderUpsert,
   ScrapeResult,
@@ -106,5 +107,21 @@ export function mapDeliveryStatus(
     }
   }
 
-  return { riders, snapshots, hourly }
+  // 센터 피크별 실시간 current = 라이더 peak 완료수 합산(배민 deliveryPeakTimeCount).
+  // Looker 공동목표(지연)에 의존하지 않고 1분 주기로 실값 반영. peak_key 는 Looker 와 동일 분류.
+  const centerPeakCurrents: CenterCurrentUpsert[] | undefined = centerId
+    ? ([
+        ['ml', 'peak_morning'],
+        ['pl', 'peak_afternoon'],
+        ['d', 'peak_evening'],
+        ['pd', 'peak_midnight'],
+      ] as const).map(([peak_key, field]) => ({
+        center_id: centerId,
+        snapshot_date: snapshotDate,
+        peak_key,
+        current: snapshots.reduce((acc, s) => acc + (s[field] ?? 0), 0),
+      }))
+    : undefined
+
+  return { riders, snapshots, hourly, ...(centerPeakCurrents ? { centerPeakCurrents } : {}) }
 }
