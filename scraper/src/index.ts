@@ -9,7 +9,7 @@ import { access, mkdir, writeFile } from 'node:fs/promises'
 import { dirname } from 'node:path'
 import { loadConfig, type Config } from './config'
 import { createLogger, serializeError, type Logger } from './logger'
-import { createDb, upsertCenterPeakGoals } from './supabase'
+import { createDb, upsertCenterGoalTargets } from './supabase'
 import { BrowserSession } from './browser'
 import { runScrapeCycle } from './scrape'
 import { runLoop } from './scheduler'
@@ -133,8 +133,8 @@ async function main(): Promise<void> {
 async function collectAndUpsertGoals(cfg: Config, db: ReturnType<typeof createDb>, log: Logger): Promise<void> {
   try {
     const rows = await collectCenterGoals(cfg, log)
-    const n = await upsertCenterPeakGoals(db, rows)
-    if (n > 0) log.info('공동목표 적재', { rows: n })
+    const n = await upsertCenterGoalTargets(db, rows)
+    if (n > 0) log.info('공동목표 goal 적재', { rows: n })
   } catch (err) {
     log.error('공동목표 수집/적재 실패(스킵, 다음 주기 재시도)', serializeError(err))
   }
