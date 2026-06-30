@@ -62,7 +62,7 @@ async function main(): Promise<void> {
   await session.start()
   const page = await session.newPage()
   try {
-    const headers = await captureApiHeaders(page, cfg) // 1회 캡처 후 전 날짜 재사용
+    const headers = await captureApiHeaders(page, cfg, log) // 1회 캡처 후 전 날짜 재사용
     let okDays = 0
     for (const day of targets) {
       const result = await fetchHistoryDay(page, headers, cfg, log, day)
