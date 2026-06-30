@@ -97,29 +97,56 @@ export async function captureApiHeaders(page: Page, cfg: Config): Promise<Record
   return headers
 }
 
-/** 캡처한 헤더로 api-deliverycenter 를 페이지 컨텍스트에서 직접 호출(쿠키 자동 포함). */
+// 재전송 금지 헤더(컨텍스트/전송계층이 자체 설정 — 재사용 시 충돌/거부 유발).
+const DROP_HEADERS = new Set([
+  'host',
+  'cookie',
+  'content-length',
+  'connection',
+  'accept-encoding',
+])
+
+/** 캡처한 SPA 헤더에서 안전 재전송분만 추림(center-id·authorization·origin·referer 등 유지). */
+function pickReplayHeaders(headers: Record<string, string>): Record<string, string> {
+  const out: Record<string, string> = {}
+  for (const [k, v] of Object.entries(headers)) {
+    const key = k.toLowerCase()
+    if (key.startsWith(':') || DROP_HEADERS.has(key)) continue // HTTP/2 pseudo + 전송계층 헤더 제외
+    out[k] = v
+  }
+  return out
+}
+
+/**
+ * 캡처한 헤더로 api-deliverycenter 직접 호출.
+ * Playwright 네이티브 page.request 사용 — 컨텍스트 쿠키 자동 포함 + 페이지 SPA 의 fetch 래퍼/브라우저
+ * CORS 우회. (구: page.evaluate(fetch) 는 SPA 가 monkey-patch 한 window.fetch 를 타 "Failed to fetch"
+ * 네트워크 예외로 크래시 → 상태코드 분류 불가. 2026-06-30 교체.)
+ * 네트워크 자체 실패는 명확한 에러로 변환(스케줄러가 사이클 실패로 카운트, raw TypeError 누수 방지).
+ */
 async function apiGet(
   page: Page,
   headers: Record<string, string>,
   url: string,
   label: string,
 ): Promise<DeliveryStatusResponse> {
-  const res = await page.evaluate(
-    async ({ u, h }) => {
-      const r = await fetch(u, { headers: h, credentials: 'include' })
-      let body: unknown = null
-      try {
-        body = await r.json()
-      } catch {
-        /* 비 JSON */
-      }
-      return { status: r.status, body }
-    },
-    { u: url, h: headers },
-  )
-  if (res.status === 401 || res.status === 403) throw new SessionExpiredError(`HTTP ${res.status}`)
-  if (res.status < 200 || res.status >= 300) throw new Error(`${label} HTTP ${res.status}`)
-  return res.body as DeliveryStatusResponse
+  let status: number
+  let body: unknown = null
+  try {
+    const res = await page.request.get(url, { headers: pickReplayHeaders(headers) })
+    status = res.status()
+    try {
+      body = await res.json()
+    } catch {
+      /* 비 JSON */
+    }
+  } catch (e) {
+    // DNS/연결거부/타임아웃/차단 등 전송계층 실패 — 상태코드 없음.
+    throw new Error(`${label} 네트워크 실패(전송계층): ${(e as Error).message}`)
+  }
+  if (status === 401 || status === 403) throw new SessionExpiredError(`HTTP ${status}`)
+  if (status < 200 || status >= 300) throw new Error(`${label} HTTP ${status}`)
+  return body as DeliveryStatusResponse
 }
 
 /** 오늘 배달현황 한 페이지(delivery-status). */
