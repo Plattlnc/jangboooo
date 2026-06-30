@@ -139,25 +139,38 @@ async function apiGet(
   url: string,
   label: string,
 ): Promise<DeliveryStatusResponse> {
-  let status: number
-  let raw = ''
-  try {
-    const res = await page.request.get(url, { headers: pickReplayHeaders(headers) })
-    status = res.status()
-    raw = await res.text()
-  } catch (e) {
-    // DNS/연결거부/타임아웃/차단 등 전송계층 실패 — 상태코드 없음.
-    throw new Error(`${label} 네트워크 실패(전송계층): ${(e as Error).message}`)
-  }
-  // 진단: 실패 시 응답 본문 스니펫을 에러 메시지에 실어 로그로 노출(403 원인 파악).
-  if (status < 200 || status >= 300) {
-    const snippet = raw.slice(0, 400).replace(/\s+/g, ' ').trim()
-    if (status === 401 || status === 403) throw new SessionExpiredError(`HTTP ${status} body=${snippet}`)
-    throw new Error(`${label} HTTP ${status} body=${snippet}`)
+  // 실제 브라우저 네트워크로 호출(WAF/anti-bot 통과) + SPA 가 monkey-patch 한 window.fetch 우회.
+  // 트릭: 빈 iframe(about:blank, 부모 origin 상속)의 native fetch 를 써 SPA 래퍼를 타지 않음.
+  //   - page.request: HTTP 클라이언트 → 봇 탐지로 403(HTML 차단페이지). 사용 불가.
+  //   - window.fetch(SPA 래퍼): "Failed to fetch" 로 깨짐. 사용 불가.
+  const res = await page.evaluate(
+    async ({ u, h }) => {
+      const ifr = document.createElement('iframe')
+      ifr.style.display = 'none'
+      document.body.appendChild(ifr)
+      try {
+        const win = ifr.contentWindow as (Window & typeof globalThis) | null
+        if (!win) return { status: 0, text: 'IFRAME_NO_WINDOW' }
+        const nativeFetch = win.fetch.bind(win)
+        const r = await nativeFetch(u, { headers: h, credentials: 'include' })
+        return { status: r.status, text: await r.text() }
+      } catch (e) {
+        return { status: 0, text: `FETCH_ERROR: ${(e as Error).message}` }
+      } finally {
+        ifr.remove()
+      }
+    },
+    { u: url, h: pickReplayHeaders(headers) },
+  )
+  if (res.status === 0) throw new Error(`${label} 브라우저 fetch 실패: ${res.text.slice(0, 200)}`)
+  if (res.status < 200 || res.status >= 300) {
+    const snippet = res.text.slice(0, 400).replace(/\s+/g, ' ').trim()
+    if (res.status === 401 || res.status === 403) throw new SessionExpiredError(`HTTP ${res.status} body=${snippet}`)
+    throw new Error(`${label} HTTP ${res.status} body=${snippet}`)
   }
   let body: unknown = null
   try {
-    body = JSON.parse(raw)
+    body = JSON.parse(res.text)
   } catch {
     /* 비 JSON */
   }
