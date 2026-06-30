@@ -143,13 +143,15 @@ async function apiGet(
   // 트릭: 빈 iframe(about:blank, 부모 origin 상속)의 native fetch 를 써 SPA 래퍼를 타지 않음.
   //   - page.request: HTTP 클라이언트 → 봇 탐지로 403(HTML 차단페이지). 사용 불가.
   //   - window.fetch(SPA 래퍼): "Failed to fetch" 로 깨짐. 사용 불가.
-  const res = await page.evaluate(
+  // 콜백은 브라우저에서 실행되므로 DOM 글로벌 사용. scraper tsconfig 엔 DOM lib 없어 any 로 우회.
+  const res = (await page.evaluate(
     async ({ u, h }) => {
-      const ifr = document.createElement('iframe')
+      const doc = (globalThis as { document?: any }).document
+      const ifr = doc.createElement('iframe')
       ifr.style.display = 'none'
-      document.body.appendChild(ifr)
+      doc.body.appendChild(ifr)
       try {
-        const win = ifr.contentWindow as (Window & typeof globalThis) | null
+        const win = ifr.contentWindow
         if (!win) return { status: 0, text: 'IFRAME_NO_WINDOW' }
         const nativeFetch = win.fetch.bind(win)
         const r = await nativeFetch(u, { headers: h, credentials: 'include' })
@@ -161,7 +163,7 @@ async function apiGet(
       }
     },
     { u: url, h: pickReplayHeaders(headers) },
-  )
+  )) as { status: number; text: string }
   if (res.status === 0) throw new Error(`${label} 브라우저 fetch 실패: ${res.text.slice(0, 200)}`)
   if (res.status < 200 || res.status >= 300) {
     const snippet = res.text.slice(0, 400).replace(/\s+/g, ' ').trim()
