@@ -182,9 +182,12 @@ export function HomeScreen({
             <span className="text-[18px] font-bold text-jb-ink-soft">건</span>
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            <span className="flex items-baseline gap-px">
-              <span className="tnum text-[18px] font-black" style={{ color: v.acceptStatus.color }}>{m.accept}</span>
-              <span className="text-[18px] font-black" style={{ color: v.acceptStatus.color }}>%</span>
+            <span className="flex items-baseline gap-1">
+              <span className="text-[18px] font-bold text-jb-ink-soft">수락률</span>
+              <span className="flex items-baseline gap-px">
+                <span className="tnum text-[18px] font-black" style={{ color: v.acceptStatus.color }}>{m.accept}</span>
+                <span className="text-[18px] font-black" style={{ color: v.acceptStatus.color }}>%</span>
+              </span>
             </span>
             <span
               className="px-2.5 py-[3px] text-[10.5px] font-black text-white"
