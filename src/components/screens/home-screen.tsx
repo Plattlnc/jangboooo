@@ -169,39 +169,32 @@ export function HomeScreen({
         </TabButton>
       </div>
 
-      {/* 히어로 요약 — 다른 카드와 동일하게 흰 배경 + 검은 텍스트 */}
-      <div className="mt-2 border border-jb-line bg-white px-4 py-[13px] shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-bold text-jb-ink-mute">{summaryLabel}</span>
-          <span className="tnum bg-jb-track px-2.5 py-[3px] text-[11px] font-bold text-jb-ink-soft">
-            {dateShort}
-          </span>
-        </div>
-        <div className="mt-2.5 flex items-end justify-between">
-          <div className="flex items-baseline gap-1.5">
+      {/* 히어로 요약 — 컴팩트 1줄: 좌(요약+배달건수) / 우(수락률+상태) */}
+      <div className="mt-2 flex items-center justify-between border border-jb-line bg-white px-4 py-3 shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs font-bold text-jb-ink-mute">{summaryLabel}</span>
+            <span className="tnum text-[10px] font-semibold text-jb-ink-mute">{dateShort}</span>
+          </div>
+          <div className="mt-0.5 flex items-baseline gap-1">
             <span className="text-[13px] font-bold text-jb-ink-soft">배달</span>
-            <span className="tnum text-[46px] font-black leading-[0.85] tracking-[-0.035em] text-jb-ink">{m.count}</span>
-            <span className="text-[17px] font-bold text-jb-ink-soft">건</span>
+            <span className="tnum text-[32px] font-black leading-none tracking-[-0.03em] text-jb-ink">{m.count}</span>
+            <span className="text-[15px] font-bold text-jb-ink-soft">건</span>
           </div>
-          <div className="text-right">
-            <div className="mb-[3px] text-[11px] font-semibold text-jb-ink-mute">수락률</div>
-            <div className="flex items-baseline justify-end gap-[7px]">
-              <span className="flex items-baseline gap-px">
-                <span className="tnum text-[27px] font-black tracking-[-0.025em]" style={{ color: v.acceptStatus.color }}>
-                  {m.accept}
-                </span>
-                <span className="text-sm font-bold" style={{ color: v.acceptStatus.color }}>
-                  %
-                </span>
-              </span>
-              <span
-                className="px-2.5 py-[3px] text-[10.5px] font-black text-white"
-                style={{ background: v.acceptStatus.color }}
-              >
-                {v.acceptStatus.label}
-              </span>
-            </div>
-          </div>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          <span className="flex items-baseline gap-px">
+            <span className="tnum text-[28px] font-black tracking-[-0.02em]" style={{ color: v.acceptStatus.color }}>
+              {m.accept}
+            </span>
+            <span className="text-sm font-bold" style={{ color: v.acceptStatus.color }}>%</span>
+          </span>
+          <span
+            className="px-2.5 py-[3px] text-[10.5px] font-black text-white"
+            style={{ background: v.acceptStatus.color }}
+          >
+            {v.acceptStatus.label}
+          </span>
         </div>
       </div>
 
