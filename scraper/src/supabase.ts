@@ -52,12 +52,41 @@ export async function upsertHourlyStats(db: Db, rows: HourlyStatUpsert[]): Promi
   return rows.length
 }
 
-/** center_peak_goals 멱등 upsert (키: center_id, snapshot_date, peak_key). */
+/**
+ * center_peak_goals 멱등 upsert (키: center_id, snapshot_date, peak_key).
+ *
+ * 비파괴 단조(non-decreasing) 가드: 같은 영업일·피크에서 current(누적 완료)는 줄어들 수 없다.
+ * Looker 리포트를 덜 읽어 current=0 인 불완전 스크랩이 기존 정상값을 0 으로 덮어쓰는 회귀
+ * (UI 가 간헐적으로 "전부 0" 으로 깜빡임)를 막는다. 새 current 가 기존보다 작으면 그 행은 스킵.
+ * 영업일이 바뀌면 snapshot_date 가 달라 새 행으로 0 부터 정상 시작(가드 영향 없음).
+ */
 export async function upsertCenterPeakGoals(db: Db, rows: CenterGoalUpsert[]): Promise<number> {
   if (rows.length === 0) return 0
+
+  const centerIds = [...new Set(rows.map((r) => r.center_id))]
+  const dates = [...new Set(rows.map((r) => r.snapshot_date))]
+  const { data: existing } = await db
+    .from('center_peak_goals')
+    .select('center_id, snapshot_date, peak_key, current')
+    .in('center_id', centerIds)
+    .in('snapshot_date', dates)
+
+  const prevCurrent = new Map<string, number | null>()
+  for (const e of existing ?? []) {
+    prevCurrent.set(`${e.center_id}|${e.snapshot_date}|${e.peak_key}`, e.current as number | null)
+  }
+
+  const accepted = rows.filter((r) => {
+    const prev = prevCurrent.get(`${r.center_id}|${r.snapshot_date}|${r.peak_key}`)
+    if (prev == null) return true // 기존 없음/null → 채택
+    if (r.current == null) return false // 새 값 null → 기존 보존
+    return r.current >= prev // 증가/동일만 채택, 감소(불완전 스크랩)는 스킵
+  })
+  if (accepted.length === 0) return 0
+
   const { error } = await db
     .from('center_peak_goals')
-    .upsert(rows, { onConflict: 'center_id,snapshot_date,peak_key' })
+    .upsert(accepted, { onConflict: 'center_id,snapshot_date,peak_key' })
   if (error) throw new SupabaseUpsertError('center_peak_goals', error)
-  return rows.length
+  return accepted.length
 }
