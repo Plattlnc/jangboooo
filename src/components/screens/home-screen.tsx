@@ -196,111 +196,120 @@ export function HomeScreen({
         </div>
       </div>
 
-      {/* 운행 상태 + 시간대 분포 */}
-      <div className="mt-2 border border-jb-line bg-white p-3 shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
+      {/* 운행 상태 */}
+      <div className="mt-2">
         <div className="mb-1.5 flex items-center justify-between px-0.5">
-          <span className="text-xs font-black">운행 상태</span>
+          <span className="text-xs font-black text-jb-ink">운행 상태</span>
           <span className="text-[11px] font-semibold text-jb-ink-mute">
             완료율 <span className="tnum font-black text-jb-green">{v.doneRate}%</span>
           </span>
         </div>
-        <div className="grid grid-cols-4 gap-[7px]">
-          {v.statusItems.map((it) => (
-            <div key={it.label} className="px-1 py-[7px] text-center" style={{ background: it.tileBg }}>
-              <div className="text-[11.5px] font-bold text-jb-ink-soft">{it.label}</div>
-              <div className="tnum mt-0.5 text-xl font-black tracking-[-0.02em]" style={{ color: it.numColor }}>
-                {it.value}
+        <div className="border border-jb-line bg-white p-3 shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
+          <div className="grid grid-cols-4 gap-[7px]">
+            {v.statusItems.map((it) => (
+              <div key={it.label} className="px-1 py-[7px] text-center" style={{ background: it.tileBg }}>
+                <div className="text-[11.5px] font-bold text-jb-ink-soft">{it.label}</div>
+                <div className="tnum mt-0.5 text-xl font-black tracking-[-0.02em]" style={{ color: it.numColor }}>
+                  {it.value}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
+      </div>
 
-        <div className="my-[7px] h-px bg-jb-line-soft" />
-
+      {/* 시간대별 분포 */}
+      <div className="mt-2">
         <div className="mb-1.5 flex items-center justify-between px-0.5">
-          <span className="text-xs font-black">시간대별 분포</span>
+          <span className="text-xs font-black text-jb-ink">시간대별 분포</span>
           <span className="text-[11px] font-bold text-jb-indigo">최다 시간대 강조</span>
         </div>
-        <div className="grid grid-cols-4 gap-[7px]">
-          {v.peaks.map((p) => (
-            <div
-              key={p.label}
-              className="px-1 py-[7px] text-center"
-              style={{ background: p.tileBg, border: p.tileBorder }}
-            >
-              <div className="text-[11.5px] font-bold" style={{ color: p.labelColor }}>
-                {p.label}
+        <div className="border border-jb-line bg-white p-3 shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
+          <div className="grid grid-cols-4 gap-[7px]">
+            {v.peaks.map((p) => (
+              <div
+                key={p.label}
+                className="px-1 py-[7px] text-center"
+                style={{ background: p.tileBg, border: p.tileBorder }}
+              >
+                <div className="text-[11.5px] font-bold" style={{ color: p.labelColor }}>
+                  {p.label}
+                </div>
+                <div className="tnum mt-0.5 text-xl font-black tracking-[-0.02em]" style={{ color: p.valColor }}>
+                  {p.value}
+                </div>
               </div>
-              <div className="tnum mt-0.5 text-xl font-black tracking-[-0.02em]" style={{ color: p.valColor }}>
-                {p.value}
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
 
       {/* 구간별 달성률 */}
-      <div className="mt-2 border border-jb-line bg-white px-[13px] py-[9px] shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
-        <div className="text-sm font-black">
-          구간별 달성률 <span className="text-jb-indigo">· 협력사 공동목표</span>
+      <div className="mt-2">
+        <div className="mb-1.5 px-0.5">
+          <span className="text-xs font-black text-jb-ink">
+            구간별 달성률 <span className="text-jb-indigo">· 협력사 공동목표</span>
+          </span>
+          <div className="mt-0.5 text-[11px] text-jb-ink-mute">구간 목표 대비 초과 달성 시 가점이 적립돼요</div>
         </div>
-        <div className="my-[1px] mb-1 text-[11.5px] text-jb-ink-mute">구간 목표 대비 초과 달성 시 가점이 적립돼요</div>
-        {!hasGoalData ? (
-          <div className="flex flex-col items-center gap-1.5 py-4 text-center">
-            <span className="text-[12.5px] font-bold text-jb-ink-soft">아직 집계된 공동목표가 없어요</span>
-            <span className="text-[11px] text-jb-ink-mute">수집되면 자동으로 표시돼요</span>
-            <button
-              type="button"
-              onClick={() => router.refresh()}
-              className="mt-0.5 bg-jb-indigo-tint px-3 py-1 text-[11.5px] font-bold text-jb-indigo"
-            >
-              새로고침
-            </button>
-          </div>
-        ) : (
-          <div>
-            {v.goals.map((g) => (
-            <div key={g.label} className="mb-0.5 flex gap-[11px]">
-              <div className="relative shrink-0">
-                {g.badge ? (
-                  <span className="tnum absolute -left-1.5 -top-1.5 z-[2] bg-jb-indigo px-[7px] py-0.5 text-[9.5px] font-black text-white shadow-[0_2px_5px_rgba(79,106,245,0.35)]">
-                    {g.badge}
-                  </span>
-                ) : null}
-                <div className="grid size-9 place-items-center" style={{ background: g.tileBg }}>
-                  <GoalIconArt icon={g.icon} />
-                </div>
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="text-[14.5px] font-black tracking-[-0.02em]">{g.label}</div>
-                <div className="mt-0.5 flex items-baseline gap-1.5">
-                  <span className="tnum text-[18px] font-black" style={{ color: g.barColor }}>
-                    {g.actualText}
-                  </span>
-                  <span className="tnum text-[13px] font-bold text-jb-ink-mute">/ {g.targetText}건</span>
-                  <span className="tnum text-[12.5px] font-black text-jb-ink-mute">{g.pctText}</span>
-                  {g.remainingText ? (
-                    <span
-                      className={
-                        "tnum ml-auto whitespace-nowrap text-[12px] font-black " +
-                        (g.remainingDone ? "text-jb-green" : "text-jb-indigo")
-                      }
-                    >
-                      {g.remainingText}
-                    </span>
-                  ) : null}
-                </div>
-                <div className="mt-1 h-[7px] overflow-hidden bg-jb-track">
-                  <div
-                    className="h-full"
-                    style={{ width: `${g.width}%`, background: g.barColor }}
-                  />
-                </div>
-              </div>
+        <div className="border border-jb-line bg-white px-[13px] py-[9px] shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
+          {!hasGoalData ? (
+            <div className="flex flex-col items-center gap-1.5 py-4 text-center">
+              <span className="text-[12.5px] font-bold text-jb-ink-soft">아직 집계된 공동목표가 없어요</span>
+              <span className="text-[11px] text-jb-ink-mute">수집되면 자동으로 표시돼요</span>
+              <button
+                type="button"
+                onClick={() => router.refresh()}
+                className="mt-0.5 bg-jb-indigo-tint px-3 py-1 text-[11.5px] font-bold text-jb-indigo"
+              >
+                새로고침
+              </button>
             </div>
-            ))}
-          </div>
-        )}
+          ) : (
+            <div>
+              {v.goals.map((g) => (
+                <div key={g.label} className="mb-0.5 flex gap-[11px]">
+                  <div className="relative shrink-0">
+                    {g.badge ? (
+                      <span className="tnum absolute -left-1.5 -top-1.5 z-[2] bg-jb-indigo px-[7px] py-0.5 text-[9.5px] font-black text-white shadow-[0_2px_5px_rgba(79,106,245,0.35)]">
+                        {g.badge}
+                      </span>
+                    ) : null}
+                    <div className="grid size-9 place-items-center" style={{ background: g.tileBg }}>
+                      <GoalIconArt icon={g.icon} />
+                    </div>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[14.5px] font-black tracking-[-0.02em]">{g.label}</div>
+                    <div className="mt-0.5 flex items-baseline gap-1.5">
+                      <span className="tnum text-[18px] font-black" style={{ color: g.barColor }}>
+                        {g.actualText}
+                      </span>
+                      <span className="tnum text-[13px] font-bold text-jb-ink-mute">/ {g.targetText}건</span>
+                      <span className="tnum text-[12.5px] font-black text-jb-ink-mute">{g.pctText}</span>
+                      {g.remainingText ? (
+                        <span
+                          className={
+                            "tnum ml-auto whitespace-nowrap text-[12px] font-black " +
+                            (g.remainingDone ? "text-jb-green" : "text-jb-indigo")
+                          }
+                        >
+                          {g.remainingText}
+                        </span>
+                      ) : null}
+                    </div>
+                    <div className="mt-1 h-[7px] overflow-hidden bg-jb-track">
+                      <div
+                        className="h-full"
+                        style={{ width: `${g.width}%`, background: g.barColor }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="mt-1 pb-0.5 text-center text-[11px] text-jb-ink-mute">
