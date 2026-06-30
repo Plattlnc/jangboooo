@@ -5,7 +5,7 @@
  *
  * 계약: docs/api/baemin-source.md. 세션은 scripts/capture-session.ts 로 캡처.
  */
-import type { Page, Request } from 'playwright'
+import type { Page, Request, Response } from 'playwright'
 import type { Config } from '../config'
 import type { Logger } from '../logger'
 import { businessDayInTz } from '../util'
@@ -75,20 +75,29 @@ const RIDER_HISTORY_PATH = '/v4/management/rider-delivery-status'
  * 직접 fetch 는 `center-id` 헤더가 없으면 BAD_REQUEST 라, SPA 요청 헤더를 그대로 재사용한다.
  * SPA 가 호출 자체를 안 하면(스텔스 실패/세션 만료) 에러.
  */
-export async function captureApiHeaders(page: Page, cfg: Config): Promise<Record<string, string>> {
+export async function captureApiHeaders(page: Page, cfg: Config, log: Logger): Promise<Record<string, string>> {
   let headers: Record<string, string> | null = null
   const handler = (req: Request) => {
     if (!headers && req.url().includes(DELIVERY_STATUS_PATH) && req.method() === 'GET') {
       headers = req.headers()
     }
   }
+  // 진단: SPA 자신의 delivery-status 응답 상태를 로깅 — 200이면 세션 유효(우리 replay가 문제),
+  //       403이면 세션/계정/API 자체가 거부(브라우저로도 안 됨).
+  const resHandler = (res: Response): void => {
+    if (res.url().includes(DELIVERY_STATUS_PATH)) {
+      log.info('SPA delivery-status 응답(진단)', { status: res.status(), url: res.url().slice(0, 80) })
+    }
+  }
   page.on('request', handler)
+  page.on('response', resHandler)
   try {
     await page.goto(`${baseUrl(cfg)}${HISTORY_PATH}`, { waitUntil: 'networkidle' })
     assertSession(page)
     for (let i = 0; i < 30 && !headers; i++) await page.waitForTimeout(500)
   } finally {
     page.off('request', handler)
+    page.off('response', resHandler)
   }
   if (!headers) {
     assertSession(page)
@@ -131,21 +140,27 @@ async function apiGet(
   label: string,
 ): Promise<DeliveryStatusResponse> {
   let status: number
-  let body: unknown = null
+  let raw = ''
   try {
     const res = await page.request.get(url, { headers: pickReplayHeaders(headers) })
     status = res.status()
-    try {
-      body = await res.json()
-    } catch {
-      /* 비 JSON */
-    }
+    raw = await res.text()
   } catch (e) {
     // DNS/연결거부/타임아웃/차단 등 전송계층 실패 — 상태코드 없음.
     throw new Error(`${label} 네트워크 실패(전송계층): ${(e as Error).message}`)
   }
-  if (status === 401 || status === 403) throw new SessionExpiredError(`HTTP ${status}`)
-  if (status < 200 || status >= 300) throw new Error(`${label} HTTP ${status}`)
+  // 진단: 실패 시 응답 본문 스니펫을 에러 메시지에 실어 로그로 노출(403 원인 파악).
+  if (status < 200 || status >= 300) {
+    const snippet = raw.slice(0, 400).replace(/\s+/g, ' ').trim()
+    if (status === 401 || status === 403) throw new SessionExpiredError(`HTTP ${status} body=${snippet}`)
+    throw new Error(`${label} HTTP ${status} body=${snippet}`)
+  }
+  let body: unknown = null
+  try {
+    body = JSON.parse(raw)
+  } catch {
+    /* 비 JSON */
+  }
   return body as DeliveryStatusResponse
 }
 
@@ -197,7 +212,7 @@ export async function fetchHistoryDay(
  * 세션 만료 시 SessionExpiredError 를 던진다(호출부에서 스킵 처리).
  */
 export async function fetchSlaData(page: Page, cfg: Config, log: Logger): Promise<ScrapeResult> {
-  const headers = await captureApiHeaders(page, cfg)
+  const headers = await captureApiHeaders(page, cfg, log)
   const size = cfg.pageSize
   const first = await fetchPage(page, headers, 0, size)
 
