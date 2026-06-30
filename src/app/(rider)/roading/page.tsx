@@ -16,6 +16,7 @@ export default async function RoadingPage() {
       riderId={profile.uid}
       riderName={profile.name}
       riderPhone={profile.phone}
+      riderPlate={profile.plate}
       isDemo={isDemo}
     />
   );
