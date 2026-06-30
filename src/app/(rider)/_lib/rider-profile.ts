@@ -17,6 +17,8 @@ export interface RiderProfile {
   isActive: boolean;
   /** 가입일 ISO (riders.created_at) */
   createdAt: string | null;
+  /** 등록 차량번호 (riders.plate) — ROADING 임베드 '내차량' 표기용. 컬럼/값 없으면 null. */
+  plate: string | null;
 }
 
 function hasSupabaseEnv(): boolean {
@@ -33,6 +35,7 @@ const DEMO_PROFILE: RiderProfile = {
   centerId: "생각대로 역삼센터",
   isActive: true,
   createdAt: "2024-03-18",
+  plate: "12가3456",
 };
 
 function initialOf(name: string): string {
@@ -55,6 +58,19 @@ export const getRiderProfile = cache(async (): Promise<RiderProfile> => {
       .eq("admin_rider_id", session.adminRiderId)
       .maybeSingle();
 
+    // 차량번호는 별도 best-effort 조회(컬럼 미존재해도 본 프로필은 안 깨지게 분리).
+    let plate: string | null = null;
+    try {
+      const { data: pv } = await admin
+        .from("riders")
+        .select("plate")
+        .eq("admin_rider_id", session.adminRiderId)
+        .maybeSingle<{ plate: string | null }>();
+      plate = pv?.plate ?? null;
+    } catch {
+      /* plate 컬럼 미존재 등 — 무시 */
+    }
+
     const name = data?.name ?? "라이더";
     return {
       name,
@@ -65,6 +81,7 @@ export const getRiderProfile = cache(async (): Promise<RiderProfile> => {
       centerId: data?.center_id ?? null,
       isActive: data?.is_active ?? false,
       createdAt: data?.created_at ?? null,
+      plate,
     };
   } catch {
     // 조회 실패 시에도 최소한 로그인 식별자는 보여줌(나머지 '-').
@@ -77,6 +94,7 @@ export const getRiderProfile = cache(async (): Promise<RiderProfile> => {
       centerId: null,
       isActive: false,
       createdAt: null,
+      plate: null,
     };
   }
 });
