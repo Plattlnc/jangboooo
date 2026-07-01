@@ -42,10 +42,17 @@ export class BrowserSession {
     ctx.setDefaultNavigationTimeout(this.cfg.navTimeoutMs)
   }
 
-  /** 브라우저/컨텍스트 기동. 저장된 storageState 가 있으면 복원. */
+  /** 브라우저/컨텍스트 기동. 저장된 storageState 가 있으면 복원. 프록시(가정용 IP) 설정 시 egress 우회. */
   async start(): Promise<void> {
     if (this.browser) return
-    this.browser = await chromium.launch({ headless: this.cfg.headless, args: STEALTH_ARGS })
+    if (this.cfg.proxy) {
+      this.log.info('프록시 egress 사용(배민 WAF 우회)', { server: this.cfg.proxy.server })
+    }
+    this.browser = await chromium.launch({
+      headless: this.cfg.headless,
+      args: STEALTH_ARGS,
+      ...(this.cfg.proxy ? { proxy: this.cfg.proxy } : {}),
+    })
     const storageState = await this.loadStorageState()
     this.context = await this.browser.newContext({
       ...STEALTH_CONTEXT,
