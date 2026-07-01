@@ -54,6 +54,13 @@ const EnvSchema = z.object({
   GOAL_REPORT_URL: optionalNonEmpty, // 미설정 시 DEFAULT_GOAL_REPORT_URL 사용
   GOOGLE_STORAGE_STATE_PATH: z.string().min(1).default('./.session/google-state.json'),
   GOOGLE_STORAGE_STATE_B64: optionalNonEmpty,
+
+  // ── Residential/mobile 프록시 (배민 브라우저 egress) ──
+  // 배민 WAF 가 데이터센터 IP(클라우드)를 차단 → 클라우드 24/7 운영 시 가정용 IP 프록시로 우회.
+  // 예: PROXY_SERVER=http://gate.provider.com:8000 (+ 사용자/비번). 미설정이면 프록시 없이 직결(로컬/가정 IP 용).
+  PROXY_SERVER: optionalNonEmpty,
+  PROXY_USERNAME: optionalNonEmpty,
+  PROXY_PASSWORD: optionalNonEmpty,
 })
 
 /** 달성현황(beta) Looker 임베드 리포트 기본 URL (리포트 ID 는 공개 임베드 식별자, 시크릿 아님). */
@@ -78,6 +85,8 @@ export type Config = {
   headless: boolean
   storageStatePath: string
   storageStateB64?: string
+  /** 배민 브라우저 egress 프록시(가정용 IP). 미설정이면 직결. Playwright launch proxy 로 주입. */
+  proxy?: { server: string; username?: string; password?: string }
   /** 공동목표(달성현황 beta) 수집 설정. configured=false 면 스킵. */
   goals: {
     configured: boolean
@@ -127,6 +136,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env, argv: readonly 
     headless: e.HEADLESS,
     storageStatePath: e.STORAGE_STATE_PATH,
     storageStateB64: e.STORAGE_STATE_B64,
+    proxy: e.PROXY_SERVER
+      ? { server: e.PROXY_SERVER, username: e.PROXY_USERNAME, password: e.PROXY_PASSWORD }
+      : undefined,
     goals: {
       // 구글 세션(B64)이 주입돼야 수집 시도(운영=Railway). 미설정이면 스킵(best-effort).
       // 로컬은 capture 스크립트가 만든 파일을 B64 로 주입해 검증.
