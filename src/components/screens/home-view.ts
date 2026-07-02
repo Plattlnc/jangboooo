@@ -16,6 +16,23 @@ function mmdd(iso: string): string {
   return `${m}.${d}`;
 }
 
+const KDOW = ["일", "월", "화", "수", "목", "금", "토"];
+
+/** 'YYYY-MM-DD' → 'M월D일(요일)'. TZ 영향 없게 UTC 로 파싱. */
+function fmtKDate(iso: string): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  const dow = KDOW[new Date(Date.UTC(y, m - 1, d)).getUTCDay()];
+  return `${m}월${d}일(${dow})`;
+}
+
+/** 'YYYY-MM-DD' 에 n일 더한 날짜 문자열. */
+function addDaysIso(iso: string, n: number): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() + n);
+  return dt.toISOString().slice(0, 10);
+}
+
 export interface HomeProfile {
   name: string;
   initial: string;
@@ -67,5 +84,7 @@ export function toHomeMetrics(data: DashboardData, period: "today" | "week"): Ho
 /** 오늘/주간 두 기간의 날짜 단축 표기(히어로 우상단 칩). */
 export function homeDateShort(data: DashboardData, period: "today" | "week"): string {
   const s = data.summary;
-  return period === "today" ? s.start_date : `${mmdd(s.start_date)} ~ ${mmdd(s.end_date)}`;
+  if (period === "today") return fmtKDate(s.start_date);
+  // 주간: 수요일 시작 ~ 화요일 종료(전체 주 범위 표기). 표시 end 는 start+6(화) — 집계는 오늘까지.
+  return `${fmtKDate(s.start_date)} ~ ${fmtKDate(addDaysIso(s.start_date, 6))}`;
 }
