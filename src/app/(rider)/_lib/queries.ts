@@ -140,7 +140,7 @@ const MOCK_SUMMARY: Record<SlaPeriod, RiderSummaryRow> = {
     active_days: 1, last_captured_at: "2026-06-28T09:00:00Z",
   },
   week: {
-    period: "week", start_date: "2026-06-22", end_date: "2026-06-28",
+    period: "week", start_date: "2026-06-24", end_date: "2026-06-30",
     admin_rider_id: "MOCK-0000", sla_score: 88, completed: 124, rejected: 11,
     dispatch_canceled: 6, delivery_canceled: 3, assigned: 144, acceptance_rate: 86,
     active_days: 6, last_captured_at: "2026-06-28T09:00:00Z",
