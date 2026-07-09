@@ -4,7 +4,6 @@ import {
   isSlaPeriod,
   gaugeBand,
   gaugeNote,
-  aggregatePeakBuckets,
   formatUpdatedAt,
   liveStatus,
   formatDashboardDate,
@@ -51,32 +50,8 @@ describe("gaugeNote — 게이지 보조 문구 (조건부)", () => {
   });
 });
 
-describe("aggregatePeakBuckets — 0~23시 → 4버킷 합계", () => {
-  it("고정 순서/라벨로 4버킷 반환", () => {
-    const buckets = aggregatePeakBuckets([]);
-    expect(buckets.map((b) => b.key)).toEqual(["morning", "afternoon", "evening", "midnight"]);
-    expect(buckets.map((b) => b.label)).toEqual([
-      "아침점심피크",
-      "오후논피크",
-      "저녁피크",
-      "심야논피크",
-    ]);
-    expect(buckets.every((b) => b.count === 0)).toBe(true);
-  });
-
-  it("시간대별 완료가 해당 버킷에 합산", () => {
-    const buckets = aggregatePeakBuckets([
-      { hour: 8, completed: 2 },
-      { hour: 12, completed: 3 }, // morning
-      { hour: 15, completed: 4 }, // afternoon
-      { hour: 19, completed: 5 }, // evening
-      { hour: 2, completed: 1 }, // midnight
-      { hour: 23, completed: 6 }, // midnight
-    ]);
-    const byKey = Object.fromEntries(buckets.map((b) => [b.key, b.count]));
-    expect(byKey).toEqual({ morning: 5, afternoon: 4, evening: 5, midnight: 7 });
-  });
-});
+// aggregatePeakBuckets(시간 경계 추정 집계)는 배민 원본 버킷값(sla_snapshots.peak_*)으로
+// 대체되어 제거 — 피크 매핑 검증은 home-view 테스트에서 수행.
 
 describe("formatUpdatedAt — 신선도 표기 + stale(>3분)", () => {
   it("null 이면 정보 없음 + stale", () => {

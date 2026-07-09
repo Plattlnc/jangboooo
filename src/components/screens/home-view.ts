@@ -3,7 +3,7 @@
 // 매핑 가능: 완료건수·수락률·상태4분류·피크4버킷·공동목표(current/goal/pct).
 // 소스 없음: 매출(revenue)·카테고리(cats) → 빈 값(화면 미표시). 가점 배지(badge) → 생략.
 
-import { aggregatePeakBuckets, formatUpdatedAt } from "@/app/(rider)/_lib/metrics";
+import { formatUpdatedAt } from "@/app/(rider)/_lib/metrics";
 import type { DashboardData } from "@/app/(rider)/_lib/queries";
 import type { HomeMetrics, GoalIcon } from "@/lib/mock/home";
 
@@ -53,7 +53,9 @@ export function toHomeProfile(data: DashboardData): HomeProfile {
 
 export function toHomeMetrics(data: DashboardData, period: "today" | "week"): HomeMetrics {
   const s = data.summary;
-  const buckets = aggregatePeakBuckets(data.hourly);
+  // 배민 원본 버킷(deliveryPeakTimeCount)값 그대로 — 시간 경계 추정 집계는 소스와 어긋나 폐기.
+  const p = data.peaks;
+  const peakValues = [p.morning, p.afternoon, p.evening, p.midnight];
 
   return {
     period:
@@ -70,7 +72,7 @@ export function toHomeMetrics(data: DashboardData, period: "today" | "week"): Ho
       { label: "배달취소", value: s.delivery_canceled, color: "#9b9588" },
     ],
     cats: [], // 소스 없음 — 미표시
-    peaks: buckets.map((b, i) => ({ label: PEAK_LABELS[i] ?? b.label, value: b.count })),
+    peaks: peakValues.map((value, i) => ({ label: PEAK_LABELS[i], value })),
     goals: data.centerGoals.slice(0, 4).map((g, i) => ({
       label: g.label,
       actual: g.current ?? 0,

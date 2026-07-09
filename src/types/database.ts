@@ -115,6 +115,14 @@ export type RiderHourlyRow = {
   completed: number
 }
 
+/** 기간 피크 4버킷 합계 — 배민 원본(deliveryPeakTimeCount → sla_snapshots.peak_*) 합산값. */
+export type RiderPeakTotals = {
+  morning: number
+  afternoon: number
+  evening: number
+  midnight: number
+}
+
 /** center_peak_goals 행 (0006). */
 export type CenterPeakGoalRow = {
   id: number
