@@ -2,8 +2,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { AcceptanceGauge } from "@/components/dashboard/acceptance-gauge";
 import { StatCards } from "@/components/dashboard/stat-cards";
-import { PeakCard } from "@/components/dashboard/peak-card";
-import { aggregatePeakBuckets } from "@/app/(rider)/_lib/metrics";
 
 // 대시보드 개편(06) 컴포넌트 상태 렌더. matchMedia=reduce(setup) → 애니메이션 즉시 최종값.
 
@@ -48,20 +46,8 @@ describe("StatCards — 완료/거절/취소", () => {
   });
 });
 
-describe("PeakCard — 피크타임 4버킷", () => {
-  it("4버킷 라벨 + 건수 렌더", () => {
-    const buckets = aggregatePeakBuckets([
-      { hour: 12, completed: 14 },
-      { hour: 18, completed: 11 },
-    ]);
-    render(<PeakCard buckets={buckets} />);
-    expect(screen.getByText("피크타임 완료 현황")).toBeInTheDocument();
-    expect(screen.getByText("아침점심피크")).toBeInTheDocument();
-    expect(screen.getByText("저녁피크")).toBeInTheDocument();
-    expect(screen.getByText("14건")).toBeInTheDocument();
-    expect(screen.getByText("11건")).toBeInTheDocument();
-  });
-});
+// PeakCard(구 대시보드) + aggregatePeakBuckets(시간 경계 추정)는 배민 원본 버킷값
+// (DashboardData.peaks) 채택으로 제거 — 홈 피크 표시는 home-view 매핑이 담당.
 
 // PeriodTabs 는 next/navigation 훅에 의존 → 모킹.
 const { replace } = vi.hoisted(() => ({ replace: vi.fn() }));

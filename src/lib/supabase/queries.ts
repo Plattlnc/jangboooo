@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import type {
   RiderDailyRow,
   RiderHourlyRow,
+  RiderPeakTotals,
   RiderSummaryRow,
   SlaPeriod,
 } from '@/types/database'
@@ -61,6 +62,35 @@ export async function getRiderHourlyFor(
   })
   if (error) throw error
   return data
+}
+
+/**
+ * 기간 피크 4버킷 합계 — 배민 원본 버킷(deliveryPeakTimeCount → sla_snapshots.peak_*)을
+ * 그대로 합산. 시간(hour) 경계 추정 없이 소스 수치와 정확히 일치한다.
+ * 기간 경계는 요약 RPC 가 반환한 start_date/end_date 를 그대로 받아 일관성 유지.
+ */
+export async function getRiderPeaksFor(
+  adminRiderId: string,
+  startDate: string,
+  endDate: string,
+): Promise<RiderPeakTotals> {
+  const supabase = createAdminClient()
+  const { data, error } = await supabase
+    .from('sla_snapshots')
+    .select('peak_morning, peak_afternoon, peak_evening, peak_midnight')
+    .eq('admin_rider_id', adminRiderId)
+    .gte('snapshot_date', startDate)
+    .lte('snapshot_date', endDate)
+  if (error) throw error
+  return (data ?? []).reduce<RiderPeakTotals>(
+    (acc, row) => ({
+      morning: acc.morning + row.peak_morning,
+      afternoon: acc.afternoon + row.peak_afternoon,
+      evening: acc.evening + row.peak_evening,
+      midnight: acc.midnight + row.peak_midnight,
+    }),
+    { morning: 0, afternoon: 0, evening: 0, midnight: 0 },
+  )
 }
 
 /** 라이더 표시 이름(대시보드 헤더 등). 세션의 admin_rider_id 로 조회. */

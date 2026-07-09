@@ -2,7 +2,7 @@
 // SLA 점수 제거(2026-06-28) → 메인 지표는 수락률(acceptance_rate) 원형 게이지.
 // frontend 가 색/밴드/버킷 경계를 자의로 고르지 않도록 임계값을 여기서 고정한다.
 
-import type { RiderHourlyRow, SlaPeriod } from "@/types/database";
+import type { SlaPeriod } from "@/types/database";
 
 // ── 기간(period) 유틸 — 클라이언트 안전(서버 의존 없음). ────────────
 export const SLA_PERIODS: readonly SlaPeriod[] = ["today", "week", "month"];
@@ -59,32 +59,8 @@ export const PEAK_LABEL: Record<PeakKey, string> = {
   pd: "심야논피크",
 };
 
-// ── 피크타임 4버킷 집계 (06 §F / §8) ──────────────────────────────
-// ⚠️ 버킷 시간 경계는 backend 와 미확정(06 §9-3). 아래는 잠정값 — 확정 시 교체.
-export interface PeakBucket {
-  key: "morning" | "afternoon" | "evening" | "midnight";
-  label: string;
-  count: number;
-}
-
-// PeakBucket.key(시간대) ↔ peak_key(센터목표) 매핑으로 라벨 SSOT(PEAK_LABEL) 공유.
-const PEAK_BUCKETS: { key: PeakBucket["key"]; peakKey: PeakKey; hours: number[] }[] = [
-  { key: "morning", peakKey: "ml", hours: [6, 7, 8, 9, 10, 11, 12, 13] },
-  { key: "afternoon", peakKey: "pl", hours: [14, 15, 16] },
-  { key: "evening", peakKey: "d", hours: [17, 18, 19, 20, 21] },
-  { key: "midnight", peakKey: "pd", hours: [22, 23, 0, 1, 2, 3, 4, 5] },
-];
-
-/** 0~23시 완료 분포 → 4버킷 합계(고정 라벨·순서). */
-export function aggregatePeakBuckets(hourly: RiderHourlyRow[]): PeakBucket[] {
-  const byHour = new Map<number, number>();
-  for (const row of hourly) byHour.set(row.hour, (byHour.get(row.hour) ?? 0) + row.completed);
-  return PEAK_BUCKETS.map(({ key, peakKey, hours }) => ({
-    key,
-    label: PEAK_LABEL[peakKey],
-    count: hours.reduce((sum, h) => sum + (byHour.get(h) ?? 0), 0),
-  }));
-}
+// (제거됨) 피크 4버킷 시간 경계 추정 집계(aggregatePeakBuckets) — 배민 원본 버킷값
+// (sla_snapshots.peak_*, getRiderPeaksFor)과 어긋나 폐기. 피크값은 원본 그대로 사용한다.
 
 // ── 실시간 상태 (헤더 인디케이터). 카피 SSOT: dashboard.md §6. ──────
 export type LiveTone = "live" | "muted";
