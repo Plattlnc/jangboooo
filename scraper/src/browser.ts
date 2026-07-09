@@ -51,6 +51,8 @@ export class BrowserSession {
     this.browser = await chromium.launch({
       headless: this.cfg.headless,
       args: STEALTH_ARGS,
+      // 재기동 시 launch 가 무한 행에 걸리는 사례 방지(2026-07-09 프로덕션 75분 침묵).
+      timeout: 60_000,
       ...(this.cfg.proxy ? { proxy: this.cfg.proxy } : {}),
     })
     const storageState = await this.loadStorageState()

@@ -41,7 +41,9 @@ export async function runLoop(opts: LoopOptions): Promise<void> {
     let ok = false
     try {
       // 사이클 전 브라우저 등 헬스 보장(크래시 복구). 실패 시 아래 catch 로.
-      if (opts.ensureHealthy) await opts.ensureHealthy()
+      // 재기동(chromium.launch 등)이 행에 걸리면 루프 전체가 침묵하므로 이것도 주기 예산으로 상한
+      // → 실패 집계 → 연속 실패 임계에서 onFatal(exit 1) → 컨테이너 재시작으로 회복.
+      if (opts.ensureHealthy) await withTimeout(opts.ensureHealthy(), periodMs, 'ensure-healthy')
       // 한 틱 전체(재시도 포함)를 주기 예산으로 상한. 초과 시 다음 틱으로 스킵.
       await withTimeout(
         withRetry(opts.cycle, {
