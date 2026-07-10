@@ -8,8 +8,8 @@ import { Toast, ToastViewport } from "@/components/ui/toast";
 import type { RiderProfile } from "@/app/(rider)/_lib/rider-profile";
 
 // 시안 헤더 — 흰 배경 56px. 좌:햄버거 / 중:로고("배달 장부") / 우:사고접수(→/roading).
-// 데모 잠금(2026-07): 홈(로고) 외 진입점(햄버거 메뉴·사고접수)은 막고 '준비중' 토스트만 표시.
-//   복구 시 햄버거 onClick={()=>setOpen(true)}, 사고접수 <Link href="/roading"> 로 되돌리면 됨.
+// 데모 잠금(2026-07): 햄버거 메뉴는 막고 '준비중' 토스트만 표시(복구 시 onClick={()=>setOpen(true)}).
+//   사고접수는 2026-07-11 활성 복구 — ROADING 임베드(/roading) 연결.
 
 export function AppBar({ profile }: { profile: RiderProfile }) {
   const [open, setOpen] = useState(false);
@@ -39,16 +39,15 @@ export function AppBar({ profile }: { profile: RiderProfile }) {
           <span className="text-base font-black tracking-[-0.03em] text-jb-ink">배달 장부</span>
         </Link>
 
-        <button
-          type="button"
-          onClick={showComingSoon}
+        <Link
+          href="/roading"
           className="flex h-[34px] items-center gap-1.5 rounded-[10px] border border-[#f5d2cf] bg-jb-red-tint pl-[7px] pr-[9px]"
         >
           <Siren size={16} strokeWidth={2} className="animate-pulse-dot text-jb-red" />
           <span className="whitespace-nowrap text-[11.5px] font-black tracking-[-0.03em] text-jb-red">
             사고접수
           </span>
-        </button>
+        </Link>
       </header>
 
       {comingSoon ? (
