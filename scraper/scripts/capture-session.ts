@@ -8,10 +8,8 @@
  *   (헤드리스 아님 — 브라우저 창이 뜬다. 로그인 완료 후 터미널에서 ENTER.)
  *   세션 만료 시 다시 실행해 갱신.
  */
-import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { mkdir, readFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
-import { createInterface } from 'node:readline/promises'
-import { stdin, stdout } from 'node:process'
 import { chromium } from 'playwright'
 import { DELIVERY_CENTER_URL } from '../src/sources/baemin'
 
@@ -34,16 +32,27 @@ async function main(): Promise<void> {
       '────────────────────────────────────────────────────',
       ' 1) 브라우저에서 biz-member 로그인 (ID/PW + SMS 2FA)',
       ' 2) "자동로그인" 체크 권장 (세션 수명 ↑)',
-      ' 3) deliverycenter 대시보드까지 진입 확인',
-      ' 4) 끝나면 이 터미널로 돌아와 ENTER',
+      ' 3) deliverycenter 대시보드까지 진입하면 자동 저장됩니다',
+      '    (ENTER 불필요 — 백그라운드 실행도 안전)',
       '────────────────────────────────────────────────────',
       '',
     ].join('\n'),
   )
 
-  const rl = createInterface({ input: stdin, output: stdout })
-  await rl.question('로그인 완료 후 ENTER ▶ ')
-  rl.close()
+  // 로그인 완료 자동 감지: 로그인/2차인증 화면이 아닌 deliverycenter 본화면 도달까지 폴링.
+  // stdin 의존 제거 — 백그라운드로 돌려도 저장이 누락되지 않는다(2026-07-10 ENTER 유실 사고).
+  const DEADLINE_MS = 10 * 60 * 1000
+  const start = Date.now()
+  for (;;) {
+    if (Date.now() - start > DEADLINE_MS) throw new Error('10분 내 로그인 미완료 — 다시 실행해주세요')
+    await page.waitForTimeout(3_000)
+    const url = page.url()
+    const loggedIn =
+      url.startsWith(PORTAL_URL) && !url.includes('biz-member') && !url.includes('/sign-in')
+    if (loggedIn) break
+    console.log(`  대기 중... (현재: ${url.slice(0, 80)})`)
+  }
+  await page.waitForTimeout(5_000) // 로그인 직후 쿠키 정착 대기
 
   await mkdir(dirname(STATE_PATH), { recursive: true })
   await context.storageState({ path: STATE_PATH })
