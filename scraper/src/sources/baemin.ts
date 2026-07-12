@@ -228,6 +228,20 @@ export async function fetchHistoryDay(
  */
 export async function fetchSlaData(page: Page, cfg: Config, log: Logger): Promise<ScrapeResult> {
   const headers = await captureApiHeaders(page, cfg, log)
+  return fetchSlaDataWithHeaders(page, headers, cfg, log)
+}
+
+/**
+ * 캡처된 헤더로 수집만 수행 — SPA 재진입(goto) 없음. 파킹된 페이지에서 사이클마다 재호출해
+ * 프록시 트래픽을 JSON 응답만으로 줄인다. 헤더/세션 노화 시 apiGet 이 던지는 에러는
+ * 호출부(scrape.ts)가 재캡처로 복구한다.
+ */
+export async function fetchSlaDataWithHeaders(
+  page: Page,
+  headers: Record<string, string>,
+  cfg: Config,
+  log: Logger,
+): Promise<ScrapeResult> {
   const size = cfg.pageSize
   const first = await fetchPage(page, headers, 0, size)
 

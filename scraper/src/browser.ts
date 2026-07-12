@@ -18,6 +18,9 @@ import { serializeError } from './logger'
 const STEALTH_UA =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
 const STEALTH_ARGS = ['--disable-blink-features=AutomationControlled']
+// 프록시 트래픽 절감: 수집은 JSON API 만 쓰므로 이미지/원격폰트는 대역폭 낭비(2026-07-11 5GB 소진 원인 일부).
+// route() 인터셉트는 Chromium HTTP 캐시를 꺼 JS 번들이 매번 재다운로드되므로 반드시 launch args 로 차단.
+const TRAFFIC_ARGS = ['--blink-settings=imagesEnabled=false', '--disable-remote-fonts']
 const STEALTH_CONTEXT = {
   userAgent: STEALTH_UA,
   viewport: { width: 1440, height: 900 },
@@ -50,7 +53,7 @@ export class BrowserSession {
     }
     this.browser = await chromium.launch({
       headless: this.cfg.headless,
-      args: STEALTH_ARGS,
+      args: [...STEALTH_ARGS, ...TRAFFIC_ARGS],
       // 재기동 시 launch 가 무한 행에 걸리는 사례 방지(2026-07-09 프로덕션 75분 침묵).
       timeout: 60_000,
       ...(this.cfg.proxy ? { proxy: this.cfg.proxy } : {}),
