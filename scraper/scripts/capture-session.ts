@@ -41,16 +41,23 @@ async function main(): Promise<void> {
 
   // 로그인 완료 자동 감지: 로그인/2차인증 화면이 아닌 deliverycenter 본화면 도달까지 폴링.
   // stdin 의존 제거 — 백그라운드로 돌려도 저장이 누락되지 않는다(2026-07-10 ENTER 유실 사고).
-  const DEADLINE_MS = 10 * 60 * 1000
+  // URL 만으로는 부족: biz-member 통과 직후 SPA 가 2차인증(/sign-in/auth)으로 다시 튕기기 전의
+  // 과도기 URL 을 완료로 오판해 반쪽 세션(API 401)을 저장한 사고(2026-07-12) 방지 —
+  // api-deliverycenter 가 실제 2xx 를 반환해야만 완료로 판정한다.
+  let apiOk = false
+  page.on('response', (res) => {
+    if (res.url().includes('api-deliverycenter') && res.ok()) apiOk = true
+  })
+  const DEADLINE_MS = 30 * 60 * 1000
   const start = Date.now()
   for (;;) {
-    if (Date.now() - start > DEADLINE_MS) throw new Error('10분 내 로그인 미완료 — 다시 실행해주세요')
+    if (Date.now() - start > DEADLINE_MS) throw new Error('30분 내 로그인 미완료 — 다시 실행해주세요')
     await page.waitForTimeout(3_000)
     const url = page.url()
     const loggedIn =
-      url.startsWith(PORTAL_URL) && !url.includes('biz-member') && !url.includes('/sign-in')
+      apiOk && url.startsWith(PORTAL_URL) && !url.includes('biz-member') && !url.includes('/sign-in')
     if (loggedIn) break
-    console.log(`  대기 중... (현재: ${url.slice(0, 80)})`)
+    console.log(`  대기 중... (현재: ${url.slice(0, 80)}, api2xx=${apiOk})`)
   }
   await page.waitForTimeout(5_000) // 로그인 직후 쿠키 정착 대기
 
