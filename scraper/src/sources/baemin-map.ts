@@ -43,8 +43,12 @@ function toSnapshot(row: DeliveryStatusRow, snapshotDate: string): SlaSnapshotUp
   const deliveryCanceled = n(a.totalRiderFault) // 배달취소(라이더귀책)
 
   const assigned = completed + rejected + dispatchCanceled + deliveryCanceled
-  // 수락률 = 수락(제안-거절)/제안. assigned=0 → null. (get_rider_summary 기간식과 동일)
-  const acceptanceRate = assigned > 0 ? round2(((assigned - rejected) / assigned) * 100) : null
+  // 수락률 = 배민 공식(달성현황 리포트 명시, 2026-07-17 확인):
+  //   푸드완료 / (푸드완료 + 푸드거절 + 푸드취소 + 푸드라이더귀책) — 푸드 단독, 분자는 완료.
+  // (구: 전 카테고리 (제안-거절)/제안 — 취소·귀책이 분자에 포함돼 실제보다 높게 나왔음.)
+  // 한계: "권역 외 배차 제외"는 소스에서 식별 불가 — 미세 오차 가능.
+  const foodDenom = n(a.foodComplete) + n(a.foodReject) + n(a.foodCancel) + n(a.foodRiderFault)
+  const acceptanceRate = foodDenom > 0 ? round2((n(a.foodComplete) / foodDenom) * 100) : null
   // 잠정 SLA = 완료율. 배민 실점수 확보 시 교체.
   const slaScore = assigned > 0 ? round2((completed / assigned) * 100) : null
 

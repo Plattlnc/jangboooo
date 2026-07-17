@@ -150,3 +150,60 @@ test('유효끼리는 마지막 우선(최신 갱신 반영)', () => {
   const c = parseLookerGoals([older, newer])[0]!
   assert.equal(c.peaks[0]!.current, 90)
 })
+
+/** 주간 테이블(날짜 컬럼 포함, 7일 행) 빌더 — 실 리포트 "주간 배달현황" 구조. */
+function makeWeeklyBody(
+  centerLabel: string,
+  rows: Array<{ date: string; cells: [string, string, string, string] }>,
+): unknown {
+  return {
+    dataResponse: [
+      {
+        dataSubset: [
+          {
+            dataset: {
+              tableDataset: {
+                column: [
+                  { stringColumn: { values: rows.map(() => centerLabel) } },
+                  { stringColumn: { values: rows.map((r) => r.date) } },
+                  { stringColumn: { values: rows.map((r) => r.cells[0]) } },
+                  { stringColumn: { values: rows.map((r) => r.cells[1]) } },
+                  { stringColumn: { values: rows.map((r) => r.cells[2]) } },
+                  { stringColumn: { values: rows.map((r) => r.cells[3]) } },
+                ],
+              },
+            },
+          },
+        ],
+      },
+    ],
+  }
+}
+
+test('주간 테이블 + targetDate: 해당 날짜 행만 채택(마지막 행 goal 오염 방지 — 2026-07-17 사고)', () => {
+  const weekly = makeWeeklyBody('표준인천서B - DP2504250236', [
+    { date: '26-07-17', cells: ['0/589 (0%)', '0/418 (0%)', '0/684 (0%)', '0/589 (0%)'] },
+    { date: '26-07-20', cells: ['0/399 (0%)', '0/380 (0%)', '0/570 (0%)', '0/551 (0%)'] },
+    { date: '26-07-21', cells: ['0/399 (0%)', '0/380 (0%)', '0/570 (0%)', '0/551 (0%)'] },
+  ])
+  const [c] = parseLookerGoals([weekly], '26-07-17')
+  assert.ok(c)
+  assert.equal(c.peaks.find((p) => p.peak_key === 'ml')?.goal, 589) // 399(월/화) 아님
+  assert.equal(c.peaks.find((p) => p.peak_key === 'pd')?.goal, 589)
+})
+
+test('주간 테이블 + targetDate 불일치 행만 있으면 빈 결과(다른 요일 goal 채택 금지)', () => {
+  const weekly = makeWeeklyBody('표준인천서B - DP2504250236', [
+    { date: '26-07-20', cells: ['0/399 (0%)', '0/380 (0%)', '0/570 (0%)', '0/551 (0%)'] },
+  ])
+  assert.equal(parseLookerGoals([weekly], '26-07-17').length, 0)
+})
+
+test('날짜 컬럼 없는 테이블(오늘 배달현황)은 targetDate 지정에도 그대로 채택', () => {
+  const today = makeBody('표준인천서B - DP2504250236', [
+    '513/589 (87%)', '0/418 (0%)', '0/684 (0%)', '0/589 (0%)',
+  ])
+  const [c] = parseLookerGoals([today], '26-07-17')
+  assert.ok(c)
+  assert.equal(c.peaks.find((p) => p.peak_key === 'ml')?.current, 513)
+})

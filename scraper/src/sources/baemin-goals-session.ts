@@ -83,10 +83,12 @@ export async function collectCenterGoals(cfg: Config, log: Logger): Promise<Cent
     })
     // 데이터가 렌더된 "유효 목표(goal>0)" 응답이 올 때까지 대기(최대 ~30s).
     // 로딩 중에는 "0/0 (0%)" 플레이스홀더가 오므로, 패턴만 보지 말고 파싱 결과의 유효성으로 판단.
-    let centers = parseLookerGoals(bodies)
+    // 주간 테이블(수~화 7행)에서 오늘 영업일 행만 채택 — 'YYYY-MM-DD' → 'YY-MM-DD'(리포트 표기).
+    const targetDate = businessDayInTz(cfg.timezone).slice(2)
+    let centers = parseLookerGoals(bodies, targetDate)
     for (let i = 0; i < 60 && !centers.some(isValidCenterGoals); i++) {
       await page.waitForTimeout(500)
-      centers = parseLookerGoals(bodies)
+      centers = parseLookerGoals(bodies, targetDate)
     }
 
     // (B) 비파괴 가드: 유효(goal>0) 센터만 채택. 없으면 upsert 스킵(기존 값 보존) — 0 으로 덮어쓰지 않음.
