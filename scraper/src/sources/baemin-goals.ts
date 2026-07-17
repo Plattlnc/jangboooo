@@ -66,13 +66,27 @@ export function isValidCenterGoals(c: CenterGoals): boolean {
   return c.peaks.some((p) => p.goal != null && p.goal > 0)
 }
 
+/** 주간 테이블의 날짜 셀 형식: "26-07-17" (YY-MM-DD). */
+const DATE_CELL_RE = /^\d{2}-\d{2}-\d{2}$/
+
+/** 값이 전부 날짜 셀인 컬럼(주간 테이블 식별자). */
+function isDateColumn(col: LookerColumn): boolean {
+  const vals = columnValues(col).filter((v) => v != null && v !== '')
+  return vals.length > 0 && vals.every((v) => DATE_CELL_RE.test(v.trim()))
+}
+
 /**
  * batchedDataV2 응답들(원문 문자열 또는 파싱된 객체)에서 센터별 4피크 공동목표를 추출.
  * 5컬럼 [센터, ml, pl, d, pd] 형태의 tableDataset 을 찾아 행 단위로 매핑.
  * 같은 센터가 여러 응답/행에 나오면 **유효(goal>0) 값을 우선**하고, 유효끼리는 마지막이 우선.
  * (로딩/플레이스홀더 "0/0 (0%)" 응답이 좋은 값을 0 으로 덮어쓰는 회귀 방지.)
+ *
+ * targetDate('YY-MM-DD'): 리포트의 "주간 배달현황" 테이블은 수~화 7일치 행이 모두 오므로,
+ * 날짜 컬럼이 있는 테이블에선 해당 날짜 행만 채택한다. 미지정 시(과거 호환) 전 행 채택 —
+ * 마지막 행(주 후반) goal 이 오늘 goal 을 덮어쓴 2026-07-17 사고의 원인이었다.
+ * 날짜 컬럼이 없는 테이블("오늘 배달현황")은 그대로 오늘 값으로 채택한다.
  */
-export function parseLookerGoals(bodies: Array<string | unknown>): CenterGoals[] {
+export function parseLookerGoals(bodies: Array<string | unknown>, targetDate?: string): CenterGoals[] {
   const byCenter = new Map<string, CenterGoals>()
   const setBest = (cand: CenterGoals): void => {
     const prev = byCenter.get(cand.center_id)
@@ -103,9 +117,13 @@ export function parseLookerGoals(bodies: Array<string | unknown>): CenterGoals[]
       // 공동목표 테이블 = 피크 컬럼 정확히 4개 + 센터 컬럼 존재.
       if (peakCols.length !== 4 || !centerCol) continue
 
+      const dateCol = targetDate ? cols.find(isDateColumn) : undefined
+      const dateVals = dateCol ? columnValues(dateCol) : []
       const centerVals = columnValues(centerCol)
       const rowCount = Math.max(...peakCols.map((c) => columnValues(c).length), centerVals.length)
       for (let r = 0; r < rowCount; r++) {
+        // 주간(날짜 컬럼 보유) 테이블은 대상 날짜 행만 — 다른 요일 goal 채택 금지.
+        if (dateCol && dateVals[r]?.trim() !== targetDate) continue
         const label = centerVals[r]
         if (!label) continue
         const idMatch = CENTER_ID_RE.exec(label)
