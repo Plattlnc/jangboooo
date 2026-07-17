@@ -57,7 +57,9 @@ async function fileExists(path: string): Promise<boolean> {
 export async function collectCenterGoals(cfg: Config, log: Logger): Promise<CenterGoalUpsert[]> {
   await restoreGoogleStateFromB64(cfg, log)
 
-  const browser = await chromium.launch({ headless: cfg.headless })
+  // launch 무한 행 방지 — 메인 브라우저와 동일 상한(2026-07-09 9a63a28 과 같은 결함이
+  // 이 자체-launch 경로엔 누락돼 goal 루프가 통째로 멈춘 사고: 2026-07-16~17 goal null).
+  const browser = await chromium.launch({ headless: cfg.headless, timeout: 60_000 })
   try {
     const opts: BrowserContextOptions = { userAgent: GOOGLE_UA, locale: 'ko-KR' }
     if (await fileExists(cfg.goals.googleStorageStatePath)) {
