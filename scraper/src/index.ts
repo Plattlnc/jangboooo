@@ -15,7 +15,7 @@ import { runScrapeCycle } from './scrape'
 import { runLoop } from './scheduler'
 import { isSessionExpired } from './sources/baemin'
 import { collectCenterGoals } from './sources/baemin-goals-session'
-import { delay } from './util'
+import { delay, withTimeout } from './util'
 
 /**
  * Railway 등 영속 FS 없는 환경: STORAGE_STATE_B64 가 있고 세션 파일이 없으면
@@ -132,7 +132,9 @@ async function main(): Promise<void> {
 /** 공동목표 1회 수집+적재(best-effort, 절대 throw 안 함). */
 async function collectAndUpsertGoals(cfg: Config, db: ReturnType<typeof createDb>, log: Logger): Promise<void> {
   try {
-    const rows = await collectCenterGoals(cfg, log)
+    // 워치독: 한 번의 수집이 행에 걸리면 goal 루프 전체가 영구 정지(2026-07-16 사고).
+    // launch 60s + goto 30s + 응답 폴링 30s 를 넉넉히 덮는 4분 상한.
+    const rows = await withTimeout(collectCenterGoals(cfg, log), 4 * 60_000, '공동목표 수집')
     const n = await upsertCenterGoalTargets(db, rows)
     if (n > 0) log.info('공동목표 goal 적재', { rows: n })
   } catch (err) {
