@@ -120,6 +120,15 @@ export function parseLookerGoals(bodies: Array<string | unknown>, targetDate?: s
       const dateCol = targetDate ? cols.find(isDateColumn) : undefined
       const dateVals = dateCol ? columnValues(dateCol) : []
       const centerVals = columnValues(centerCol)
+      // 주간 테이블이 날짜 컬럼 없이 분할 청크로 오는 경우(Looker 응답 분할은 로드마다 다름):
+      // 같은 센터가 여러 행이면 요일별 행 = 어느 행이 오늘인지 식별 불가 → 테이블 통째로 거부.
+      // ("오늘 배달현황" 테이블은 센터당 1행이라 통과. 2026-07-17 goal 399 오염 잔존 원인.)
+      if (targetDate && !dateCol) {
+        const ids = centerVals
+          .map((v) => (v ? CENTER_ID_RE.exec(v)?.[1] : undefined))
+          .filter((v): v is string => Boolean(v))
+        if (new Set(ids).size < ids.length) continue
+      }
       const rowCount = Math.max(...peakCols.map((c) => columnValues(c).length), centerVals.length)
       for (let r = 0; r < rowCount; r++) {
         // 주간(날짜 컬럼 보유) 테이블은 대상 날짜 행만 — 다른 요일 goal 채택 금지.
