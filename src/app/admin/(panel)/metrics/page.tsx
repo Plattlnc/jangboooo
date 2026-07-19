@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getAdminCustomView, getAdminDashboardData } from "@/lib/supabase/admin-queries";
+import { getAdminCustomView, getAdminPeriodView, getAdminRiderInfo } from "@/lib/supabase/admin-queries";
 import { PeriodTabs, type PeriodTabKey } from "@/components/admin/period-tabs";
 import { DateRangeForm } from "@/components/admin/date-range-form";
 import { acceptBand, fmtCount, fmtDateRange, fmtPct, fmtRangeLabel } from "@/components/admin/format";
@@ -19,13 +19,16 @@ export default async function AdminMetricsPage({
   const sp = await searchParams;
   const period: SlaPeriod = isSlaPeriod(sp.period) ? sp.period : "today";
 
-  const data = await getAdminDashboardData();
-  const businessToday = data.today.range.start_date;
+  // 페이지에 필요한 기간 범위만 fetch(홈 superset 미사용) + 라이더 명부는 5분 메모.
+  const [{ view: periodView, businessToday }, riderMeta] = await Promise.all([
+    getAdminPeriodView(period),
+    getAdminRiderInfo(),
+  ]);
   const customRange = clampCustomRange(sp.from, sp.to, businessToday, 7);
-  const view = customRange ? await getAdminCustomView(customRange) : data[period];
+  const view = customRange ? await getAdminCustomView(customRange) : periodView;
   const tab: PeriodTabKey = customRange ? "custom" : period;
   const rangeLabel = customRange ? fmtDateRange(customRange) : fmtRangeLabel(period, view.range);
-  const nameOf = (id: string) => data.riderInfo[id]?.name ?? id;
+  const nameOf = (id: string) => riderMeta.info[id]?.name ?? id;
 
   const rated = view.riders.filter((r) => r.acceptanceRate != null);
   const byAcceptAsc = [...rated].sort((a, b) => (a.acceptanceRate ?? 0) - (b.acceptanceRate ?? 0));

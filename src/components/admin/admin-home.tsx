@@ -1,15 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import type { AdminDashboardData, AdminPeriodView } from "@/lib/supabase/admin-queries";
-import type { SlaPeriod } from "@/types/database";
+import type { AdminHomeVM } from "./home-vm";
 import { DateRangeForm } from "./date-range-form";
-import { acceptBand, fmtCapturedAt, fmtCount, fmtPct, fmtRangeLabel } from "./format";
 
 // 관리자 홈 — 일간/주간/월간 + 날짜 직접 선택(최대 7일, 당일 제외) 토글.
-// 산식·분리 규약은 라이더 홈과 동일(수락률=푸드식, 타일=일반+B마트 서브라인).
+// 뷰모델은 서버 프리컴퓨트(home-vm) — 여기는 표시/탭 전환/60s 폴링만 담당.
 
 const PERIODS = [
   { key: "today", label: "일간" },
@@ -17,34 +15,26 @@ const PERIODS = [
   { key: "month", label: "월간" },
 ] as const;
 
-type Tab = SlaPeriod | "custom";
-
-const STATUS_META = [
-  { key: "completed", bmartKey: "complete", label: "완료", color: "#1E9E5A", tint: "#e7f5ee" },
-  { key: "rejected", bmartKey: "reject", label: "거절", color: "#D9342B", tint: "#fbe9e8" },
-  { key: "dispatchCanceled", bmartKey: "cancel", label: "배차취소", color: "#E8590C", tint: "#fdf0e6" },
-  { key: "deliveryCanceled", bmartKey: "riderFault", label: "배달취소", color: "#9b9588", tint: "#f4f5f7" },
-] as const;
-
-const PEAK_LABELS = [
-  { key: "morning", label: "아침점심" },
-  { key: "afternoon", label: "오후" },
-  { key: "evening", label: "저녁" },
-  { key: "midnight", label: "심야" },
-] as const;
+type Tab = (typeof PERIODS)[number]["key"] | "custom";
 
 export function AdminHome({
-  data,
+  today,
+  week,
+  month,
   custom,
+  customRange,
   maxDate,
 }: {
-  data: AdminDashboardData;
-  /** from/to 쿼리로 선택된 커스텀 기간 뷰(클램프 완료). 없으면 null. */
-  custom: { view: AdminPeriodView; label: string } | null;
+  today: AdminHomeVM;
+  week: AdminHomeVM;
+  month: AdminHomeVM;
+  /** from/to 쿼리로 선택된 커스텀 기간 뷰모델(클램프 완료). 없으면 null. */
+  custom: AdminHomeVM | null;
+  customRange: { from: string; to: string } | null;
   /** 날짜 입력 상한(어제 영업일) — 당일은 실시간 수집 중이라 제외. */
   maxDate: string;
 }) {
-  const [period, setPeriod] = useState<Tab>(custom ? "custom" : "today");
+  const [tab, setTab] = useState<Tab>(custom ? "custom" : "today");
   const router = useRouter();
 
   // 스크래퍼 1분 주기에 맞춘 60s 폴링(라이더 홈과 동일 — 탭 숨김 시 중단).
@@ -69,65 +59,7 @@ export function AdminHome({
     };
   }, [router]);
 
-  const view = period === "custom" && custom ? custom.view : data[period === "custom" ? "today" : period];
-  const t = view.totals;
-  const rangeLabel =
-    period === "custom" && custom ? custom.label : fmtRangeLabel(period === "custom" ? "today" : period, view.range);
-
-  const v = useMemo(() => {
-    // breakdown 전무한 과거 구간(0004 이전)은 B마트 분리 표시 불가 → 서브라인 생략.
-    const catSum =
-      t.food.complete + t.food.reject + t.food.cancel + t.food.riderFault +
-      t.bmart.complete + t.bmart.reject + t.bmart.cancel + t.bmart.riderFault;
-    const hasBreakdown = catSum > 0 || t.completed === 0;
-    const band = acceptBand(t.acceptanceRate);
-
-    const status = STATUS_META.map((meta) => {
-      const total = t[meta.key];
-      const bmart = t.bmart[meta.bmartKey];
-      return {
-        label: meta.label,
-        value: hasBreakdown ? Math.max(0, total - bmart) : total,
-        bmart: hasBreakdown ? bmart : null,
-        color: total > 0 ? meta.color : "#b9bdc7",
-        tileBg: total > 0 ? meta.tint : "#f5f6f8",
-      };
-    });
-
-    const peakMax = Math.max(...PEAK_LABELS.map((p) => t.peaks[p.key]));
-    const peaks = PEAK_LABELS.map((p) => {
-      const value = t.peaks[p.key];
-      const isMax = value === peakMax && peakMax > 0;
-      return { label: p.label, value, isMax };
-    });
-
-    const nameOf = (id: string) => data.riderInfo[id]?.name ?? id;
-    // 주의 라이더: 수락률 낮은 순(산정 가능한 라이더만).
-    const atRisk = view.riders
-      .filter((r) => r.acceptanceRate != null && r.assigned > 0)
-      .sort((a, b) => (a.acceptanceRate ?? 0) - (b.acceptanceRate ?? 0))
-      .slice(0, 5)
-      .map((r) => ({ id: r.adminRiderId, name: nameOf(r.adminRiderId), rate: r.acceptanceRate, band: acceptBand(r.acceptanceRate) }));
-    // 완료 상위: aggregateByRider 기본 정렬(completed desc).
-    const top = view.riders.slice(0, 5).map((r) => ({
-      id: r.adminRiderId,
-      name: nameOf(r.adminRiderId),
-      completed: r.completed,
-      bmart: r.bmart.complete,
-      rate: r.acceptanceRate,
-    }));
-
-    // 일별 추이(주간/월간): 최신순 최대 7일.
-    const daily = [...view.daily].reverse().slice(0, 7).map((d) => ({
-      date: d.date,
-      completed: d.completed,
-      rejected: d.rejected,
-      rate: d.acceptanceRate,
-      band: acceptBand(d.acceptanceRate),
-    }));
-
-    return { hasBreakdown, band, status, peaks, atRisk, top, daily };
-  }, [t, view, data.riderInfo]);
+  const v = tab === "custom" && custom ? custom : tab === "week" ? week : tab === "month" ? month : today;
 
   return (
     <div className="px-3.5 py-[9px]">
@@ -137,10 +69,10 @@ export function AdminHome({
           <button
             key={p.key}
             type="button"
-            onClick={() => setPeriod(p.key)}
+            onClick={() => setTab(p.key)}
             className={
               "flex-1 py-[9px] text-[13.5px] transition-all " +
-              (period === p.key
+              (tab === p.key
                 ? "bg-white font-black text-jb-ink shadow-[0_1px_3px_rgba(20,23,46,0.1)]"
                 : "bg-transparent font-bold text-jb-ink-mute")
             }
@@ -151,10 +83,10 @@ export function AdminHome({
         {custom ? (
           <button
             type="button"
-            onClick={() => setPeriod("custom")}
+            onClick={() => setTab("custom")}
             className={
               "flex-1 py-[9px] text-[13.5px] transition-all " +
-              (period === "custom"
+              (tab === "custom"
                 ? "bg-white font-black text-jb-indigo shadow-[0_1px_3px_rgba(20,23,46,0.1)]"
                 : "bg-transparent font-bold text-jb-ink-mute")
             }
@@ -167,8 +99,8 @@ export function AdminHome({
       {/* 날짜 직접 선택 — 조회 시 from/to 쿼리로 서버 재렌더('기간' 탭 활성). */}
       <DateRangeForm
         basePath="/admin"
-        from={custom?.view.range.start_date}
-        to={custom?.view.range.end_date}
+        from={customRange?.from}
+        to={customRange?.to}
         maxDate={maxDate}
         note="최대 7일 조회 · 오늘은 실시간 수집 중이라 선택할 수 없어요"
       />
@@ -177,41 +109,37 @@ export function AdminHome({
       <div className="mt-2">
         <div className="mb-1.5 flex items-center justify-between px-0.5">
           <span className="text-xs font-black text-jb-ink">통합 운행 요약</span>
-          <span className="tnum text-[10px] font-semibold text-jb-ink-mute">{rangeLabel}</span>
+          <span className="tnum text-[10px] font-semibold text-jb-ink-mute">{v.rangeLabel}</span>
         </div>
         <div className="border border-jb-line bg-white px-4 py-3 shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
           <div className="flex items-center justify-between">
             <div className="flex items-baseline gap-1.5">
               <span className="text-[18px] font-bold text-jb-ink-soft">배달</span>
-              <span className="tnum text-[18px] font-black text-jb-ink">{fmtCount(t.completed)}</span>
+              <span className="tnum text-[18px] font-black text-jb-ink">{v.hero.completed}</span>
               <span className="text-[18px] font-bold text-jb-ink-soft">건</span>
             </div>
             <div className="flex shrink-0 items-center gap-2">
               <span className="flex items-baseline gap-1">
                 <span className="text-[18px] font-bold text-jb-ink-soft">수락률</span>
-                <span className="tnum text-[18px] font-black" style={{ color: v.band.color }}>
-                  {fmtPct(t.acceptanceRate)}
+                <span className="tnum text-[18px] font-black" style={{ color: v.hero.bandColor }}>
+                  {v.hero.accept}
                 </span>
               </span>
               <span
                 className="px-2.5 py-[3px] text-[10.5px] font-black text-white"
-                style={{ background: v.band.color }}
+                style={{ background: v.hero.bandColor }}
               >
-                {v.band.label}
+                {v.hero.bandLabel}
               </span>
             </div>
           </div>
           <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-jb-line-soft pt-2 text-[11.5px] font-bold text-jb-ink-soft">
-            {v.hasBreakdown ? (
-              <span className="tnum">
-                일반 {fmtCount(Math.max(0, t.completed - t.bmart.complete))} · B마트 {fmtCount(t.bmart.complete)}
-              </span>
-            ) : null}
+            {v.hero.split ? <span className="tnum">{v.hero.split}</span> : null}
             <span className="tnum">
-              활동 라이더 {fmtCount(t.activeRiders)}
-              <span className="text-jb-ink-mute"> / 등록 {fmtCount(data.registeredRiders)}</span>
+              활동 라이더 {v.hero.active}
+              <span className="text-jb-ink-mute"> / 등록 {v.hero.registered}</span>
             </span>
-            <span className="tnum ml-auto text-jb-ink-mute">{fmtCapturedAt(t.lastCapturedAt)}</span>
+            <span className="tnum ml-auto text-jb-ink-mute">{v.hero.captured}</span>
           </div>
         </div>
       </div>
@@ -230,11 +158,15 @@ export function AdminHome({
               <div key={it.label} className="px-1 py-[7px] text-center" style={{ background: it.tileBg }}>
                 <div className="text-[11.5px] font-bold text-jb-ink-soft">{it.label}</div>
                 <div className="tnum mt-0.5 text-xl font-black tracking-[-0.02em]" style={{ color: it.color }}>
-                  {fmtCount(it.value)}
+                  {it.value}
                 </div>
                 {it.bmart != null ? (
-                  <div className={"tnum text-[10px] font-bold " + (it.bmart > 0 ? "text-jb-ink-soft" : "text-jb-ink-mute")}>
-                    B마트 {fmtCount(it.bmart)}
+                  <div
+                    className={
+                      "tnum text-[10px] font-bold " + (it.bmart !== "0" ? "text-jb-ink-soft" : "text-jb-ink-mute")
+                    }
+                  >
+                    B마트 {it.bmart}
                   </div>
                 ) : null}
               </div>
@@ -263,8 +195,11 @@ export function AdminHome({
                 <div className="text-[11.5px] font-bold" style={{ color: p.isMax ? "#4F6AF5" : "#9b9588" }}>
                   {p.label}
                 </div>
-                <div className="tnum mt-0.5 text-xl font-black tracking-[-0.02em]" style={{ color: p.isMax ? "#4F6AF5" : "#1a1d2e" }}>
-                  {fmtCount(p.value)}
+                <div
+                  className="tnum mt-0.5 text-xl font-black tracking-[-0.02em]"
+                  style={{ color: p.isMax ? "#4F6AF5" : "#1a1d2e" }}
+                >
+                  {p.value}
                 </div>
               </div>
             ))}
@@ -299,14 +234,14 @@ export function AdminHome({
                   {r.name}
                   <span className="tnum ml-1.5 text-[10.5px] font-semibold text-jb-ink-mute">{r.id}</span>
                 </span>
-                <span className="tnum text-[13.5px] font-black" style={{ color: r.band.color }}>
-                  {fmtPct(r.rate)}
+                <span className="tnum text-[13.5px] font-black" style={{ color: r.bandColor }}>
+                  {r.rate}
                 </span>
                 <span
                   className="px-1.5 py-0.5 text-[9.5px] font-black text-white"
-                  style={{ background: r.band.color }}
+                  style={{ background: r.bandColor }}
                 >
-                  {r.band.label}
+                  {r.bandLabel}
                 </span>
               </Link>
             ))
@@ -341,18 +276,18 @@ export function AdminHome({
                   {r.name}
                   <span className="tnum ml-1.5 text-[10.5px] font-semibold text-jb-ink-mute">{r.id}</span>
                 </span>
-                {v.hasBreakdown && r.bmart > 0 ? (
-                  <span className="tnum text-[10.5px] font-bold text-jb-ink-mute">B마트 {fmtCount(r.bmart)}</span>
+                {r.bmart ? (
+                  <span className="tnum text-[10.5px] font-bold text-jb-ink-mute">B마트 {r.bmart}</span>
                 ) : null}
-                <span className="tnum text-[13.5px] font-black text-jb-ink">{fmtCount(r.completed)}건</span>
+                <span className="tnum text-[13.5px] font-black text-jb-ink">{r.completed}건</span>
               </Link>
             ))
           )}
         </div>
       </div>
 
-      {/* 일별 추이 (주간/월간) */}
-      {period !== "today" && v.daily.length > 0 ? (
+      {/* 일별 추이 (주간/월간/기간) */}
+      {tab !== "today" && v.daily.length > 0 ? (
         <div className="mt-2">
           <div className="mb-1.5 px-0.5">
             <span className="text-xs font-black text-jb-ink">일별 추이</span>
@@ -370,11 +305,11 @@ export function AdminHome({
                 key={d.date}
                 className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-x-3 border-b border-jb-line-soft px-3.5 py-2 last:border-b-0"
               >
-                <span className="tnum text-[12.5px] font-bold text-jb-ink">{d.date.slice(5).replace("-", ".")}</span>
-                <span className="tnum text-right text-[12.5px] font-black text-jb-ink">{fmtCount(d.completed)}</span>
-                <span className="tnum text-right text-[12.5px] font-bold text-jb-ink-soft">{fmtCount(d.rejected)}</span>
-                <span className="tnum text-right text-[12.5px] font-black" style={{ color: d.band.color }}>
-                  {fmtPct(d.rate)}
+                <span className="tnum text-[12.5px] font-bold text-jb-ink">{d.date}</span>
+                <span className="tnum text-right text-[12.5px] font-black text-jb-ink">{d.completed}</span>
+                <span className="tnum text-right text-[12.5px] font-bold text-jb-ink-soft">{d.rejected}</span>
+                <span className="tnum text-right text-[12.5px] font-black" style={{ color: d.rateColor }}>
+                  {d.rate}
                 </span>
               </div>
             ))}

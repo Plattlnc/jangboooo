@@ -60,10 +60,14 @@ export async function getDashboardData(period: SlaPeriod): Promise<DashboardData
   const adminRiderId = session.adminRiderId;
 
   const { getRiderSummaryFor, getRiderHourlyFor, getRiderPeaksFor, getRiderBmartFor } = await import("@/lib/supabase/queries");
-  const [summary, hourly, centerGoals] = await Promise.all([
+  const { memoized } = await import("@/lib/admin/memo");
+  // 이름/공동목표는 기간(today/week)과 무관 — 짧은 TTL 메모로 두 기간 병렬 조회 시 중복 제거
+  // (60s 폴링에서도 재사용, 스크래퍼 1분 주기 대비 신선).
+  const [summary, hourly, centerGoals, riderName] = await Promise.all([
     getRiderSummaryFor(adminRiderId, period),
     getRiderHourlyFor(adminRiderId, period),
-    getCenterGoals(adminRiderId),
+    memoized(`rider-goals:${adminRiderId}`, 25_000, () => getCenterGoals(adminRiderId)),
+    memoized(`rider-name:${adminRiderId}`, 5 * 60_000, () => getRiderName(adminRiderId)),
   ]);
 
   // 직전 기간 요약(델타용)·피크 4버킷·B마트 세부: 모두 summary 의 기간 경계에 의존 → 병렬 후속 조회.
@@ -81,7 +85,7 @@ export async function getDashboardData(period: SlaPeriod): Promise<DashboardData
     bmart = bmartTotals;
   }
 
-  return { summary, previous, hourly, peaks, bmart, riderName: await getRiderName(adminRiderId), centerGoals };
+  return { summary, previous, hourly, peaks, bmart, riderName, centerGoals };
 }
 
 /**
