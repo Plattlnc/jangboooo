@@ -1,13 +1,16 @@
 import Link from "next/link";
-import { getAdminDashboardData } from "@/lib/supabase/admin-queries";
-import { PeriodTabs } from "@/components/admin/period-tabs";
-import { acceptBand, fmtCount, fmtPct, fmtRangeLabel } from "@/components/admin/format";
+import { getAdminCustomView, getAdminDashboardData } from "@/lib/supabase/admin-queries";
+import { PeriodTabs, type PeriodTabKey } from "@/components/admin/period-tabs";
+import { DateRangeForm } from "@/components/admin/date-range-form";
+import { acceptBand, fmtCount, fmtDateRange, fmtPct, fmtRangeLabel } from "@/components/admin/format";
+import { addDaysIso, clampCustomRange } from "@/lib/admin/date-range";
 import { isSlaPeriod } from "@/app/(rider)/_lib/metrics";
 import type { SlaPeriod } from "@/types/database";
 
 export const dynamic = "force-dynamic";
 
 // 지표 상세 — 수락률(낮은 순)/거절률(높은 순) 전체 랭킹. 산식=배민 공식(푸드 기준).
+// from/to 쿼리 = 날짜 직접 선택(포함 최대 7일, 당일 제외 — 서버 클램프).
 export default async function AdminMetricsPage({
   searchParams,
 }: {
@@ -17,7 +20,11 @@ export default async function AdminMetricsPage({
   const period: SlaPeriod = isSlaPeriod(sp.period) ? sp.period : "today";
 
   const data = await getAdminDashboardData();
-  const view = data[period];
+  const businessToday = data.today.range.start_date;
+  const customRange = clampCustomRange(sp.from, sp.to, businessToday, 7);
+  const view = customRange ? await getAdminCustomView(customRange) : data[period];
+  const tab: PeriodTabKey = customRange ? "custom" : period;
+  const rangeLabel = customRange ? fmtDateRange(customRange) : fmtRangeLabel(period, view.range);
   const nameOf = (id: string) => data.riderInfo[id]?.name ?? id;
 
   const rated = view.riders.filter((r) => r.acceptanceRate != null);
@@ -29,13 +36,19 @@ export default async function AdminMetricsPage({
 
   return (
     <div className="px-3.5 py-[9px]">
-      <PeriodTabs period={period} basePath="/admin/metrics" />
+      <PeriodTabs period={tab} basePath="/admin/metrics" />
+
+      <DateRangeForm
+        basePath="/admin/metrics"
+        from={customRange?.start_date}
+        to={customRange?.end_date}
+        maxDate={addDaysIso(businessToday, -1)}
+        note="최대 7일 조회 · 오늘은 실시간 수집 중이라 선택할 수 없어요"
+      />
 
       <div className="mt-2 flex items-center justify-between px-0.5">
         <span className="text-xs font-black text-jb-ink">전체 지표</span>
-        <span className="tnum text-[10px] font-semibold text-jb-ink-mute">
-          {fmtRangeLabel(period, view.range)}
-        </span>
+        <span className="tnum text-[10px] font-semibold text-jb-ink-mute">{rangeLabel}</span>
       </div>
 
       {/* 요약 스트립 */}

@@ -24,6 +24,12 @@ export function fmtRangeLabel(period: SlaPeriod, range: PeriodRange): string {
   return `${fmtKDate(range.start_date)} ~ ${fmtKDate(range.end_date)}`;
 }
 
+/** 커스텀 선택 범위 라벨 — 단일일이면 '기준' 표기. */
+export function fmtDateRange(range: PeriodRange): string {
+  if (range.start_date === range.end_date) return `${fmtKDate(range.start_date)} 기준`;
+  return `${fmtKDate(range.start_date)} ~ ${fmtKDate(range.end_date)}`;
+}
+
 /** 퍼센트 — null 은 '—'. 저장 정밀도(소수 2자리)를 1자리로 표시. */
 export function fmtPct(v: number | null | undefined): string {
   if (v == null) return "—";
