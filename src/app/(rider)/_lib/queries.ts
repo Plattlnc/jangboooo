@@ -7,7 +7,7 @@
 //
 // 단위: acceptance_rate/sla_score 는 0~100 퍼센트 — 목 데이터도 동일.
 
-import type { CenterGoalRow, RiderHourlyRow, RiderPeakTotals, RiderSummaryRow, SlaPeriod } from "@/types/database";
+import type { CenterGoalRow, RiderHourlyRow, RiderPeakTotals, RiderSummaryRow, SlaCategoryCounts, SlaPeriod } from "@/types/database";
 import { DEMO_MODE } from "@/lib/demo";
 
 // period 유틸의 정식 위치는 _lib/metrics(클라이언트 안전). 기존 import 경로 하위호환 re-export.
@@ -21,6 +21,8 @@ export interface DashboardData {
   hourly: RiderHourlyRow[];
   /** 피크 4버킷 합계 — 배민 원본 버킷값(sla_snapshots.peak_*). 시간 경계 추정 없음. */
   peaks: RiderPeakTotals;
+  /** 기간 B마트 세부 합계(breakdown.bmart). 미보유(과거 데이터)면 null → 분리 표시 생략. */
+  bmart: SlaCategoryCounts | null;
   /** 세션 라이더 이름(헤더 표시). 미상이면 null. */
   riderName: string | null;
   /** 센터 공동목표 4피크(ml→pl→d→pd). best-effort — 미수집/실패 시 빈 배열. */
@@ -57,26 +59,29 @@ export async function getDashboardData(period: SlaPeriod): Promise<DashboardData
   }
   const adminRiderId = session.adminRiderId;
 
-  const { getRiderSummaryFor, getRiderHourlyFor, getRiderPeaksFor } = await import("@/lib/supabase/queries");
+  const { getRiderSummaryFor, getRiderHourlyFor, getRiderPeaksFor, getRiderBmartFor } = await import("@/lib/supabase/queries");
   const [summary, hourly, centerGoals] = await Promise.all([
     getRiderSummaryFor(adminRiderId, period),
     getRiderHourlyFor(adminRiderId, period),
     getCenterGoals(adminRiderId),
   ]);
 
-  // 직전 기간 요약(델타용)과 피크 4버킷: 둘 다 summary 의 기간 경계에 의존 → 병렬 후속 조회.
+  // 직전 기간 요약(델타용)·피크 4버킷·B마트 세부: 모두 summary 의 기간 경계에 의존 → 병렬 후속 조회.
   let previous: RiderSummaryRow | null = null;
   let peaks: RiderPeakTotals = { morning: 0, afternoon: 0, evening: 0, midnight: 0 };
+  let bmart: SlaCategoryCounts | null = null;
   if (summary?.start_date) {
-    const [prev, peakTotals] = await Promise.all([
+    const [prev, peakTotals, bmartTotals] = await Promise.all([
       getRiderSummaryFor(adminRiderId, period, isoDateMinusDays(summary.start_date, 1)),
       getRiderPeaksFor(adminRiderId, summary.start_date, summary.end_date),
+      getRiderBmartFor(adminRiderId, summary.start_date, summary.end_date),
     ]);
     previous = prev && prev.active_days > 0 ? prev : null;
     peaks = peakTotals;
+    bmart = bmartTotals;
   }
 
-  return { summary, previous, hourly, peaks, riderName: await getRiderName(adminRiderId), centerGoals };
+  return { summary, previous, hourly, peaks, bmart, riderName: await getRiderName(adminRiderId), centerGoals };
 }
 
 /**
@@ -166,6 +171,13 @@ const MOCK_PREVIOUS: Record<SlaPeriod, RiderSummaryRow> = {
   month: { ...MOCK_SUMMARY.month, sla_score: 87, completed: 488, rejected: 45, dispatch_canceled: 30, delivery_canceled: 12, acceptance_rate: 85 },
 };
 
+// B마트 세부 목 — 요약 합계(completed 등)에 포함된 것으로 가정(합계 − bmart = 일반).
+const MOCK_BMART: Record<SlaPeriod, SlaCategoryCounts> = {
+  today: { complete: 2, reject: 1, cancel: 0, riderFault: 0 },
+  week: { complete: 9, reject: 3, cancel: 1, riderFault: 0 },
+  month: { complete: 34, reject: 11, cancel: 4, riderFault: 1 },
+};
+
 function mockHourly(period: SlaPeriod): RiderHourlyRow[] {
   const scale = period === "today" ? 1 : period === "week" ? 6 : 26;
   const base = [0, 0, 0, 0, 0, 0, 0, 1, 2, 2, 3, 6, 9, 5, 3, 2, 3, 7, 11, 8, 5, 3, 1, 0];
@@ -192,6 +204,7 @@ async function getMockDashboardData(period: SlaPeriod): Promise<DashboardData> {
     previous: MOCK_PREVIOUS[period],
     hourly: mockHourly(period),
     peaks: mockPeaks(period),
+    bmart: MOCK_BMART[period],
     riderName: "라이더",
     centerGoals: MOCK_CENTER_GOALS,
   };

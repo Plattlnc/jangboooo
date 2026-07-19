@@ -28,11 +28,15 @@ function useHomeView(m: HomeMetrics) {
     const acceptOnDark =
       acceptStatus.label === "양호" ? "#4ade80" : acceptStatus.label === "주의" ? "#fbbf24" : "#ff7a7a";
 
-    const statusItems = m.status.map((it) => ({
-      ...it,
-      tileBg: it.value > 0 ? (STATUS_TINT[it.color] ?? "#f8f9fb") : "#f5f6f8",
-      numColor: it.value > 0 ? it.color : "#b9bdc7",
-    }));
+    const statusItems = m.status.map((it) => {
+      // 타일 활성(색) 판정은 일반+B마트 합산 — 일반 0건이어도 B마트만 있으면 활동으로 표시.
+      const total = it.value + (it.bmart ?? 0);
+      return {
+        ...it,
+        tileBg: total > 0 ? (STATUS_TINT[it.color] ?? "#f8f9fb") : "#f5f6f8",
+        numColor: total > 0 ? it.color : "#b9bdc7",
+      };
+    });
     const totalAll = m.status.reduce((a, b) => a + b.value, 0);
     const doneRate = totalAll > 0 ? Math.round((m.status[0].value / totalAll) * 100) : 0;
 
@@ -68,7 +72,9 @@ function useHomeView(m: HomeMetrics) {
       };
     });
 
-    return { acceptStatus, acceptOnDark, statusItems, doneRate, peaks, goals };
+    const hasBmartSplit = m.status.some((it) => it.bmart != null);
+
+    return { acceptStatus, acceptOnDark, statusItems, hasBmartSplit, doneRate, peaks, goals };
   }, [m]);
 }
 
@@ -201,8 +207,11 @@ export function HomeScreen({
 
       {/* 운행 상태 */}
       <div className="mt-2">
-        <div className="mb-1.5 px-0.5">
+        <div className="mb-1.5 flex items-center justify-between px-0.5">
           <span className="text-xs font-black text-jb-ink">운행 상태</span>
+          {v.hasBmartSplit ? (
+            <span className="text-[11px] font-bold text-jb-ink-mute">일반 배달 기준 · B마트 별도</span>
+          ) : null}
         </div>
         <div className="border border-jb-line bg-white p-3 shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
           <div className="grid grid-cols-4 gap-[7px]">
@@ -212,6 +221,16 @@ export function HomeScreen({
                 <div className="tnum mt-0.5 text-xl font-black tracking-[-0.02em]" style={{ color: it.numColor }}>
                   {it.value}
                 </div>
+                {it.bmart != null ? (
+                  <div
+                    className={
+                      "tnum text-[10px] font-bold " +
+                      (it.bmart > 0 ? "text-jb-ink-soft" : "text-jb-ink-mute")
+                    }
+                  >
+                    B마트 {it.bmart}
+                  </div>
+                ) : null}
               </div>
             ))}
           </div>
