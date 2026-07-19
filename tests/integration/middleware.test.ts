@@ -7,16 +7,21 @@ import { NextRequest } from "next/server";
 vi.mock("@/lib/demo", () => ({ DEMO_MODE: false }));
 
 import { middleware } from "@/middleware";
-import { createSessionToken, SESSION_COOKIE } from "@/lib/auth/session";
+import {
+  ADMIN_SESSION_COOKIE,
+  createAdminSessionToken,
+  createSessionToken,
+  SESSION_COOKIE,
+} from "@/lib/auth/session";
 
 const SECRET = "test-secret-0123456789-abcdef"; // ≥16자
 
 beforeEach(() => vi.stubEnv("SESSION_SECRET", SECRET));
 afterEach(() => vi.unstubAllEnvs());
 
-function req(path: string, cookie?: string) {
+function req(path: string, cookie?: string, cookieName: string = SESSION_COOKIE) {
   const r = new NextRequest(new URL(`http://localhost${path}`));
-  if (cookie) r.cookies.set(SESSION_COOKIE, cookie);
+  if (cookie) r.cookies.set(cookieName, cookie);
   return r;
 }
 
@@ -72,5 +77,50 @@ describe("middleware — 가드 비활성 우회", () => {
     vi.stubEnv("SESSION_SECRET", "");
     const res = await middleware(req("/dashboard"));
     expect(redirectLocation(res)).toBeNull();
+  });
+});
+
+describe("middleware — 관리자 영역(/admin) 가드", () => {
+  it("미인증 + /admin → /admin/login?next=/admin 리다이렉트", async () => {
+    const res = await middleware(req("/admin"));
+    expect(res.status).toBe(307);
+    const loc = redirectLocation(res);
+    expect(loc?.pathname).toBe("/admin/login");
+    expect(loc?.searchParams.get("next")).toBe("/admin");
+  });
+
+  it("미인증 + 하위 경로(/admin/riders/R-1)도 보호", async () => {
+    const res = await middleware(req("/admin/riders/R-1"));
+    expect(res.status).toBe(307);
+    expect(redirectLocation(res)?.pathname).toBe("/admin/login");
+  });
+
+  it("/admin/login 은 미인증 통과", async () => {
+    const res = await middleware(req("/admin/login"));
+    expect(redirectLocation(res)).toBeNull();
+  });
+
+  it("유효 관리자 토큰 → 통과", async () => {
+    const token = await createAdminSessionToken();
+    const res = await middleware(req("/admin", token, ADMIN_SESSION_COOKIE));
+    expect(redirectLocation(res)).toBeNull();
+  });
+
+  it("라이더 세션 쿠키로는 /admin 접근 불가(상호 인정 없음)", async () => {
+    const riderToken = await createSessionToken("R-1");
+    // 라이더 쿠키명/관리자 쿠키명 모두에 라이더 토큰을 실어도 거부돼야 한다.
+    const r = new NextRequest(new URL("http://localhost/admin"));
+    r.cookies.set(SESSION_COOKIE, riderToken);
+    r.cookies.set(ADMIN_SESSION_COOKIE, riderToken);
+    const res = await middleware(r);
+    expect(res.status).toBe(307);
+    expect(redirectLocation(res)?.pathname).toBe("/admin/login");
+  });
+
+  it("관리자 토큰으로는 /dashboard 접근 불가(역방향 상호 인정 없음)", async () => {
+    const adminToken = await createAdminSessionToken();
+    const res = await middleware(req("/dashboard", adminToken));
+    expect(res.status).toBe(307);
+    expect(redirectLocation(res)?.pathname).toBe("/login");
   });
 });
