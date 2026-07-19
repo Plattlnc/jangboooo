@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getAdminCustomView, getAdminDashboardData } from "@/lib/supabase/admin-queries";
+import { getAdminCustomView, getAdminPeriodView, getAdminRiderInfo } from "@/lib/supabase/admin-queries";
 import { PeriodTabs, type PeriodTabKey } from "@/components/admin/period-tabs";
 import { DateRangeForm } from "@/components/admin/date-range-form";
 import { acceptBand, fmtCount, fmtDateRange, fmtPct, fmtRangeLabel } from "@/components/admin/format";
@@ -20,14 +20,17 @@ export default async function AdminRidersPage({
   const period: SlaPeriod = isSlaPeriod(sp.period) ? sp.period : "today";
   const q = typeof sp.q === "string" ? sp.q.trim() : "";
 
-  const data = await getAdminDashboardData();
-  const businessToday = data.today.range.start_date;
+  // 페이지에 필요한 기간 범위만 fetch(홈 superset 미사용) + 라이더 명부는 5분 메모.
+  const [{ view: periodView, businessToday }, riderMeta] = await Promise.all([
+    getAdminPeriodView(period),
+    getAdminRiderInfo(),
+  ]);
   const customRange = clampCustomRange(sp.from, sp.to, businessToday, 7);
-  const view = customRange ? await getAdminCustomView(customRange) : data[period];
+  const view = customRange ? await getAdminCustomView(customRange) : periodView;
   const tab: PeriodTabKey = customRange ? "custom" : period;
   const rangeLabel = customRange ? fmtDateRange(customRange) : fmtRangeLabel(period, view.range);
 
-  const nameOf = (id: string) => data.riderInfo[id]?.name ?? null;
+  const nameOf = (id: string) => riderMeta.info[id]?.name ?? null;
   const matches = (id: string) => {
     if (!q) return true;
     const needle = q.toLowerCase();
@@ -37,7 +40,7 @@ export default async function AdminRidersPage({
   const riders = view.riders.filter((r) => matches(r.adminRiderId));
   // 기간 내 실적 없는 등록(활성) 라이더 — 하단 접이식으로 노출.
   const withRecords = new Set(view.riders.map((r) => r.adminRiderId));
-  const idle = Object.entries(data.riderInfo)
+  const idle = Object.entries(riderMeta.info)
     .filter(([id, info]) => info.isActive && !withRecords.has(id) && matches(id))
     .map(([id, info]) => ({ id, name: info.name }))
     .sort((a, b) => (a.name ?? a.id).localeCompare(b.name ?? b.id, "ko"));
