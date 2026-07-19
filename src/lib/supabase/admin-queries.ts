@@ -10,6 +10,7 @@ import {
   type DailyTotals,
   type RiderTotals,
 } from '@/lib/admin/aggregate'
+import { addDaysIso, clampCustomRange } from '@/lib/admin/date-range'
 import type { CenterPeakGoalRow, SlaPeriod } from '@/types/database'
 
 /**
@@ -123,6 +124,12 @@ export async function getAdminDashboardData(ref?: string): Promise<AdminDashboar
   }
 }
 
+/** 커스텀 기간(시작~마감, 클램프 완료된 범위) 집계 뷰 — 홈/라이더/지표 공용. */
+export async function getAdminCustomView(range: PeriodRange): Promise<AdminPeriodView> {
+  const rows = await fetchSnapshotsRange(range.start_date, range.end_date)
+  return toView(rows, range)
+}
+
 export interface AdminRiderDetail {
   adminRiderId: string
   name: string | null
@@ -178,18 +185,53 @@ export async function getAdminRiderDetail(adminRiderId: string, ref?: string): P
   }
 }
 
-/** 센터 공동목표 — 최근 n 영업일(기본 7) 이력, 최신 날짜 우선. */
-export async function getAdminCenterGoals(days = 7, ref?: string): Promise<CenterPeakGoalRow[]> {
+export interface AdminGoalsData {
+  /** 현재 영업일(-6h 앵커) — 상단 '오늘 현황' 기준. */
+  businessToday: string
+  today: CenterPeakGoalRow[]
+  /** 조회 범위 내 과거 이력(최신 날짜 우선). 당일은 미포함(상단이 담당). */
+  history: CenterPeakGoalRow[]
+  range: PeriodRange
+}
+
+/**
+ * 센터 공동목표 — 오늘(영업일) 현황 + 과거 이력(자유 범위, 스팬 제한 없음).
+ * from/to 미지정 시 최근 7일(어제까지). 당일 제외 클램프는 커스텀 기간과 동일 규칙.
+ */
+export async function getAdminGoalsData(fromRaw?: unknown, toRaw?: unknown, ref?: string): Promise<AdminGoalsData> {
   const supabase = createAdminClient()
-  const { start_date } = await getPeriodRange('today', ref)
-  const from = new Date(`${start_date}T00:00:00Z`)
-  from.setUTCDate(from.getUTCDate() - (days - 1))
-  const { data, error } = await supabase
-    .from('center_peak_goals')
-    .select('*')
-    .gte('snapshot_date', from.toISOString().slice(0, 10))
-    .lte('snapshot_date', start_date)
-    .order('snapshot_date', { ascending: false })
-  if (error) throw error
-  return data ?? []
+  const { start_date: businessToday } = await getPeriodRange('today', ref)
+  const defaultEnd = addDaysIso(businessToday, -1)
+  const range =
+    clampCustomRange(fromRaw, toRaw, businessToday, null) ??
+    { start_date: addDaysIso(defaultEnd, -6), end_date: defaultEnd }
+
+  const todayQuery = supabase.from('center_peak_goals').select('*').eq('snapshot_date', businessToday)
+
+  // 이력은 자유 범위(과거 전체 가능) — 4행/일이지만 장기 조회 대비 페이징 루프.
+  const BATCH = 1000
+  const history: CenterPeakGoalRow[] = []
+  const fetchHistoryPage = (offset: number) =>
+    supabase
+      .from('center_peak_goals')
+      .select('*')
+      .gte('snapshot_date', range.start_date)
+      .lte('snapshot_date', range.end_date)
+      .order('snapshot_date', { ascending: false })
+      .order('peak_key', { ascending: true })
+      .range(offset, offset + BATCH - 1)
+
+  const [todayRes, firstPage] = await Promise.all([todayQuery, fetchHistoryPage(0)])
+  if (todayRes.error) throw todayRes.error
+  if (firstPage.error) throw firstPage.error
+  history.push(...(firstPage.data ?? []))
+  let lastLen = firstPage.data?.length ?? 0
+  for (let offset = BATCH; lastLen === BATCH; offset += BATCH) {
+    const page = await fetchHistoryPage(offset)
+    if (page.error) throw page.error
+    history.push(...(page.data ?? []))
+    lastLen = page.data?.length ?? 0
+  }
+
+  return { businessToday, today: todayRes.data ?? [], history, range }
 }

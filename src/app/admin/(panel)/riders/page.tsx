@@ -1,13 +1,16 @@
 import Link from "next/link";
-import { getAdminDashboardData } from "@/lib/supabase/admin-queries";
-import { PeriodTabs } from "@/components/admin/period-tabs";
-import { acceptBand, fmtCount, fmtPct, fmtRangeLabel } from "@/components/admin/format";
+import { getAdminCustomView, getAdminDashboardData } from "@/lib/supabase/admin-queries";
+import { PeriodTabs, type PeriodTabKey } from "@/components/admin/period-tabs";
+import { DateRangeForm } from "@/components/admin/date-range-form";
+import { acceptBand, fmtCount, fmtDateRange, fmtPct, fmtRangeLabel } from "@/components/admin/format";
+import { addDaysIso, clampCustomRange } from "@/lib/admin/date-range";
 import { isSlaPeriod } from "@/app/(rider)/_lib/metrics";
 import type { SlaPeriod } from "@/types/database";
 
 export const dynamic = "force-dynamic";
 
 // 라이더(직원) 전체 목록 — 기간별 실적 테이블. 행 탭 → 개별 상세.
+// from/to 쿼리 = 날짜 직접 선택(포함 최대 7일, 당일 제외 — 서버 클램프).
 export default async function AdminRidersPage({
   searchParams,
 }: {
@@ -18,7 +21,11 @@ export default async function AdminRidersPage({
   const q = typeof sp.q === "string" ? sp.q.trim() : "";
 
   const data = await getAdminDashboardData();
-  const view = data[period];
+  const businessToday = data.today.range.start_date;
+  const customRange = clampCustomRange(sp.from, sp.to, businessToday, 7);
+  const view = customRange ? await getAdminCustomView(customRange) : data[period];
+  const tab: PeriodTabKey = customRange ? "custom" : period;
+  const rangeLabel = customRange ? fmtDateRange(customRange) : fmtRangeLabel(period, view.range);
 
   const nameOf = (id: string) => data.riderInfo[id]?.name ?? null;
   const matches = (id: string) => {
@@ -37,20 +44,33 @@ export default async function AdminRidersPage({
 
   return (
     <div className="px-3.5 py-[9px]">
-      <PeriodTabs period={period} basePath="/admin/riders" extraQuery={q ? { q } : {}} />
+      <PeriodTabs period={tab} basePath="/admin/riders" extraQuery={q ? { q } : {}} />
+
+      <DateRangeForm
+        basePath="/admin/riders"
+        from={customRange?.start_date}
+        to={customRange?.end_date}
+        maxDate={addDaysIso(businessToday, -1)}
+        extraQuery={q ? { q } : {}}
+        note="최대 7일 조회 · 오늘은 실시간 수집 중이라 선택할 수 없어요"
+      />
 
       <div className="mt-2 flex items-center justify-between px-0.5">
         <span className="text-xs font-black text-jb-ink">
           라이더 실적 <span className="tnum text-jb-indigo">{fmtCount(riders.length)}명</span>
         </span>
-        <span className="tnum text-[10px] font-semibold text-jb-ink-mute">
-          {fmtRangeLabel(period, view.range)}
-        </span>
+        <span className="tnum text-[10px] font-semibold text-jb-ink-mute">{rangeLabel}</span>
       </div>
 
-      {/* 검색(GET) — 기간 유지 */}
+      {/* 검색(GET) — 기간/커스텀 범위 유지 */}
       <form className="mt-1.5 flex gap-1.5" action="/admin/riders" method="get">
         <input type="hidden" name="period" value={period} />
+        {customRange ? (
+          <>
+            <input type="hidden" name="from" value={customRange.start_date} />
+            <input type="hidden" name="to" value={customRange.end_date} />
+          </>
+        ) : null}
         <input
           type="search"
           name="q"

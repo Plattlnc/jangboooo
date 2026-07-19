@@ -3,11 +3,12 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import type { AdminDashboardData } from "@/lib/supabase/admin-queries";
+import type { AdminDashboardData, AdminPeriodView } from "@/lib/supabase/admin-queries";
 import type { SlaPeriod } from "@/types/database";
+import { DateRangeForm } from "./date-range-form";
 import { acceptBand, fmtCapturedAt, fmtCount, fmtPct, fmtRangeLabel } from "./format";
 
-// 관리자 홈 — 일간/주간/월간 토글 + 전체 SLA 요약/운행 상태/피크/주의·상위 라이더/일별 추이.
+// 관리자 홈 — 일간/주간/월간 + 날짜 직접 선택(최대 7일, 당일 제외) 토글.
 // 산식·분리 규약은 라이더 홈과 동일(수락률=푸드식, 타일=일반+B마트 서브라인).
 
 const PERIODS = [
@@ -15,6 +16,8 @@ const PERIODS = [
   { key: "week", label: "주간" },
   { key: "month", label: "월간" },
 ] as const;
+
+type Tab = SlaPeriod | "custom";
 
 const STATUS_META = [
   { key: "completed", bmartKey: "complete", label: "완료", color: "#1E9E5A", tint: "#e7f5ee" },
@@ -30,8 +33,18 @@ const PEAK_LABELS = [
   { key: "midnight", label: "심야" },
 ] as const;
 
-export function AdminHome({ data }: { data: AdminDashboardData }) {
-  const [period, setPeriod] = useState<SlaPeriod>("today");
+export function AdminHome({
+  data,
+  custom,
+  maxDate,
+}: {
+  data: AdminDashboardData;
+  /** from/to 쿼리로 선택된 커스텀 기간 뷰(클램프 완료). 없으면 null. */
+  custom: { view: AdminPeriodView; label: string } | null;
+  /** 날짜 입력 상한(어제 영업일) — 당일은 실시간 수집 중이라 제외. */
+  maxDate: string;
+}) {
+  const [period, setPeriod] = useState<Tab>(custom ? "custom" : "today");
   const router = useRouter();
 
   // 스크래퍼 1분 주기에 맞춘 60s 폴링(라이더 홈과 동일 — 탭 숨김 시 중단).
@@ -56,8 +69,10 @@ export function AdminHome({ data }: { data: AdminDashboardData }) {
     };
   }, [router]);
 
-  const view = data[period];
+  const view = period === "custom" && custom ? custom.view : data[period === "custom" ? "today" : period];
   const t = view.totals;
+  const rangeLabel =
+    period === "custom" && custom ? custom.label : fmtRangeLabel(period === "custom" ? "today" : period, view.range);
 
   const v = useMemo(() => {
     // breakdown 전무한 과거 구간(0004 이전)은 B마트 분리 표시 불가 → 서브라인 생략.
@@ -133,15 +148,36 @@ export function AdminHome({ data }: { data: AdminDashboardData }) {
             {p.label}
           </button>
         ))}
+        {custom ? (
+          <button
+            type="button"
+            onClick={() => setPeriod("custom")}
+            className={
+              "flex-1 py-[9px] text-[13.5px] transition-all " +
+              (period === "custom"
+                ? "bg-white font-black text-jb-indigo shadow-[0_1px_3px_rgba(20,23,46,0.1)]"
+                : "bg-transparent font-bold text-jb-ink-mute")
+            }
+          >
+            기간
+          </button>
+        ) : null}
       </div>
+
+      {/* 날짜 직접 선택 — 조회 시 from/to 쿼리로 서버 재렌더('기간' 탭 활성). */}
+      <DateRangeForm
+        basePath="/admin"
+        from={custom?.view.range.start_date}
+        to={custom?.view.range.end_date}
+        maxDate={maxDate}
+        note="최대 7일 조회 · 오늘은 실시간 수집 중이라 선택할 수 없어요"
+      />
 
       {/* 통합 요약 히어로 */}
       <div className="mt-2">
         <div className="mb-1.5 flex items-center justify-between px-0.5">
           <span className="text-xs font-black text-jb-ink">통합 운행 요약</span>
-          <span className="tnum text-[10px] font-semibold text-jb-ink-mute">
-            {fmtRangeLabel(period, view.range)}
-          </span>
+          <span className="tnum text-[10px] font-semibold text-jb-ink-mute">{rangeLabel}</span>
         </div>
         <div className="border border-jb-line bg-white px-4 py-3 shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
           <div className="flex items-center justify-between">

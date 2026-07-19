@@ -1,10 +1,13 @@
-import { getAdminCenterGoals } from "@/lib/supabase/admin-queries";
-import { fmtCount, fmtKDate, fmtShortDate } from "@/components/admin/format";
+import { getAdminGoalsData } from "@/lib/supabase/admin-queries";
+import { DateRangeForm } from "@/components/admin/date-range-form";
+import { addDaysIso } from "@/lib/admin/date-range";
+import { fmtCount, fmtDateRange, fmtKDate, fmtShortDate } from "@/components/admin/format";
 import type { CenterPeakGoalRow } from "@/types/database";
 
 export const dynamic = "force-dynamic";
 
-// 협력사 공동목표 — 오늘(영업일) 4피크 현황 + 최근 7일 이력. 소스: center_peak_goals(Looker).
+// 협력사 공동목표 — 최상단 = 당일(영업일) 4피크 현황(실시간), 하단 = 과거 이력.
+// 이력은 from/to 로 과거 전체 일자 자유 조회(스팬 제한 없음, 당일 제외). 기본 최근 7일.
 const PEAK_ORDER: { key: CenterPeakGoalRow["peak_key"]; label: string }[] = [
   { key: "ml", label: "아침점심" },
   { key: "pl", label: "오후논피크" },
@@ -12,19 +15,21 @@ const PEAK_ORDER: { key: CenterPeakGoalRow["peak_key"]; label: string }[] = [
   { key: "pd", label: "심야논피크" },
 ];
 
-export default async function AdminGoalsPage() {
-  const rows = await getAdminCenterGoals(7);
+export default async function AdminGoalsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const sp = await searchParams;
+  const { businessToday, today: latest, history: historyRows, range } = await getAdminGoalsData(sp.from, sp.to);
 
   const byDate = new Map<string, CenterPeakGoalRow[]>();
-  for (const r of rows) {
+  for (const r of historyRows) {
     const list = byDate.get(r.snapshot_date);
     if (list) list.push(r);
     else byDate.set(r.snapshot_date, [r]);
   }
-  const dates = [...byDate.keys()].sort().reverse();
-  const latestDate = dates[0];
-  const latest = latestDate ? byDate.get(latestDate) ?? [] : [];
-  const history = dates.slice(1);
+  const history = [...byDate.keys()].sort().reverse();
 
   const pick = (list: CenterPeakGoalRow[], key: CenterPeakGoalRow["peak_key"]) =>
     list.find((r) => r.peak_key === key);
@@ -33,18 +38,16 @@ export default async function AdminGoalsPage() {
     <div className="px-3.5 py-[9px]">
       <div className="flex items-center justify-between px-0.5">
         <span className="text-xs font-black text-jb-ink">
-          공동목표 <span className="text-jb-indigo">· 협력사 4피크</span>
+          오늘 공동목표 <span className="text-jb-indigo">· 협력사 4피크</span>
         </span>
-        {latestDate ? (
-          <span className="tnum text-[10px] font-semibold text-jb-ink-mute">{fmtKDate(latestDate)} 기준</span>
-        ) : null}
+        <span className="tnum text-[10px] font-semibold text-jb-ink-mute">{fmtKDate(businessToday)} 실시간</span>
       </div>
 
-      {/* 오늘 현황 */}
+      {/* 오늘(영업일) 현황 — 실시간 수집분 */}
       <div className="mt-1.5 border border-jb-line bg-white px-[13px] py-[9px] shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
         {latest.length === 0 ? (
           <div className="flex flex-col items-center gap-1.5 py-4 text-center">
-            <span className="text-[12.5px] font-bold text-jb-ink-soft">아직 집계된 공동목표가 없어요</span>
+            <span className="text-[12.5px] font-bold text-jb-ink-soft">오늘 공동목표가 아직 수집 전이에요</span>
             <span className="text-[11px] text-jb-ink-mute">수집되면 자동으로 표시돼요</span>
           </div>
         ) : (
@@ -91,14 +94,27 @@ export default async function AdminGoalsPage() {
         )}
       </div>
 
-      {/* 최근 이력 */}
-      {history.length > 0 ? (
-        <div className="mt-2">
-          <div className="mb-1.5 px-0.5">
-            <span className="text-xs font-black text-jb-ink">최근 이력</span>
-            <span className="ml-1.5 text-[11px] font-bold text-jb-ink-mute">달성/목표(달성률)</span>
+      {/* 일자별 이력 — 과거 전체 자유 조회 */}
+      <div className="mt-2">
+        <div className="mb-1.5 flex items-center justify-between px-0.5">
+          <span className="text-xs font-black text-jb-ink">
+            일자별 이력 <span className="ml-1 text-[11px] font-bold text-jb-ink-mute">달성/목표(달성률)</span>
+          </span>
+          <span className="tnum text-[10px] font-semibold text-jb-ink-mute">{fmtDateRange(range)}</span>
+        </div>
+        <DateRangeForm
+          basePath="/admin/goals"
+          from={range.start_date}
+          to={range.end_date}
+          maxDate={addDaysIso(businessToday, -1)}
+          note="과거 전체 일자 조회 가능 · 오늘은 상단 실시간 현황에서 확인"
+        />
+        {history.length === 0 ? (
+          <div className="mt-1.5 border border-jb-line bg-white px-4 py-6 text-center text-[12px] font-bold text-jb-ink-mute shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
+            선택한 기간에 수집된 공동목표가 없어요
           </div>
-          <div className="border border-jb-line bg-white shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
+        ) : (
+          <div className="mt-1.5 border border-jb-line bg-white shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
             <div className="grid grid-cols-[auto_1fr_1fr_1fr_1fr] items-center gap-x-2 border-b border-jb-line-soft px-3 py-1.5 text-[10px] font-bold text-jb-ink-mute">
               <span className="w-[52px]">날짜</span>
               {PEAK_ORDER.map((p) => (
@@ -136,8 +152,8 @@ export default async function AdminGoalsPage() {
               );
             })}
           </div>
-        </div>
-      ) : null}
+        )}
+      </div>
 
       <div className="mt-1 pb-0.5 text-center text-[11px] text-jb-ink-mute">
         공동목표는 배민 달성현황(Looker) 소스 기준이며 수집 지연이 있을 수 있어요.
