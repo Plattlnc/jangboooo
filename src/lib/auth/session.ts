@@ -10,12 +10,23 @@
 export const SESSION_COOKIE = 'rider_session'
 export const SESSION_TTL_SECONDS = 60 * 60 * 24 * 14 // 14일
 
+// 관리자 세션 — 라이더와 쿠키/페이로드 분리(같은 서명 비밀 사용). 관리 화면 특성상 TTL 짧게.
+export const ADMIN_SESSION_COOKIE = 'admin_session'
+export const ADMIN_SESSION_TTL_SECONDS = 60 * 60 * 12 // 12시간
+
 export interface RiderSession {
   adminRiderId: string
 }
 
 interface TokenPayload {
   rid: string
+  iat: number
+  exp: number
+}
+
+/** 관리자 토큰 페이로드 — rid 대신 adm 플래그(라이더 토큰과 상호 오인 불가). */
+interface AdminTokenPayload {
+  adm: true
   iat: number
   exp: number
 }
@@ -75,6 +86,33 @@ export async function createSessionToken(adminRiderId: string): Promise<string> 
   const body = bytesToB64url(enc.encode(JSON.stringify(payload)))
   const sig = bytesToB64url(await hmac(body))
   return `${body}.${sig}`
+}
+
+/** 관리자 서명 토큰 생성. */
+export async function createAdminSessionToken(): Promise<string> {
+  const now = Math.floor(Date.now() / 1000)
+  const payload: AdminTokenPayload = { adm: true, iat: now, exp: now + ADMIN_SESSION_TTL_SECONDS }
+  const body = bytesToB64url(enc.encode(JSON.stringify(payload)))
+  const sig = bytesToB64url(await hmac(body))
+  return `${body}.${sig}`
+}
+
+/** 관리자 토큰 검증 — 유효하면 true(서명불일치/만료/형식오류/라이더 토큰이면 false). */
+export async function verifyAdminSessionToken(token: string | undefined | null): Promise<boolean> {
+  if (!token) return false
+  const dot = token.indexOf('.')
+  if (dot <= 0) return false
+  const body = token.slice(0, dot)
+  const sig = token.slice(dot + 1)
+  const expected = bytesToB64url(await hmac(body))
+  if (!constantTimeEqual(sig, expected)) return false
+  try {
+    const payload = JSON.parse(new TextDecoder().decode(b64urlToBytes(body))) as Partial<AdminTokenPayload>
+    if (payload.adm !== true || typeof payload.exp !== 'number') return false
+    return Math.floor(Date.now() / 1000) < payload.exp
+  } catch {
+    return false
+  }
 }
 
 /** 토큰 검증 → 세션 또는 null(서명불일치/만료/형식오류). */

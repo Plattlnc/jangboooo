@@ -211,6 +211,11 @@ export type Database = {
       }
       current_admin_rider_id: { Args: Empty; Returns: string | null }
       normalize_phone: { Args: { p_phone: string }; Returns: string | null }
+      // 기간 경계(영업일 -6h 앵커, 주=수요일 시작). 관리자 집계가 직접 호출(0010).
+      sla_period_range: {
+        Args: { p_period: SlaPeriod; p_ref?: string | null }
+        Returns: { start_date: string; end_date: string }[]
+      }
     }
     Enums: Empty
     CompositeTypes: Empty
