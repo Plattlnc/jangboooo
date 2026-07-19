@@ -5,7 +5,10 @@
 
 export interface StatusDatum {
   label: string;
+  /** 일반 배달(B마트 제외) 건수. bmart 미보유 데이터면 전체 합계. */
   value: number;
+  /** B마트 건수 — 값이 있으면 타일에 "B마트 n" 서브라인 표시. */
+  bmart?: number;
   color: string;
 }
 export interface CatDatum {

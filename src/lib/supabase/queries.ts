@@ -5,6 +5,7 @@ import type {
   RiderHourlyRow,
   RiderPeakTotals,
   RiderSummaryRow,
+  SlaCategoryCounts,
   SlaPeriod,
 } from '@/types/database'
 import type { SlaDashboardResponse } from '@/types/api'
@@ -90,6 +91,37 @@ export async function getRiderPeaksFor(
       midnight: acc.midnight + row.peak_midnight,
     }),
     { morning: 0, afternoon: 0, evening: 0, midnight: 0 },
+  )
+}
+
+/**
+ * 기간 B마트 세부 합계 — sla_snapshots.breakdown(0004, 배민 원본 카테고리)에서 bmart 만 합산.
+ * 요약 합계(completed 등)는 푸드+B마트+스토어 전체이므로, 화면의 "일반/B마트" 분리 표시는
+ * (합계 − bmart) 로 파생한다. breakdown 보유 행이 하나도 없으면 null(분리 표시 불가 신호).
+ */
+export async function getRiderBmartFor(
+  adminRiderId: string,
+  startDate: string,
+  endDate: string,
+): Promise<SlaCategoryCounts | null> {
+  const supabase = createAdminClient()
+  const { data, error } = await supabase
+    .from('sla_snapshots')
+    .select('breakdown')
+    .eq('admin_rider_id', adminRiderId)
+    .gte('snapshot_date', startDate)
+    .lte('snapshot_date', endDate)
+  if (error) throw error
+  const buckets = (data ?? []).flatMap((row) => (row.breakdown?.bmart ? [row.breakdown.bmart] : []))
+  if (buckets.length === 0) return null
+  return buckets.reduce<SlaCategoryCounts>(
+    (acc, b) => ({
+      complete: acc.complete + (b.complete ?? 0),
+      reject: acc.reject + (b.reject ?? 0),
+      cancel: acc.cancel + (b.cancel ?? 0),
+      riderFault: acc.riderFault + (b.riderFault ?? 0),
+    }),
+    { complete: 0, reject: 0, cancel: 0, riderFault: 0 },
   )
 }
 
