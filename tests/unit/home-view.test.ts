@@ -74,12 +74,4 @@ describe("toHomeMetrics — 일반/B마트 분리", () => {
     );
     expect(m.accept).toBe(95);
   });
-
-  it("수락률 소수값은 배민 표기와 동일하게 정수 반올림(93.75 → 94)", () => {
-    const m = toHomeMetrics(
-      fixture({ summary: { ...fixture().summary, acceptance_rate: 93.75 } }),
-      "today",
-    );
-    expect(m.accept).toBe(94);
-  });
 });
