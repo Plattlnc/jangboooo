@@ -26,7 +26,8 @@ interface AcceptanceGaugeProps {
 }
 
 function formatPct(value: number): string {
-  return Number.isInteger(value) ? `${value}%` : `${value.toFixed(1)}%`;
+  // 배민 앱 표기와 동일하게 정수 반올림 — 소수는 표시하지 않는다.
+  return `${Math.round(value)}%`;
 }
 
 export function AcceptanceGauge({ rate, label, note, errorText }: AcceptanceGaugeProps) {
