@@ -74,11 +74,17 @@ export default async function AdminRiderDetailPage({
                     <div className="text-[10px] font-bold text-jb-ink-mute">완료</div>
                     <div className="tnum text-[15px] font-black text-jb-ink">{fmtCount(t.completed)}</div>
                     <div className="tnum text-[9.5px] font-bold text-jb-ink-mute">B마트 {fmtCount(t.bmart.complete)}</div>
+                    {t.store.complete > 0 ? (
+                      <div className="tnum text-[9.5px] font-bold text-jb-ink-mute">스토어 {fmtCount(t.store.complete)}</div>
+                    ) : null}
                   </div>
                   <div>
                     <div className="text-[10px] font-bold text-jb-ink-mute">거절</div>
                     <div className="tnum text-[15px] font-black text-jb-ink-soft">{fmtCount(t.rejected)}</div>
                     <div className="tnum text-[9.5px] font-bold text-jb-ink-mute">B마트 {fmtCount(t.bmart.reject)}</div>
+                    {t.store.reject > 0 ? (
+                      <div className="tnum text-[9.5px] font-bold text-jb-ink-mute">스토어 {fmtCount(t.store.reject)}</div>
+                    ) : null}
                   </div>
                   <div>
                     <div className="text-[10px] font-bold text-jb-ink-mute">취소</div>
@@ -133,6 +139,11 @@ export default async function AdminRiderDetailPage({
                         B마트 {fmtCount(d.bmart.complete)}
                       </span>
                     ) : null}
+                    {d.store.complete > 0 ? (
+                      <span className="tnum block text-[9px] font-bold text-jb-ink-mute">
+                        스토어 {fmtCount(d.store.complete)}
+                      </span>
+                    ) : null}
                   </span>
                   <span className="tnum w-[30px] text-right text-[12.5px] font-bold text-jb-ink-soft">
                     {fmtCount(d.rejected)}
@@ -151,7 +162,7 @@ export default async function AdminRiderDetailPage({
       </div>
 
       <div className="mt-1 pb-0.5 text-center text-[11px] text-jb-ink-mute">
-        수락률은 배민 공식 산식(푸드 기준) · B마트 건 미포함
+        수락률은 배민 공식 산식(푸드 기준) · B마트·스토어 건 미포함
       </div>
     </div>
   );

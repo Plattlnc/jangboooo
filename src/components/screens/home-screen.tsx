@@ -29,8 +29,8 @@ function useHomeView(m: HomeMetrics) {
       acceptStatus.label === "양호" ? "#4ade80" : acceptStatus.label === "주의" ? "#fbbf24" : "#ff7a7a";
 
     const statusItems = m.status.map((it) => {
-      // 타일 활성(색) 판정은 일반+B마트 합산 — 일반 0건이어도 B마트만 있으면 활동으로 표시.
-      const total = it.value + (it.bmart ?? 0);
+      // 타일 활성(색) 판정은 일반+B마트+스토어 합산 — 일반 0건이어도 B마트/스토어만 있으면 활동으로 표시.
+      const total = it.value + (it.bmart ?? 0) + (it.store ?? 0);
       return {
         ...it,
         tileBg: total > 0 ? (STATUS_TINT[it.color] ?? "#f8f9fb") : "#f5f6f8",
@@ -210,7 +210,7 @@ export function HomeScreen({
         <div className="mb-1.5 flex items-center justify-between px-0.5">
           <span className="text-xs font-black text-jb-ink">운행 상태</span>
           {v.hasBmartSplit ? (
-            <span className="text-[11px] font-bold text-jb-ink-mute">일반 배달 기준 · B마트 별도</span>
+            <span className="text-[11px] font-bold text-jb-ink-mute">일반 배달 기준 · B마트/스토어 별도</span>
           ) : null}
         </div>
         <div className="border border-jb-line bg-white p-3 shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
@@ -230,6 +230,9 @@ export function HomeScreen({
                   >
                     B마트 {it.bmart}
                   </div>
+                ) : null}
+                {it.store != null && it.store > 0 ? (
+                  <div className="tnum text-[10px] font-bold text-jb-ink-soft">스토어 {it.store}</div>
                 ) : null}
               </div>
             ))}

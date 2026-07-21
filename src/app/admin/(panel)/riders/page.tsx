@@ -121,6 +121,11 @@ export default async function AdminRidersPage({
                       B마트 {fmtCount(r.bmart.complete)}
                     </span>
                   ) : null}
+                  {r.store.complete > 0 ? (
+                    <span className="tnum block text-[9.5px] font-bold text-jb-ink-mute">
+                      스토어 {fmtCount(r.store.complete)}
+                    </span>
+                  ) : null}
                 </span>
                 <span className="tnum w-[30px] text-right text-[13px] font-bold text-jb-ink-soft">
                   {fmtCount(r.rejected)}

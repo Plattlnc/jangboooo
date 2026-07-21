@@ -55,7 +55,23 @@ describe("aggregateTotals", () => {
     const t = aggregateTotals([row(), row({ admin_rider_id: "R-2" })]);
     expect(t.completed).toBe(20);
     expect(t.bmart.complete).toBe(4);
+    expect(t.store.complete).toBe(0);
     expect(t.food.complete).toBe(16);
+  });
+
+  it("스토어 세부도 별도 합산 — 일반(합계 − B마트 − 스토어) = 푸드와 일치", () => {
+    const t = aggregateTotals([
+      row({
+        breakdown: {
+          food: { complete: 6, reject: 1, cancel: 0, riderFault: 0 },
+          bmart: { complete: 2, reject: 0, cancel: 0, riderFault: 0 },
+          store: { complete: 2, reject: 1, cancel: 0, riderFault: 0 },
+        },
+      }),
+    ]);
+    expect(t.store.complete).toBe(2);
+    expect(t.store.reject).toBe(1);
+    expect(t.completed - t.bmart.complete - t.store.complete).toBe(t.food.complete);
   });
 
   it("breakdown 전무 시 수락률은 저장된 일별 acceptance_rate 평균 폴백(RPC 0011 동일)", () => {

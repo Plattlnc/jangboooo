@@ -94,16 +94,23 @@ export async function getRiderPeaksFor(
   )
 }
 
+/** 기간 카테고리 세부 합계 — B마트/스토어 각각. breakdown 보유 행이 없으면 null. */
+export interface RiderCategorySplit {
+  bmart: SlaCategoryCounts
+  store: SlaCategoryCounts
+}
+
 /**
- * 기간 B마트 세부 합계 — sla_snapshots.breakdown(0004, 배민 원본 카테고리)에서 bmart 만 합산.
- * 요약 합계(completed 등)는 푸드+B마트+스토어 전체이므로, 화면의 "일반/B마트" 분리 표시는
- * (합계 − bmart) 로 파생한다. breakdown 보유 행이 하나도 없으면 null(분리 표시 불가 신호).
+ * 기간 B마트·스토어 세부 합계 — sla_snapshots.breakdown(0004, 배민 원본 카테고리) 합산.
+ * 요약 합계(completed 등)는 푸드+B마트+스토어 전체이므로, 화면의 "일반" 표시는
+ * (합계 − bmart − store) 로 파생한다(= 순수 푸드). breakdown 보유 행이 하나도 없으면
+ * null(분리 표시 불가 신호).
  */
-export async function getRiderBmartFor(
+export async function getRiderCategoriesFor(
   adminRiderId: string,
   startDate: string,
   endDate: string,
-): Promise<SlaCategoryCounts | null> {
+): Promise<RiderCategorySplit | null> {
   const supabase = createAdminClient()
   const { data, error } = await supabase
     .from('sla_snapshots')
@@ -112,16 +119,18 @@ export async function getRiderBmartFor(
     .gte('snapshot_date', startDate)
     .lte('snapshot_date', endDate)
   if (error) throw error
-  const buckets = (data ?? []).flatMap((row) => (row.breakdown?.bmart ? [row.breakdown.bmart] : []))
-  if (buckets.length === 0) return null
-  return buckets.reduce<SlaCategoryCounts>(
-    (acc, b) => ({
-      complete: acc.complete + (b.complete ?? 0),
-      reject: acc.reject + (b.reject ?? 0),
-      cancel: acc.cancel + (b.cancel ?? 0),
-      riderFault: acc.riderFault + (b.riderFault ?? 0),
-    }),
-    { complete: 0, reject: 0, cancel: 0, riderFault: 0 },
+  const rows = (data ?? []).flatMap((row) => (row.breakdown ? [row.breakdown] : []))
+  if (rows.length === 0) return null
+  const addCat = (acc: SlaCategoryCounts, c: SlaCategoryCounts | undefined): SlaCategoryCounts => ({
+    complete: acc.complete + (c?.complete ?? 0),
+    reject: acc.reject + (c?.reject ?? 0),
+    cancel: acc.cancel + (c?.cancel ?? 0),
+    riderFault: acc.riderFault + (c?.riderFault ?? 0),
+  })
+  const EMPTY: SlaCategoryCounts = { complete: 0, reject: 0, cancel: 0, riderFault: 0 }
+  return rows.reduce<RiderCategorySplit>(
+    (acc, b) => ({ bmart: addCat(acc.bmart, b.bmart), store: addCat(acc.store, b.store) }),
+    { bmart: EMPTY, store: EMPTY },
   )
 }
 
