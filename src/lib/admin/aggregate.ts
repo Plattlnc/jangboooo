@@ -7,7 +7,7 @@
  *   저장된 일별 acceptance_rate 평균 폴백(RPC 0011 과 동일).
  * - 거절률 = 푸드거절 / 같은 분모 (수락률과 대비 가능).
  * - SLA 점수 = completed 가중 평균(RPC 와 동일).
- * - B마트/푸드 세부는 breakdown(0004) 합산 — 일반 표시는 (합계 − B마트).
+ * - B마트/스토어/푸드 세부는 breakdown(0004) 합산 — 일반 표시는 (합계 − B마트 − 스토어).
  */
 import type { SlaCategoryCounts, SlaSnapshotRow } from '@/types/database'
 
@@ -38,6 +38,7 @@ export interface AdminTotals {
   assigned: number
   food: SlaCategoryCounts
   bmart: SlaCategoryCounts
+  store: SlaCategoryCounts
   /** 수락률(%, 푸드 공식). 분모 0 + 폴백 불가 시 null. */
   acceptanceRate: number | null
   /** 거절률(%, 푸드거절/푸드분모). 분모 0 이면 null. */
@@ -85,6 +86,7 @@ export function aggregateTotals(rows: AdminSnapshotRow[]): AdminTotals {
   let assigned = 0
   let food = EMPTY_CAT
   let bmart = EMPTY_CAT
+  let store = EMPTY_CAT
   let slaWeighted = 0
   let slaWeight = 0
   let slaSum = 0
@@ -103,6 +105,7 @@ export function aggregateTotals(rows: AdminSnapshotRow[]): AdminTotals {
     assigned += r.assigned
     food = addCat(food, r.breakdown?.food)
     bmart = addCat(bmart, r.breakdown?.bmart)
+    store = addCat(store, r.breakdown?.store)
     if (r.sla_score != null) {
       slaWeighted += r.sla_score * r.completed
       slaWeight += r.completed
@@ -140,6 +143,7 @@ export function aggregateTotals(rows: AdminSnapshotRow[]): AdminTotals {
     assigned,
     food,
     bmart,
+    store,
     acceptanceRate,
     rejectionRate,
     slaScore,

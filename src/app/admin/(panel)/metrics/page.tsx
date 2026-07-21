@@ -146,7 +146,7 @@ export default async function AdminMetricsPage({
       </div>
 
       <div className="mt-1 pb-0.5 text-center text-[11px] text-jb-ink-mute">
-        수락률·거절률 = 푸드 완료+거절+취소+귀책 분모 기준(배민 공식) · B마트 미포함
+        수락률·거절률 = 푸드 완료+거절+취소+귀책 분모 기준(배민 공식) · B마트·스토어 미포함
       </div>
     </div>
   );

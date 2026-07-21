@@ -17,7 +17,7 @@ function fixture(overrides: Partial<DashboardData> = {}): DashboardData {
     // 일부러 peaks 와 안 맞는 분포 — hourly 로 재집계하지 않음을 검증.
     hourly: [{ hour: 13, completed: 99 }],
     peaks: { morning: 7, afternoon: 3, evening: 12, midnight: 2 },
-    bmart: null,
+    categories: null,
     riderName: "홍길동",
     centerGoals: [],
     ...overrides,
@@ -36,40 +36,51 @@ describe("toHomeMetrics — 피크 4버킷은 원본값 그대로", () => {
   });
 });
 
-describe("toHomeMetrics — 일반/B마트 분리", () => {
-  it("bmart 보유 시 상태값 = 합계 − B마트, bmart 서브값 첨부", () => {
+const ZERO_CAT = { complete: 0, reject: 0, cancel: 0, riderFault: 0 };
+
+describe("toHomeMetrics — 일반/B마트/스토어 분리", () => {
+  it("breakdown 보유 시 상태값 = 합계 − B마트 − 스토어, bmart/store 서브값 첨부", () => {
     const m = toHomeMetrics(
-      fixture({ bmart: { complete: 3, reject: 1, cancel: 0, riderFault: 0 } }),
+      fixture({
+        categories: {
+          bmart: { complete: 3, reject: 1, cancel: 0, riderFault: 0 },
+          store: { complete: 2, reject: 0, cancel: 0, riderFault: 0 },
+        },
+      }),
       "today",
     );
     expect(m.status).toEqual([
-      { label: "완료", value: 17, bmart: 3, color: "#1E9E5A" },
-      { label: "거절", value: 0, bmart: 1, color: "#D9342B" },
-      { label: "배차취소", value: 0, bmart: 0, color: "#E8590C" },
-      { label: "배달취소", value: 0, bmart: 0, color: "#9b9588" },
+      { label: "완료", value: 15, bmart: 3, store: 2, color: "#1E9E5A" },
+      { label: "거절", value: 0, bmart: 1, store: 0, color: "#D9342B" },
+      { label: "배차취소", value: 0, bmart: 0, store: 0, color: "#E8590C" },
+      { label: "배달취소", value: 0, bmart: 0, store: 0, color: "#9b9588" },
     ]);
     // 히어로 배달 건수는 전체 합계 유지(일반+B마트+스토어) — 분리는 운행 상태 타일에서.
     expect(m.count).toBe(20);
   });
 
-  it("bmart 미보유(null)면 합계 그대로 + bmart 필드 없음(서브라인 생략)", () => {
+  it("breakdown 미보유(null)면 합계 그대로 + bmart/store 필드 없음(서브라인 생략)", () => {
     const m = toHomeMetrics(fixture(), "today");
     expect(m.status[0]).toEqual({ label: "완료", value: 20, color: "#1E9E5A" });
-    expect(m.status.every((it) => !("bmart" in it))).toBe(true);
+    expect(m.status.every((it) => !("bmart" in it) && !("store" in it))).toBe(true);
   });
 
-  it("데이터 불일치로 B마트가 합계보다 커도 음수로 내려가지 않음(0 클램프)", () => {
+  it("데이터 불일치로 B마트+스토어가 합계보다 커도 음수로 내려가지 않음(0 클램프)", () => {
     const m = toHomeMetrics(
-      fixture({ bmart: { complete: 99, reject: 0, cancel: 0, riderFault: 0 } }),
+      fixture({
+        categories: { bmart: { ...ZERO_CAT, complete: 99 }, store: ZERO_CAT },
+      }),
       "today",
     );
     expect(m.status[0].value).toBe(0);
     expect(m.status[0].bmart).toBe(99);
   });
 
-  it("수락률은 B마트 분리와 무관하게 요약값(푸드 단독 산식) 그대로", () => {
+  it("수락률은 B마트/스토어 분리와 무관하게 요약값(푸드 단독 산식) 그대로", () => {
     const m = toHomeMetrics(
-      fixture({ bmart: { complete: 3, reject: 5, cancel: 0, riderFault: 0 } }),
+      fixture({
+        categories: { bmart: { ...ZERO_CAT, complete: 3, reject: 5 }, store: { ...ZERO_CAT, reject: 2 } },
+      }),
       "today",
     );
     expect(m.accept).toBe(95);

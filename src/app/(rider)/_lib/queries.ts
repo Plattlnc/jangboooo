@@ -8,6 +8,7 @@
 // 단위: acceptance_rate/sla_score 는 0~100 퍼센트 — 목 데이터도 동일.
 
 import type { CenterGoalRow, RiderHourlyRow, RiderPeakTotals, RiderSummaryRow, SlaCategoryCounts, SlaPeriod } from "@/types/database";
+import type { RiderCategorySplit } from "@/lib/supabase/queries";
 import { DEMO_MODE } from "@/lib/demo";
 
 // period 유틸의 정식 위치는 _lib/metrics(클라이언트 안전). 기존 import 경로 하위호환 re-export.
@@ -21,8 +22,8 @@ export interface DashboardData {
   hourly: RiderHourlyRow[];
   /** 피크 4버킷 합계 — 배민 원본 버킷값(sla_snapshots.peak_*). 시간 경계 추정 없음. */
   peaks: RiderPeakTotals;
-  /** 기간 B마트 세부 합계(breakdown.bmart). 미보유(과거 데이터)면 null → 분리 표시 생략. */
-  bmart: SlaCategoryCounts | null;
+  /** 기간 B마트·스토어 세부 합계(breakdown). 미보유(과거 데이터)면 null → 분리 표시 생략. */
+  categories: RiderCategorySplit | null;
   /** 세션 라이더 이름(헤더 표시). 미상이면 null. */
   riderName: string | null;
   /** 센터 공동목표 4피크(ml→pl→d→pd). best-effort — 미수집/실패 시 빈 배열. */
@@ -59,7 +60,7 @@ export async function getDashboardData(period: SlaPeriod): Promise<DashboardData
   }
   const adminRiderId = session.adminRiderId;
 
-  const { getRiderSummaryFor, getRiderHourlyFor, getRiderPeaksFor, getRiderBmartFor } = await import("@/lib/supabase/queries");
+  const { getRiderSummaryFor, getRiderHourlyFor, getRiderPeaksFor, getRiderCategoriesFor } = await import("@/lib/supabase/queries");
   const { memoized } = await import("@/lib/admin/memo");
   // 이름/공동목표는 기간(today/week)과 무관 — 짧은 TTL 메모로 두 기간 병렬 조회 시 중복 제거
   // (60s 폴링에서도 재사용, 스크래퍼 1분 주기 대비 신선).
@@ -70,22 +71,22 @@ export async function getDashboardData(period: SlaPeriod): Promise<DashboardData
     memoized(`rider-name:${adminRiderId}`, 5 * 60_000, () => getRiderName(adminRiderId)),
   ]);
 
-  // 직전 기간 요약(델타용)·피크 4버킷·B마트 세부: 모두 summary 의 기간 경계에 의존 → 병렬 후속 조회.
+  // 직전 기간 요약(델타용)·피크 4버킷·카테고리 세부: 모두 summary 의 기간 경계에 의존 → 병렬 후속 조회.
   let previous: RiderSummaryRow | null = null;
   let peaks: RiderPeakTotals = { morning: 0, afternoon: 0, evening: 0, midnight: 0 };
-  let bmart: SlaCategoryCounts | null = null;
+  let categories: RiderCategorySplit | null = null;
   if (summary?.start_date) {
-    const [prev, peakTotals, bmartTotals] = await Promise.all([
+    const [prev, peakTotals, catTotals] = await Promise.all([
       getRiderSummaryFor(adminRiderId, period, isoDateMinusDays(summary.start_date, 1)),
       getRiderPeaksFor(adminRiderId, summary.start_date, summary.end_date),
-      getRiderBmartFor(adminRiderId, summary.start_date, summary.end_date),
+      getRiderCategoriesFor(adminRiderId, summary.start_date, summary.end_date),
     ]);
     previous = prev && prev.active_days > 0 ? prev : null;
     peaks = peakTotals;
-    bmart = bmartTotals;
+    categories = catTotals;
   }
 
-  return { summary, previous, hourly, peaks, bmart, riderName, centerGoals };
+  return { summary, previous, hourly, peaks, categories, riderName, centerGoals };
 }
 
 /**
@@ -175,11 +176,16 @@ const MOCK_PREVIOUS: Record<SlaPeriod, RiderSummaryRow> = {
   month: { ...MOCK_SUMMARY.month, sla_score: 87, completed: 488, rejected: 45, dispatch_canceled: 30, delivery_canceled: 12, acceptance_rate: 85 },
 };
 
-// B마트 세부 목 — 요약 합계(completed 등)에 포함된 것으로 가정(합계 − bmart = 일반).
+// B마트·스토어 세부 목 — 요약 합계(completed 등)에 포함된 것으로 가정(합계 − bmart − store = 일반).
 const MOCK_BMART: Record<SlaPeriod, SlaCategoryCounts> = {
   today: { complete: 2, reject: 1, cancel: 0, riderFault: 0 },
   week: { complete: 9, reject: 3, cancel: 1, riderFault: 0 },
   month: { complete: 34, reject: 11, cancel: 4, riderFault: 1 },
+};
+const MOCK_STORE: Record<SlaPeriod, SlaCategoryCounts> = {
+  today: { complete: 0, reject: 0, cancel: 0, riderFault: 0 },
+  week: { complete: 2, reject: 1, cancel: 0, riderFault: 0 },
+  month: { complete: 6, reject: 2, cancel: 1, riderFault: 0 },
 };
 
 function mockHourly(period: SlaPeriod): RiderHourlyRow[] {
@@ -208,7 +214,7 @@ async function getMockDashboardData(period: SlaPeriod): Promise<DashboardData> {
     previous: MOCK_PREVIOUS[period],
     hourly: mockHourly(period),
     peaks: mockPeaks(period),
-    bmart: MOCK_BMART[period],
+    categories: { bmart: MOCK_BMART[period], store: MOCK_STORE[period] },
     riderName: "라이더",
     centerGoals: MOCK_CENTER_GOALS,
   };

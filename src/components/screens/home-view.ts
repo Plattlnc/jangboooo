@@ -57,12 +57,14 @@ export function toHomeMetrics(data: DashboardData, period: "today" | "week"): Ho
   const p = data.peaks;
   const peakValues = [p.morning, p.afternoon, p.evening, p.midnight];
 
-  // 일반/B마트 분리: 요약 합계(completed 등)는 전 카테고리 총합 → B마트를 빼서 일반값 파생.
-  // breakdown 미보유(bmart=null) 기간은 분리 불가 → 합계 그대로 + 서브라인 생략.
-  // (수락률은 배민 공식상 푸드 단독 산식이라 B마트가 원래 미포함 — 여기서 손대지 않음.)
-  const b = data.bmart;
-  const split = (total: number, bmartCount: number | undefined) =>
-    bmartCount == null ? { value: total } : { value: Math.max(0, total - bmartCount), bmart: bmartCount };
+  // 일반/B마트/스토어 분리: 요약 합계(completed 등)는 전 카테고리 총합 → B마트·스토어를
+  // 빼서 일반(=푸드)값 파생. breakdown 미보유(categories=null) 기간은 분리 불가 → 합계 그대로.
+  // (수락률은 배민 공식상 푸드 단독 산식이라 B마트·스토어가 원래 미포함 — 여기서 손대지 않음.)
+  const c = data.categories;
+  const split = (total: number, bmartCount: number | undefined, storeCount: number | undefined) =>
+    bmartCount == null || storeCount == null
+      ? { value: total }
+      : { value: Math.max(0, total - bmartCount - storeCount), bmart: bmartCount, store: storeCount };
 
   return {
     period:
@@ -73,10 +75,10 @@ export function toHomeMetrics(data: DashboardData, period: "today" | "week"): Ho
     revenue: 0, // 소스 없음 — 미표시
     accept: s.acceptance_rate ?? 0,
     status: [
-      { label: "완료", ...split(s.completed, b?.complete), color: "#1E9E5A" },
-      { label: "거절", ...split(s.rejected, b?.reject), color: "#D9342B" },
-      { label: "배차취소", ...split(s.dispatch_canceled, b?.cancel), color: "#E8590C" },
-      { label: "배달취소", ...split(s.delivery_canceled, b?.riderFault), color: "#9b9588" },
+      { label: "완료", ...split(s.completed, c?.bmart.complete, c?.store.complete), color: "#1E9E5A" },
+      { label: "거절", ...split(s.rejected, c?.bmart.reject, c?.store.reject), color: "#D9342B" },
+      { label: "배차취소", ...split(s.dispatch_canceled, c?.bmart.cancel, c?.store.cancel), color: "#E8590C" },
+      { label: "배달취소", ...split(s.delivery_canceled, c?.bmart.riderFault, c?.store.riderFault), color: "#9b9588" },
     ],
     cats: [], // 소스 없음 — 미표시
     peaks: peakValues.map((value, i) => ({ label: PEAK_LABELS[i], value })),

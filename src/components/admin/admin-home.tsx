@@ -149,7 +149,7 @@ export function AdminHome({
         <div className="mb-1.5 flex items-center justify-between px-0.5">
           <span className="text-xs font-black text-jb-ink">운행 상태</span>
           {v.hasBreakdown ? (
-            <span className="text-[11px] font-bold text-jb-ink-mute">일반 배달 기준 · B마트 별도</span>
+            <span className="text-[11px] font-bold text-jb-ink-mute">일반 배달 기준 · B마트/스토어 별도</span>
           ) : null}
         </div>
         <div className="border border-jb-line bg-white p-3 shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
@@ -168,6 +168,9 @@ export function AdminHome({
                   >
                     B마트 {it.bmart}
                   </div>
+                ) : null}
+                {it.store != null ? (
+                  <div className="tnum text-[10px] font-bold text-jb-ink-soft">스토어 {it.store}</div>
                 ) : null}
               </div>
             ))}
@@ -279,6 +282,9 @@ export function AdminHome({
                 {r.bmart ? (
                   <span className="tnum text-[10.5px] font-bold text-jb-ink-mute">B마트 {r.bmart}</span>
                 ) : null}
+                {r.store ? (
+                  <span className="tnum text-[10.5px] font-bold text-jb-ink-mute">스토어 {r.store}</span>
+                ) : null}
                 <span className="tnum text-[13.5px] font-black text-jb-ink">{r.completed}건</span>
               </Link>
             ))
@@ -318,7 +324,7 @@ export function AdminHome({
       ) : null}
 
       <div className="mt-1 pb-0.5 text-center text-[11px] text-jb-ink-mute">
-        수락률은 배민 공식 산식(푸드 기준)이며 B마트 건은 포함되지 않습니다.
+        수락률은 배민 공식 산식(푸드 기준)이며 B마트·스토어 건은 포함되지 않습니다.
       </div>
     </div>
   );
