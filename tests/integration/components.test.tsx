@@ -12,9 +12,9 @@ describe("AcceptanceGauge — 수락률 게이지", () => {
     expect(screen.getByLabelText("오늘 수락률 85%")).toBeInTheDocument();
   });
 
-  it("소수 수락률은 배민 표기와 동일하게 정수 반올림(93.75 → 94%)", () => {
-    render(<AcceptanceGauge rate={93.75} label="이번 주 수락률" />);
-    expect(screen.getByText("94%")).toBeInTheDocument();
+  it("소수 수락률은 1자리 표기", () => {
+    render(<AcceptanceGauge rate={85.3} label="이번 주 수락률" />);
+    expect(screen.getByText("85.3%")).toBeInTheDocument();
   });
 
   it("미수집(rate=null)이면 중앙 '—'", () => {

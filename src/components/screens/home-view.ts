@@ -71,8 +71,7 @@ export function toHomeMetrics(data: DashboardData, period: "today" | "week"): Ho
         : `${s.start_date.replaceAll("-", ".")} ~ ${mmdd(s.end_date)} · 주간 합계`,
     count: s.completed,
     revenue: 0, // 소스 없음 — 미표시
-    // 배민 앱 표기와 동일하게 정수 반올림(93.75 → 94). DB/RPC 는 소수 2자리 정밀도 유지.
-    accept: Math.round(s.acceptance_rate ?? 0),
+    accept: s.acceptance_rate ?? 0,
     status: [
       { label: "완료", ...split(s.completed, b?.complete), color: "#1E9E5A" },
       { label: "거절", ...split(s.rejected, b?.reject), color: "#D9342B" },
