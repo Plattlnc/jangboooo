@@ -90,7 +90,7 @@ export default async function AdminRidersPage({
         <div className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-x-2.5 border-b border-jb-line-soft px-3 py-1.5 text-[10.5px] font-bold text-jb-ink-mute">
           <span>라이더</span>
           <span className="w-[52px] text-right">완료</span>
-          <span className="w-[30px] text-right">거절</span>
+          <span className="w-[46px] text-right">거절</span>
           <span className="w-[52px] text-right">수락률</span>
         </div>
         {riders.length === 0 ? (
@@ -127,8 +127,18 @@ export default async function AdminRidersPage({
                     </span>
                   ) : null}
                 </span>
-                <span className="tnum w-[30px] text-right text-[13px] font-bold text-jb-ink-soft">
-                  {fmtCount(r.rejected)}
+                <span className="w-[46px] text-right">
+                  <span className="tnum block text-[13px] font-bold text-jb-ink-soft">{fmtCount(r.rejected)}</span>
+                  {r.bmart.reject > 0 ? (
+                    <span className="tnum block text-[9.5px] font-bold text-jb-ink-mute">
+                      B마트 {fmtCount(r.bmart.reject)}
+                    </span>
+                  ) : null}
+                  {r.store.reject > 0 ? (
+                    <span className="tnum block text-[9.5px] font-bold text-jb-ink-mute">
+                      스토어 {fmtCount(r.store.reject)}
+                    </span>
+                  ) : null}
                 </span>
                 <span className="tnum w-[52px] text-right text-[13px] font-black" style={{ color: band.color }}>
                   {fmtPct(r.acceptanceRate)}

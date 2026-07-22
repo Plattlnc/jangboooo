@@ -61,7 +61,7 @@ export function toAdminHomeVM(
       label: meta.label,
       value: fmtCount(hasBreakdown ? Math.max(0, total - bmart - store) : total),
       bmart: hasBreakdown ? fmtCount(bmart) : null,
-      store: hasBreakdown && store > 0 ? fmtCount(store) : null,
+      store: hasBreakdown ? fmtCount(store) : null,
       color: total > 0 ? meta.color : "#b9bdc7",
       tileBg: total > 0 ? meta.tint : "#f5f6f8",
     };

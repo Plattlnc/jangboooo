@@ -170,7 +170,13 @@ export function AdminHome({
                   </div>
                 ) : null}
                 {it.store != null ? (
-                  <div className="tnum text-[10px] font-bold text-jb-ink-soft">스토어 {it.store}</div>
+                  <div
+                    className={
+                      "tnum text-[10px] font-bold " + (it.store !== "0" ? "text-jb-ink-soft" : "text-jb-ink-mute")
+                    }
+                  >
+                    스토어 {it.store}
+                  </div>
                 ) : null}
               </div>
             ))}
