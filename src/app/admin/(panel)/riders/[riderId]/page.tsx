@@ -74,17 +74,13 @@ export default async function AdminRiderDetailPage({
                     <div className="text-[10px] font-bold text-jb-ink-mute">완료</div>
                     <div className="tnum text-[15px] font-black text-jb-ink">{fmtCount(t.completed)}</div>
                     <div className="tnum text-[9.5px] font-bold text-jb-ink-mute">B마트 {fmtCount(t.bmart.complete)}</div>
-                    {t.store.complete > 0 ? (
-                      <div className="tnum text-[9.5px] font-bold text-jb-ink-mute">스토어 {fmtCount(t.store.complete)}</div>
-                    ) : null}
+                    <div className="tnum text-[9.5px] font-bold text-jb-ink-mute">스토어 {fmtCount(t.store.complete)}</div>
                   </div>
                   <div>
                     <div className="text-[10px] font-bold text-jb-ink-mute">거절</div>
                     <div className="tnum text-[15px] font-black text-jb-ink-soft">{fmtCount(t.rejected)}</div>
                     <div className="tnum text-[9.5px] font-bold text-jb-ink-mute">B마트 {fmtCount(t.bmart.reject)}</div>
-                    {t.store.reject > 0 ? (
-                      <div className="tnum text-[9.5px] font-bold text-jb-ink-mute">스토어 {fmtCount(t.store.reject)}</div>
-                    ) : null}
+                    <div className="tnum text-[9.5px] font-bold text-jb-ink-mute">스토어 {fmtCount(t.store.reject)}</div>
                   </div>
                   <div>
                     <div className="text-[10px] font-bold text-jb-ink-mute">취소</div>
@@ -115,7 +111,7 @@ export default async function AdminRiderDetailPage({
           <div className="grid grid-cols-[1fr_auto_auto_auto_auto] items-center gap-x-2.5 border-b border-jb-line-soft px-3 py-1.5 text-[10.5px] font-bold text-jb-ink-mute">
             <span>날짜</span>
             <span className="w-[46px] text-right">완료</span>
-            <span className="w-[30px] text-right">거절</span>
+            <span className="w-[46px] text-right">거절</span>
             <span className="w-[30px] text-right">취소</span>
             <span className="w-[50px] text-right">수락률</span>
           </div>
@@ -145,8 +141,18 @@ export default async function AdminRiderDetailPage({
                       </span>
                     ) : null}
                   </span>
-                  <span className="tnum w-[30px] text-right text-[12.5px] font-bold text-jb-ink-soft">
-                    {fmtCount(d.rejected)}
+                  <span className="w-[46px] text-right">
+                    <span className="tnum block text-[12.5px] font-bold text-jb-ink-soft">{fmtCount(d.rejected)}</span>
+                    {d.bmart.reject > 0 ? (
+                      <span className="tnum block text-[9px] font-bold text-jb-ink-mute">
+                        B마트 {fmtCount(d.bmart.reject)}
+                      </span>
+                    ) : null}
+                    {d.store.reject > 0 ? (
+                      <span className="tnum block text-[9px] font-bold text-jb-ink-mute">
+                        스토어 {fmtCount(d.store.reject)}
+                      </span>
+                    ) : null}
                   </span>
                   <span className="tnum w-[30px] text-right text-[12.5px] font-bold text-jb-ink-soft">
                     {fmtCount(d.dispatchCanceled + d.deliveryCanceled)}

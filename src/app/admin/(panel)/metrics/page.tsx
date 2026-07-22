@@ -135,7 +135,14 @@ export default async function AdminMetricsPage({
                   {nameOf(r.adminRiderId)}
                   <span className="tnum ml-1.5 text-[10px] font-semibold text-jb-ink-mute">{r.adminRiderId}</span>
                 </span>
-                <span className="tnum text-[11.5px] font-bold text-jb-ink-soft">거절 {fmtCount(r.rejected)}건</span>
+                <span className="text-right">
+                  <span className="tnum block text-[11.5px] font-bold text-jb-ink-soft">거절 {fmtCount(r.food.reject)}건</span>
+                  {r.bmart.reject > 0 || r.store.reject > 0 ? (
+                    <span className="tnum block text-[9.5px] font-bold text-jb-ink-mute">
+                      B마트 {fmtCount(r.bmart.reject)} · 스토어 {fmtCount(r.store.reject)}
+                    </span>
+                  ) : null}
+                </span>
                 <span className="tnum w-[52px] text-right text-[13px] font-black text-[#D9342B]">
                   {fmtPct(r.rejectionRate)}
                 </span>
