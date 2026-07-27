@@ -22,6 +22,14 @@ export type RiderRow = {
   is_active: boolean
   /** 소속 협력사(센터) ID (0006). 공동목표 RPC 의 라이더→센터 해석에 사용. */
   center_id: string | null
+  /** 등록 차량번호 (0008). ROADING 내차량 표기 — 스크래퍼 소스 없음, 내정보에서 수동 등록. */
+  plate: string | null
+  /** 실 사용자 이름 (0012, 내정보 등록 — ROADING 사고접수 프리필). */
+  real_name: string | null
+  /** 실 사용자 연락처 (0012, 내정보 등록 — ROADING 사고접수 프리필). */
+  real_phone: string | null
+  /** 운행 바이크 기종 (0012, 내정보 등록 — ROADING 내차량 표기). */
+  bike_model: string | null
   created_at: string
   updated_at: string
 }

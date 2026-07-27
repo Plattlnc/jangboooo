@@ -4,28 +4,21 @@ import { useState } from "react";
 import Link from "next/link";
 import { Menu, Siren } from "lucide-react";
 import { MenuDrawer } from "./menu-drawer";
-import { Toast, ToastViewport } from "@/components/ui/toast";
 import type { RiderProfile } from "@/app/(rider)/_lib/rider-profile";
 
 // 시안 헤더 — 흰 배경 56px. 좌:햄버거 / 중:로고("배달 장부") / 우:사고접수(→/roading).
-// 데모 잠금(2026-07): 햄버거 메뉴는 막고 '준비중' 토스트만 표시(복구 시 onClick={()=>setOpen(true)}).
+// 햄버거 메뉴 2026-07-27 활성 복구(구 데모 잠금 해제) — 드로어 네비 오픈.
 //   사고접수는 2026-07-11 활성 복구 — ROADING 임베드(/roading) 연결.
 
 export function AppBar({ profile }: { profile: RiderProfile }) {
   const [open, setOpen] = useState(false);
-  const [comingSoon, setComingSoon] = useState(false);
-
-  const showComingSoon = () => {
-    setComingSoon(true);
-    window.setTimeout(() => setComingSoon(false), 2000);
-  };
 
   return (
     <>
       <header className="sticky top-0 z-[200] flex h-14 items-center justify-between border-b border-jb-line-soft bg-white px-3.5">
         <button
           type="button"
-          onClick={showComingSoon}
+          onClick={() => setOpen(true)}
           aria-label="메뉴"
           className="grid size-10 place-items-center rounded-full text-jb-ink transition-transform active:scale-95"
         >
@@ -50,13 +43,6 @@ export function AppBar({ profile }: { profile: RiderProfile }) {
         </Link>
       </header>
 
-      {comingSoon ? (
-        <ToastViewport>
-          <Toast variant="info" message="준비 중이에요" />
-        </ToastViewport>
-      ) : null}
-
-      {/* 데모에선 열리지 않음(햄버거가 '준비중' 토스트). 복구 대비 마운트 유지. */}
       <MenuDrawer open={open} onClose={() => setOpen(false)} profile={profile} />
     </>
   );

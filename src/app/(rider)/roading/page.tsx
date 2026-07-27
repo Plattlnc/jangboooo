@@ -11,12 +11,14 @@ export default async function RoadingPage() {
   const profile = await getRiderProfile();
   // 목 프로필(uid "MOCK-*")은 데모 — ROADING 운영 데이터 오염 방지용으로 표기 전달.
   const isDemo = profile.uid.startsWith("MOCK-");
+  // 내정보에서 등록한 실사용자 정보가 있으면 계정(스크래퍼) 정보보다 우선.
   return (
     <RoadingEmbed
       riderId={profile.uid}
-      riderName={profile.name}
-      riderPhone={profile.phone}
+      riderName={profile.realName ?? profile.name}
+      riderPhone={profile.realPhone ?? profile.phone}
       riderPlate={profile.plate}
+      riderModel={profile.bikeModel}
       isDemo={isDemo}
     />
   );

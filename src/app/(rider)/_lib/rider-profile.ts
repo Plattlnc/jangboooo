@@ -19,6 +19,12 @@ export interface RiderProfile {
   createdAt: string | null;
   /** 등록 차량번호 (riders.plate) — ROADING 임베드 '내차량' 표기용. 컬럼/값 없으면 null. */
   plate: string | null;
+  /** 실 사용자 이름 (내정보 등록, 0012) — ROADING 프리필 시 name 보다 우선. */
+  realName: string | null;
+  /** 실 사용자 연락처 (내정보 등록, 0012) — ROADING 프리필 시 phone 보다 우선. */
+  realPhone: string | null;
+  /** 운행 바이크 기종 (내정보 등록, 0012) — ROADING 내차량 카드 표기. */
+  bikeModel: string | null;
 }
 
 function hasSupabaseEnv(): boolean {
@@ -36,6 +42,9 @@ const DEMO_PROFILE: RiderProfile = {
   isActive: true,
   createdAt: "2024-03-18",
   plate: "12가3456",
+  realName: null,
+  realPhone: null,
+  bikeModel: null,
 };
 
 function initialOf(name: string): string {
@@ -58,17 +67,23 @@ export const getRiderProfile = cache(async (): Promise<RiderProfile> => {
       .eq("admin_rider_id", session.adminRiderId)
       .maybeSingle();
 
-    // 차량번호는 별도 best-effort 조회(컬럼 미존재해도 본 프로필은 안 깨지게 분리).
+    // 내정보 등록 필드(0008/0012)는 별도 best-effort 조회(컬럼 미존재해도 본 프로필은 안 깨지게 분리).
     let plate: string | null = null;
+    let realName: string | null = null;
+    let realPhone: string | null = null;
+    let bikeModel: string | null = null;
     try {
       const { data: pv } = await admin
         .from("riders")
-        .select("plate")
+        .select("plate, real_name, real_phone, bike_model")
         .eq("admin_rider_id", session.adminRiderId)
-        .maybeSingle<{ plate: string | null }>();
+        .maybeSingle();
       plate = pv?.plate ?? null;
+      realName = pv?.real_name ?? null;
+      realPhone = pv?.real_phone ?? null;
+      bikeModel = pv?.bike_model ?? null;
     } catch {
-      /* plate 컬럼 미존재 등 — 무시 */
+      /* 컬럼 미존재 등 — 무시 */
     }
 
     const name = data?.name ?? "라이더";
@@ -82,6 +97,9 @@ export const getRiderProfile = cache(async (): Promise<RiderProfile> => {
       isActive: data?.is_active ?? false,
       createdAt: data?.created_at ?? null,
       plate,
+      realName,
+      realPhone,
+      bikeModel,
     };
   } catch {
     // 조회 실패 시에도 최소한 로그인 식별자는 보여줌(나머지 '-').
@@ -95,6 +113,9 @@ export const getRiderProfile = cache(async (): Promise<RiderProfile> => {
       isActive: false,
       createdAt: null,
       plate: null,
+      realName: null,
+      realPhone: null,
+      bikeModel: null,
     };
   }
 });
