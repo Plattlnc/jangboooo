@@ -30,6 +30,12 @@ export type RiderRow = {
   real_phone: string | null
   /** 운행 바이크 기종 (0012, 내정보 등록 — ROADING 내차량 표기). */
   bike_model: string | null
+  /** 차량 이용 형태 (0013, 내정보 등록): '렌탈' | '리스'. */
+  usage_type: string | null
+  /** 보험 시작일 (0013, 내정보 등록) — 'YYYY-MM-DD'. */
+  insurance_start: string | null
+  /** 보험 기간 일수 (0013, 내정보 등록) — 만료일 = start + days. */
+  insurance_days: number | null
   created_at: string
   updated_at: string
 }

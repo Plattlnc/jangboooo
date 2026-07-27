@@ -13,8 +13,17 @@ interface Props {
     realPhone: string;
     bikePlate: string;
     bikeModel: string;
+    /** '' | '렌탈' | '리스' */
+    usageType: string;
+    /** '' | 'YYYY-MM-DD' */
+    insuranceStart: string;
+    /** '' | 일수 문자열 (예 '90') */
+    insuranceDays: string;
   };
 }
+
+const USAGE_TYPES = ["렌탈", "리스"] as const;
+const INSURANCE_DAY_OPTIONS = [30, 60, 90, 180, 365];
 
 interface Field {
   key: keyof Props["initial"];
@@ -76,6 +85,61 @@ export function ProfileForm({ initial }: Props) {
             />
           </label>
         ))}
+
+        {/* 이용 형태: 렌탈/리스 토글 */}
+        <div>
+          <span className="mb-1 block text-[12px] font-bold text-jb-ink-soft">이용 형태</span>
+          <div className="grid grid-cols-2 gap-2">
+            {USAGE_TYPES.map((t) => {
+              const selected = values.usageType === t;
+              return (
+                <button
+                  key={t}
+                  type="button"
+                  aria-pressed={selected}
+                  onClick={() =>
+                    setValues((prev) => ({ ...prev, usageType: selected ? "" : t }))
+                  }
+                  className={
+                    selected
+                      ? "rounded-[11px] border border-jb-indigo bg-[#eef1fe] py-[11px] text-[14px] font-bold text-jb-indigo transition-colors"
+                      : "rounded-[11px] border border-jb-line bg-[#f8f9fb] py-[11px] text-[14px] font-semibold text-jb-ink-soft transition-colors"
+                  }
+                >
+                  {t}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* 보험: 시작일 + 기간(일수) → 만료일 자동 계산 */}
+        <div className="grid grid-cols-2 gap-2">
+          <label className="block">
+            <span className="mb-1 block text-[12px] font-bold text-jb-ink-soft">보험 시작일</span>
+            <input
+              type="date"
+              value={values.insuranceStart}
+              onChange={(e) => setValues((prev) => ({ ...prev, insuranceStart: e.target.value }))}
+              className="w-full rounded-[11px] border border-jb-line bg-[#f8f9fb] px-3.5 py-[10px] text-[14px] font-semibold text-jb-ink outline-none transition-colors focus:border-jb-indigo focus:bg-white"
+            />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-[12px] font-bold text-jb-ink-soft">보험 기간</span>
+            <select
+              value={values.insuranceDays}
+              onChange={(e) => setValues((prev) => ({ ...prev, insuranceDays: e.target.value }))}
+              className="w-full appearance-none rounded-[11px] border border-jb-line bg-[#f8f9fb] px-3.5 py-[11px] text-[14px] font-semibold text-jb-ink outline-none transition-colors focus:border-jb-indigo focus:bg-white"
+            >
+              <option value="">선택 안 함</option>
+              {INSURANCE_DAY_OPTIONS.map((d) => (
+                <option key={d} value={String(d)}>
+                  {d}일
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
       </div>
 
       <button

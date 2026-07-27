@@ -21,6 +21,18 @@ const saveProfileSchema = z.object({
     .refine((v) => v === '' || phoneDigits.test(v), '휴대폰 번호 형식을 확인해주세요.'),
   bikePlate: z.string().trim().max(12, '번호판은 12자 이내로 입력해주세요.'),
   bikeModel: z.string().trim().max(30, '기종은 30자 이내로 입력해주세요.'),
+  /** '' | '렌탈' | '리스' */
+  usageType: z.enum(['', '렌탈', '리스']),
+  /** '' 또는 'YYYY-MM-DD' */
+  insuranceStart: z
+    .string()
+    .trim()
+    .refine((v) => v === '' || /^\d{4}-\d{2}-\d{2}$/.test(v), '보험 시작일 형식을 확인해주세요.'),
+  /** '' 또는 기간 일수 문자열 */
+  insuranceDays: z
+    .string()
+    .trim()
+    .refine((v) => v === '' || (/^\d+$/.test(v) && Number(v) > 0), '보험 기간을 확인해주세요.'),
 })
 
 export interface SaveProfileResult {
@@ -56,7 +68,8 @@ export async function saveRiderProfile(input: unknown): Promise<SaveProfileResul
     return { ok: false, message: '서버 설정 오류입니다. 잠시 후 다시 시도해주세요.' }
   }
 
-  const { realName, realPhone, bikePlate, bikeModel } = parsed.data
+  const { realName, realPhone, bikePlate, bikeModel, usageType, insuranceStart, insuranceDays } =
+    parsed.data
   const { data, error } = await admin
     .from('riders')
     .update({
@@ -64,6 +77,9 @@ export async function saveRiderProfile(input: unknown): Promise<SaveProfileResul
       real_phone: formatPhone(realPhone),
       plate: bikePlate || null,
       bike_model: bikeModel || null,
+      usage_type: usageType || null,
+      insurance_start: insuranceStart || null,
+      insurance_days: insuranceDays ? Number(insuranceDays) : null,
     })
     .eq('admin_rider_id', session.adminRiderId)
     .select('admin_rider_id')
