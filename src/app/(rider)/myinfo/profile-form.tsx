@@ -102,8 +102,8 @@ export function ProfileForm({ initial }: Props) {
                   }
                   className={
                     selected
-                      ? "rounded-[11px] border border-jb-indigo bg-[#eef1fe] py-[11px] text-[14px] font-bold text-jb-indigo transition-colors"
-                      : "rounded-[11px] border border-jb-line bg-[#f8f9fb] py-[11px] text-[14px] font-semibold text-jb-ink-soft transition-colors"
+                      ? "rounded-[11px] border border-jb-indigo bg-[#eef1fe] py-[11px] text-[14px] font-bold text-jb-indigo transition-[background-color,border-color,color,transform] duration-150 active:scale-[.97]"
+                      : "rounded-[11px] border border-jb-line bg-[#f8f9fb] py-[11px] text-[14px] font-semibold text-jb-ink-soft transition-[background-color,border-color,color,transform] duration-150 active:scale-[.97]"
                   }
                 >
                   {t}

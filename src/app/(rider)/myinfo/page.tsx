@@ -24,7 +24,7 @@ function fmtDate(iso: string | null): string {
 
 /** 보험 만료 표시: 시작일 + 기간(일) → 'YYYY.MM.DD (D-n)'. 미등록이면 '-'. */
 function fmtInsuranceExpiry(start: string | null, days: number | null): string {
-  if (!start || !days) return "-";
+  if (!start || !days) return "미등록";
   const startMs = Date.parse(`${start}T00:00:00+09:00`);
   if (Number.isNaN(startMs)) return "-";
   const expiryMs = startMs + days * 86_400_000;
@@ -50,8 +50,8 @@ export default async function MyInfoPage() {
     {
       title: "기본 정보",
       rows: [
-        { label: "실 사용자 이름", value: p.realName ?? "-" },
-        { label: "실 사용자 번호", value: p.realPhone ?? "-" },
+        { label: "실 사용자 이름", value: p.realName ?? "미등록" },
+        { label: "실 사용자 번호", value: p.realPhone ?? "미등록" },
         { label: "연락처(계정)", value: p.phone ?? "-" },
         { label: "활동 지역", value: p.region ?? "-" },
         { label: "소속 협력사", value: centerDisplayName(p.centerId) ?? "-" },
@@ -61,17 +61,10 @@ export default async function MyInfoPage() {
     {
       title: "차량 정보",
       rows: [
-        { label: "기종", value: p.bikeModel ?? "-" },
-        { label: "번호판", value: p.plate ?? "-" },
-        { label: "이용 형태", value: p.usageType ?? "-" },
+        { label: "기종", value: p.bikeModel ?? "미등록" },
+        { label: "번호판", value: p.plate ?? "미등록" },
+        { label: "이용 형태", value: p.usageType ?? "미등록" },
         { label: "보험 만료", value: fmtInsuranceExpiry(p.insuranceStart, p.insuranceDays) },
-      ],
-    },
-    {
-      title: "정산 계좌",
-      rows: [
-        { label: "입금 은행", value: "-" },
-        { label: "계좌번호", value: "-" },
       ],
     },
   ];
@@ -109,6 +102,12 @@ export default async function MyInfoPage() {
           ))}
         </div>
       ))}
+
+      {/* 정산 계좌 — 연동 전 준비 상태 */}
+      <div className="mt-3 rounded-[14px] border border-jb-line bg-white px-4 py-3.5 shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
+        <div className="text-xs font-black text-jb-ink-mute">정산 계좌</div>
+        <p className="mt-1.5 text-[12.5px] text-jb-ink-mute">정산 시스템 연동 후 등록할 수 있어요.</p>
+      </div>
 
       {/* 실사용자 · 바이크 등록 폼 — 저장 시 ROADING 사고접수 프리필에 반영 */}
       <ProfileForm

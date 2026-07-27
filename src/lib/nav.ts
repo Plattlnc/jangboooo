@@ -4,8 +4,6 @@ import {
   Wallet,
   TriangleAlert,
   ClipboardList,
-  Bike,
-  Wrench,
   type LucideIcon,
 } from "lucide-react";
 
@@ -13,8 +11,9 @@ import {
 // 각 화면 = (rider) 그룹의 실제 라우트. 활성표시는 usePathname 으로 판정.
 // 타일 색은 시안 목업 그대로(브랜드 멀티컬러).
 //
-// 2026-07-27 슬림화(2차 확정): 내 정보 · 사고접수 관련 탭은 유지(사용자 롤백 요청).
-// 제거 유지: 홈(로고 클릭으로 진입) / 긴급출동서비스 / 라이더 용품 / 배달뉴스.
+// 2026-07-27 확정 구성: 내 정보 · 일차감 · 정산 · 사고접수 · 접수 내역 5개.
+// 제거: 홈(로고 클릭으로 진입) / 긴급출동 / 라이더 용품 / 배달뉴스 / 리스·렌탈 / 정비소
+// (리스·렌탈, 정비소는 페이지·목데이터까지 삭제됨 — 3차 정리).
 
 export interface NavItem {
   label: string;
@@ -45,13 +44,6 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: "교통사고접수", href: "/roading", icon: TriangleAlert, tileColor: "#FF3B5C", tileBg: "#ffecef" },
       { label: "접수 내역", href: "/roading/history", icon: ClipboardList, tileColor: "#4F6AF5", tileBg: "#eef1fe" },
-    ],
-  },
-  {
-    title: "라이더 혜택",
-    items: [
-      { label: "리스 · 렌탈", href: "/lease", icon: Bike, tileColor: "#E8590C", tileBg: "#fdf0e6" },
-      { label: "내 주변 정비소", href: "/repair", icon: Wrench, tileColor: "#5b6660", tileBg: "#eef0f3" },
     ],
   },
 ];
