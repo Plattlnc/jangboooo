@@ -20,6 +20,12 @@ import type {
   SlaSnapshotUpsert,
 } from '../types'
 
+// 센터별 활동 권역 — delivery-status 응답엔 권역 필드가 없어 센터 단위로 스탬프.
+// (center_id 스탬프와 동일 패턴. 신규 센터 추가 시 여기에 등록.)
+const REGION_BY_CENTER: Record<string, string> = {
+  DP2504250236: '인천 서구',
+}
+
 const n = (v: number | undefined): number => (typeof v === 'number' && Number.isFinite(v) ? v : 0)
 
 function round2(v: number): number {
@@ -95,7 +101,7 @@ export function mapDeliveryStatus(
       name: row.name ?? null,
       phone: row.phoneNumber ?? null,
       is_active: true,
-      ...(centerId ? { center_id: centerId } : {}),
+      ...(centerId ? { center_id: centerId, region: REGION_BY_CENTER[centerId] ?? null } : {}),
     })
 
     snapshots.push(toSnapshot(row, snapshotDate))

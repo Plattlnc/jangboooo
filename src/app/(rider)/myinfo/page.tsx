@@ -2,6 +2,7 @@
 // 실사용자·바이크 정보는 하단 폼으로 등록 → ROADING 사고접수 프리필에 사용.
 
 import { getRiderProfile } from "@/app/(rider)/_lib/rider-profile";
+import { centerDisplayName } from "@/lib/center-names";
 import { ProfileForm } from "./profile-form";
 
 // 저장 직후 revalidatePath 반영 위해 매 요청 fresh.
@@ -21,6 +22,26 @@ function fmtDate(iso: string | null): string {
   return iso ? iso.slice(0, 10).replaceAll("-", ".") : "-";
 }
 
+/** 보험 만료 표시: 시작일 + 기간(일) → 'YYYY.MM.DD (D-n)'. 미등록이면 '-'. */
+function fmtInsuranceExpiry(start: string | null, days: number | null): string {
+  if (!start || !days) return "-";
+  const startMs = Date.parse(`${start}T00:00:00+09:00`);
+  if (Number.isNaN(startMs)) return "-";
+  const expiryMs = startMs + days * 86_400_000;
+  const d = new Date(expiryMs);
+  const fmt = new Intl.DateTimeFormat("ko-KR", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  })
+    .format(d)
+    .replaceAll(". ", ".")
+    .replace(/\.$/, "");
+  const dday = Math.ceil((expiryMs - Date.now()) / 86_400_000);
+  return dday >= 0 ? `${fmt} (D-${dday})` : `${fmt} (만료됨)`;
+}
+
 export default async function MyInfoPage() {
   const p = await getRiderProfile();
 
@@ -33,7 +54,7 @@ export default async function MyInfoPage() {
         { label: "실 사용자 번호", value: p.realPhone ?? "-" },
         { label: "연락처(계정)", value: p.phone ?? "-" },
         { label: "활동 지역", value: p.region ?? "-" },
-        { label: "소속 협력사", value: p.centerId ?? "-" },
+        { label: "소속 협력사", value: centerDisplayName(p.centerId) ?? "-" },
         { label: "가입일", value: fmtDate(p.createdAt) },
       ],
     },
@@ -42,8 +63,8 @@ export default async function MyInfoPage() {
       rows: [
         { label: "기종", value: p.bikeModel ?? "-" },
         { label: "번호판", value: p.plate ?? "-" },
-        { label: "이용 형태", value: "-" },
-        { label: "보험 만료", value: "-" },
+        { label: "이용 형태", value: p.usageType ?? "-" },
+        { label: "보험 만료", value: fmtInsuranceExpiry(p.insuranceStart, p.insuranceDays) },
       ],
     },
     {
@@ -96,6 +117,9 @@ export default async function MyInfoPage() {
           realPhone: p.realPhone ?? "",
           bikePlate: p.plate ?? "",
           bikeModel: p.bikeModel ?? "",
+          usageType: p.usageType ?? "",
+          insuranceStart: p.insuranceStart ?? "",
+          insuranceDays: p.insuranceDays ? String(p.insuranceDays) : "",
         }}
       />
     </div>

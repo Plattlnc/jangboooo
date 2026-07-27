@@ -25,6 +25,12 @@ export interface RiderProfile {
   realPhone: string | null;
   /** 운행 바이크 기종 (내정보 등록, 0012) — ROADING 내차량 카드 표기. */
   bikeModel: string | null;
+  /** 차량 이용 형태 (내정보 등록, 0013): '렌탈' | '리스'. */
+  usageType: string | null;
+  /** 보험 시작일 'YYYY-MM-DD' (내정보 등록, 0013). */
+  insuranceStart: string | null;
+  /** 보험 기간 일수 (내정보 등록, 0013). */
+  insuranceDays: number | null;
 }
 
 function hasSupabaseEnv(): boolean {
@@ -45,6 +51,9 @@ const DEMO_PROFILE: RiderProfile = {
   realName: null,
   realPhone: null,
   bikeModel: null,
+  usageType: null,
+  insuranceStart: null,
+  insuranceDays: null,
 };
 
 function initialOf(name: string): string {
@@ -72,16 +81,22 @@ export const getRiderProfile = cache(async (): Promise<RiderProfile> => {
     let realName: string | null = null;
     let realPhone: string | null = null;
     let bikeModel: string | null = null;
+    let usageType: string | null = null;
+    let insuranceStart: string | null = null;
+    let insuranceDays: number | null = null;
     try {
       const { data: pv } = await admin
         .from("riders")
-        .select("plate, real_name, real_phone, bike_model")
+        .select("plate, real_name, real_phone, bike_model, usage_type, insurance_start, insurance_days")
         .eq("admin_rider_id", session.adminRiderId)
         .maybeSingle();
       plate = pv?.plate ?? null;
       realName = pv?.real_name ?? null;
       realPhone = pv?.real_phone ?? null;
       bikeModel = pv?.bike_model ?? null;
+      usageType = pv?.usage_type ?? null;
+      insuranceStart = pv?.insurance_start ?? null;
+      insuranceDays = pv?.insurance_days ?? null;
     } catch {
       /* 컬럼 미존재 등 — 무시 */
     }
@@ -100,6 +115,9 @@ export const getRiderProfile = cache(async (): Promise<RiderProfile> => {
       realName,
       realPhone,
       bikeModel,
+      usageType,
+      insuranceStart,
+      insuranceDays,
     };
   } catch {
     // 조회 실패 시에도 최소한 로그인 식별자는 보여줌(나머지 '-').
@@ -116,6 +134,9 @@ export const getRiderProfile = cache(async (): Promise<RiderProfile> => {
       realName: null,
       realPhone: null,
       bikeModel: null,
+      usageType: null,
+      insuranceStart: null,
+      insuranceDays: null,
     };
   }
 });
