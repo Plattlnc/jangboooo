@@ -53,18 +53,23 @@ export function MenuDrawer({ open, onClose, profile }: MenuDrawerProps) {
           open ? "translate-x-0" : "-translate-x-full",
         )}
       >
-        {/* 프로필 헤더 */}
-        <div className="bg-gradient-to-br from-[#4F6AF5] to-[#5d77ff] px-[18px] pb-[18px] pt-[22px] text-white">
+        {/* 프로필 헤더 — 클릭 시 내 정보(실사용자·바이크 등록)로 이동 */}
+        <Link
+          href="/myinfo"
+          onClick={onClose}
+          className="block bg-gradient-to-br from-[#4F6AF5] to-[#5d77ff] px-[18px] pb-[18px] pt-[22px] text-white transition-opacity active:opacity-90"
+        >
           <div className="flex items-center gap-3">
             <div className="grid size-12 place-items-center rounded-[15px] bg-white/20 text-[18px] font-black">
               {profile.initial}
             </div>
-            <div>
+            <div className="flex-1">
               <div className="text-[17px] font-black">{profile.name}</div>
               <div className="tnum mt-0.5 text-xs opacity-90">UID {profile.uid}</div>
             </div>
+            <span className="text-[11.5px] font-bold opacity-90">내 정보 ›</span>
           </div>
-        </div>
+        </Link>
 
         {/* 네비 */}
         <nav className="flex-1 overflow-y-auto px-3 pb-2.5 pt-1.5">
