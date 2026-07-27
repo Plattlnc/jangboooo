@@ -40,6 +40,18 @@ export type RiderRow = {
   updated_at: string
 }
 
+/** 제휴 정비소 (0014) — 관리자 등록, 라이더 내주변정비소 노출. */
+export type RepairShopRow = {
+  id: string
+  name: string
+  phone: string | null
+  address: string | null
+  note: string | null
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
 export type RiderAccountRow = {
   user_id: string
   admin_rider_id: string
@@ -184,6 +196,12 @@ export type Database = {
         Insert: Pick<RiderAccountRow, 'user_id' | 'admin_rider_id' | 'verified_phone'> &
           Partial<Omit<RiderAccountRow, 'user_id' | 'admin_rider_id' | 'verified_phone'>>
         Update: Partial<RiderAccountRow>
+        Relationships: []
+      }
+      repair_shops: {
+        Row: RepairShopRow
+        Insert: Pick<RepairShopRow, 'name'> & Partial<Omit<RepairShopRow, 'name'>>
+        Update: Partial<Omit<RepairShopRow, 'id'>>
         Relationships: []
       }
       sla_snapshots: {
