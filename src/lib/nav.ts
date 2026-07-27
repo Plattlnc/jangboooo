@@ -1,6 +1,9 @@
 import {
+  User,
   ReceiptText,
   Wallet,
+  TriangleAlert,
+  ClipboardList,
   Bike,
   Wrench,
   type LucideIcon,
@@ -10,9 +13,8 @@ import {
 // 각 화면 = (rider) 그룹의 실제 라우트. 활성표시는 usePathname 으로 판정.
 // 타일 색은 시안 목업 그대로(브랜드 멀티컬러).
 //
-// 2026-07-27 슬림화: 일차감 관리 · 정산 내역 · 리스 렌탈 · 내 주변 정비소만 유지.
-// 제거된 진입점의 대체 경로 — 홈: 로고 클릭 / 사고접수: AppBar 우측 pill /
-// 내 정보: 드로어 프로필 카드 클릭(menu-drawer). 라우트 자체는 전부 살아있음.
+// 2026-07-27 슬림화(2차 확정): 내 정보 · 사고접수 관련 탭은 유지(사용자 롤백 요청).
+// 제거 유지: 홈(로고 클릭으로 진입) / 긴급출동서비스 / 라이더 용품 / 배달뉴스.
 
 export interface NavItem {
   label: string;
@@ -31,10 +33,18 @@ export interface NavGroup {
 
 export const NAV_GROUPS: NavGroup[] = [
   {
-    title: "정산",
+    title: "정산 · 내 정보",
     items: [
+      { label: "내 정보", href: "/myinfo", icon: User, tileColor: "#4F6AF5", tileBg: "#eef1fe" },
       { label: "일차감 관리", href: "/deduct", icon: ReceiptText, tileColor: "#E8590C", tileBg: "#fdf0e6" },
       { label: "정산 내역", href: "/settle", icon: Wallet, tileColor: "#1E9E5A", tileBg: "#e7f5ee" },
+    ],
+  },
+  {
+    title: "안전 · 긴급",
+    items: [
+      { label: "교통사고접수", href: "/roading", icon: TriangleAlert, tileColor: "#FF3B5C", tileBg: "#ffecef" },
+      { label: "접수 내역", href: "/roading/history", icon: ClipboardList, tileColor: "#4F6AF5", tileBg: "#eef1fe" },
     ],
   },
   {
