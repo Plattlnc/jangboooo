@@ -8,7 +8,9 @@
  */
 
 export const SESSION_COOKIE = 'rider_session'
-export const SESSION_TTL_SECONDS = 60 * 60 * 24 * 14 // 14일
+export const SESSION_TTL_SECONDS = 60 * 60 * 24 * 365 // 365일 — 실사용자 상시 로그인 유지(브라우저 쿠키 상한 400일 이내)
+// 발급 후 이 시간이 지난 토큰은 미들웨어가 재발급(슬라이딩 만료) — 가끔이라도 접속하면 만료가 계속 뒤로 밀린다.
+export const SESSION_RENEW_AFTER_SECONDS = 60 * 60 * 24 // 1일
 
 // 관리자 세션 — 라이더와 쿠키/페이로드 분리(같은 서명 비밀 사용). 관리 화면 특성상 TTL 짧게.
 export const ADMIN_SESSION_COOKIE = 'admin_session'
@@ -16,6 +18,19 @@ export const ADMIN_SESSION_TTL_SECONDS = 60 * 60 * 12 // 12시간
 
 export interface RiderSession {
   adminRiderId: string
+  /** 토큰 발급 시각(epoch 초) — 미들웨어 슬라이딩 갱신 판단용. 페이로드에 없으면 0(즉시 갱신 대상). */
+  issuedAt: number
+}
+
+/** 라이더 세션 쿠키 공통 속성 — 발급(cookies.ts)과 갱신(middleware) 간 불일치 방지. */
+export function riderSessionCookieOptions() {
+  return {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax' as const,
+    path: '/',
+    maxAge: SESSION_TTL_SECONDS,
+  }
 }
 
 interface TokenPayload {
@@ -128,7 +143,7 @@ export async function verifySessionToken(token: string | undefined | null): Prom
     const payload = JSON.parse(new TextDecoder().decode(b64urlToBytes(body))) as TokenPayload
     if (!payload.rid || typeof payload.exp !== 'number') return null
     if (Math.floor(Date.now() / 1000) >= payload.exp) return null
-    return { adminRiderId: payload.rid }
+    return { adminRiderId: payload.rid, issuedAt: typeof payload.iat === 'number' ? payload.iat : 0 }
   } catch {
     return null
   }
