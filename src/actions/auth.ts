@@ -52,8 +52,10 @@ export async function signInRider(input: unknown): Promise<SignInResult> {
  * 로그아웃: 서명 세션 쿠키를 안전하게 제거하고 /login 으로 리다이렉트.
  * redirect() 는 NEXT_REDIRECT 를 throw 하므로 정상 반환하지 않는다(서버측 네비게이션).
  * 클라이언트가 별도 네비게이션을 해도 동일 경로(/login)라 무해.
+ * ?out=1: 명시적 로그아웃 표시 — 로그인 폼이 이번 진입만 자동 로그인을 건너뛴다
+ * (없으면 로그아웃 → 자동 재로그인 루프로 로그아웃이 불가능해진다).
  */
 export async function signOutRider(): Promise<void> {
   await clearRiderSession()
-  redirect('/login')
+  redirect('/login?out=1')
 }
