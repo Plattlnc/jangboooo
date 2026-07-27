@@ -2,7 +2,7 @@
 
 import { redirect } from 'next/navigation'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { setRiderSession, clearRiderSession } from '@/lib/auth/cookies'
+import { setRiderSession, clearRiderSession, setSavedLoginCookie } from '@/lib/auth/cookies'
 import { constantTimeEqual } from '@/lib/auth/session'
 import { signInRiderSchema, type SignInResult } from '@/types/api'
 
@@ -45,6 +45,14 @@ export async function signInRider(input: unknown): Promise<SignInResult> {
   }
 
   await setRiderSession(rider.admin_rider_id)
+  // 아이디·비번 저장: localStorage 만으론 iOS 7일 삭제·브라우저 정리에 취약 →
+  // 서버 장수명 쿠키로도 보존(미들웨어가 접속 시마다 수명 연장). 미전달(구 클라이언트)이면 현상 유지.
+  const remember = parsed.data.remember
+  if (remember) {
+    await setSavedLoginCookie(
+      remember.save ? { id: rider.admin_rider_id, pw: password, auto: remember.auto } : null,
+    )
+  }
   return { ok: true, adminRiderId: rider.admin_rider_id, name: rider.name }
 }
 

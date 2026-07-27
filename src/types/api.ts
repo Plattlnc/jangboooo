@@ -38,6 +38,11 @@ export const signInRiderSchema = z.object({
   riderId: z.string().trim().min(1, 'riderId required'),
   /** 비밀번호 = 등록 휴대폰 뒤 4자리(숫자 4자리) */
   password: z.string().regex(/^\d{4}$/, 'password must be 4 digits'),
+  /**
+   * 아이디·비밀번호 저장 옵션(본인 기기 전제, 사용자 명시 요구).
+   * save=true 면 서버가 장수명 쿠키(rider_saved_login)로 보존, false 면 삭제. 미전달 시 현상 유지.
+   */
+  remember: z.object({ save: z.boolean(), auto: z.boolean() }).optional(),
 })
 export type SignInRiderInput = z.infer<typeof signInRiderSchema>
 
