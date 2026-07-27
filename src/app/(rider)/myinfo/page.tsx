@@ -1,6 +1,11 @@
-// 내 정보 (시안). 로그인 라이더의 riders 데이터로 채우고, DB에 없는 항목은 '-' 표시.
+// 내 정보. 로그인 라이더의 riders 데이터로 채우고, DB에 없는 항목은 '-' 표시.
+// 실사용자·바이크 정보는 하단 폼으로 등록 → ROADING 사고접수 프리필에 사용.
 
 import { getRiderProfile } from "@/app/(rider)/_lib/rider-profile";
+import { ProfileForm } from "./profile-form";
+
+// 저장 직후 revalidatePath 반영 위해 매 요청 fresh.
+export const dynamic = "force-dynamic";
 
 interface InfoRow {
   label: string;
@@ -19,13 +24,14 @@ function fmtDate(iso: string | null): string {
 export default async function MyInfoPage() {
   const p = await getRiderProfile();
 
-  // riders 에 있는 값만 채우고, 컬럼이 없는 항목(이메일·차량·계좌)은 '-'.
+  // riders 에 있는 값만 채우고, 컬럼이 없는 항목(이메일·계좌)은 '-'.
   const sections: InfoSection[] = [
     {
       title: "기본 정보",
       rows: [
-        { label: "연락처", value: p.phone ?? "-" },
-        { label: "이메일", value: "-" },
+        { label: "실 사용자 이름", value: p.realName ?? "-" },
+        { label: "실 사용자 번호", value: p.realPhone ?? "-" },
+        { label: "연락처(계정)", value: p.phone ?? "-" },
         { label: "활동 지역", value: p.region ?? "-" },
         { label: "소속 협력사", value: p.centerId ?? "-" },
         { label: "가입일", value: fmtDate(p.createdAt) },
@@ -34,8 +40,8 @@ export default async function MyInfoPage() {
     {
       title: "차량 정보",
       rows: [
-        { label: "차종", value: "-" },
-        { label: "번호판", value: "-" },
+        { label: "기종", value: p.bikeModel ?? "-" },
+        { label: "번호판", value: p.plate ?? "-" },
         { label: "이용 형태", value: "-" },
         { label: "보험 만료", value: "-" },
       ],
@@ -83,12 +89,15 @@ export default async function MyInfoPage() {
         </div>
       ))}
 
-      <button
-        type="button"
-        className="mt-3.5 w-full rounded-xl border border-jb-line bg-white py-[13px] text-sm font-bold text-jb-ink transition-transform active:scale-[.98]"
-      >
-        정보 수정하기
-      </button>
+      {/* 실사용자 · 바이크 등록 폼 — 저장 시 ROADING 사고접수 프리필에 반영 */}
+      <ProfileForm
+        initial={{
+          realName: p.realName ?? "",
+          realPhone: p.realPhone ?? "",
+          bikePlate: p.plate ?? "",
+          bikeModel: p.bikeModel ?? "",
+        }}
+      />
     </div>
   );
 }

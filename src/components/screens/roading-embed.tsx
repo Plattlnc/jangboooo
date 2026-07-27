@@ -24,6 +24,8 @@ interface Props {
   riderPhone: string | null;
   /** 등록 차량번호 — ROADING step2 '내차량' 표기용(있을 때만 전달) */
   riderPlate?: string | null;
+  /** 운행 바이크 기종 — ROADING step2 '내차량' 카드 이름 표기용(있을 때만 전달) */
+  riderModel?: string | null;
   /** 목 프로필(데모) 여부 — ROADING 운영 데이터 오염 방지용 표기 */
   isDemo?: boolean;
   /** 임베드할 ROADING 경로 (기본 /step1=사고접수 위자드, /history=접수 내역 등) */
@@ -43,6 +45,7 @@ export function RoadingEmbed({
   riderName,
   riderPhone,
   riderPlate,
+  riderModel,
   isDemo = false,
   path = "/step1",
   title = "ROADING 사고접수",
@@ -58,6 +61,7 @@ export function RoadingEmbed({
     });
     if (riderPhone) params.set("phone", riderPhone);
     if (riderPlate) params.set("plate", riderPlate);
+    if (riderModel) params.set("model", riderModel);
     if (isDemo) params.set("demo", "1");
     return `${ROADING_ORIGIN}${path}?${params.toString()}`;
   })();
