@@ -2,9 +2,11 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { DEMO_MODE } from '@/lib/demo'
 import {
   ADMIN_SESSION_COOKIE,
+  CREDS_COOKIE,
   SESSION_COOKIE,
   SESSION_RENEW_AFTER_SECONDS,
   createSessionToken,
+  credsCookieOptions,
   riderSessionCookieOptions,
   verifyAdminSessionToken,
   verifySessionToken,
@@ -66,6 +68,12 @@ export async function middleware(request: NextRequest) {
       await createSessionToken(session.adminRiderId),
       riderSessionCookieOptions(),
     )
+    // 아이디·비번 저장 쿠키도 같은 주기로 수명 연장(값 그대로, 만료만 리셋)
+    // — 가끔이라도 접속하면 400일 상한이 계속 뒤로 밀려 사실상 소멸하지 않는다.
+    const savedLogin = request.cookies.get(CREDS_COOKIE)?.value
+    if (savedLogin) {
+      response.cookies.set(CREDS_COOKIE, savedLogin, credsCookieOptions())
+    }
   }
   return response
 }

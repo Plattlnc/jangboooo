@@ -1,11 +1,15 @@
 import 'server-only'
 import { cookies } from 'next/headers'
 import {
+  CREDS_COOKIE,
   SESSION_COOKIE,
   createSessionToken,
+  credsCookieOptions,
+  encodeSavedLogin,
   riderSessionCookieOptions,
   verifySessionToken,
   type RiderSession,
+  type SavedLogin,
 } from '@/lib/auth/session'
 
 /**
@@ -35,4 +39,18 @@ export async function clearRiderSession(): Promise<void> {
   const store = await cookies()
   store.set(SESSION_COOKIE, '', { ...riderSessionCookieOptions(), maxAge: 0 })
   store.delete({ name: SESSION_COOKIE, path: '/' })
+}
+
+/**
+ * 아이디·비번 저장 쿠키 설정/삭제 — 로그인 성공 시 remember 옵션에 따라 호출.
+ * 로그아웃 시엔 지우지 않는다(저장의 목적 = 로그아웃 후에도 프리필).
+ */
+export async function setSavedLoginCookie(creds: SavedLogin | null): Promise<void> {
+  const store = await cookies()
+  if (creds) {
+    store.set(CREDS_COOKIE, encodeSavedLogin(creds), credsCookieOptions())
+  } else {
+    store.set(CREDS_COOKIE, '', { ...credsCookieOptions(), maxAge: 0 })
+    store.delete({ name: CREDS_COOKIE, path: '/' })
+  }
 }

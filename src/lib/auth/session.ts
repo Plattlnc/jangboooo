@@ -33,6 +33,45 @@ export function riderSessionCookieOptions() {
   }
 }
 
+// ── 아이디·비번 저장(자동 로그인) 쿠키 ─────────────────────────
+// localStorage 는 iOS 사파리 7일 미사용 삭제(ITP)·브라우저 정리에 취약 →
+// 서버 Set-Cookie(ITP 상한 면제)로 보존하고 미들웨어가 접속 시마다 수명 연장.
+// httpOnly=false 인 이유: 로그인 폼(클라이언트)이 읽어 프리필/자동 로그인해야 함.
+// 평문 수준 노출은 사용자 명시 요구(본인 기기 전제, 비번=휴대폰 뒤4자리) 트레이드오프.
+export const CREDS_COOKIE = 'rider_saved_login'
+export const CREDS_TTL_SECONDS = 60 * 60 * 24 * 400 // 브라우저 쿠키 수명 상한(크롬 400일)
+
+export interface SavedLogin {
+  id: string
+  pw: string
+  auto: boolean
+}
+
+export function credsCookieOptions() {
+  return {
+    httpOnly: false,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax' as const,
+    path: '/',
+    maxAge: CREDS_TTL_SECONDS,
+  }
+}
+
+export function encodeSavedLogin(v: SavedLogin): string {
+  return bytesToB64url(enc.encode(JSON.stringify(v)))
+}
+
+export function decodeSavedLogin(raw: string | undefined | null): SavedLogin | null {
+  if (!raw) return null
+  try {
+    const parsed = JSON.parse(new TextDecoder().decode(b64urlToBytes(raw))) as Partial<SavedLogin>
+    if (typeof parsed.id !== 'string' || typeof parsed.pw !== 'string') return null
+    return { id: parsed.id, pw: parsed.pw, auto: parsed.auto === true }
+  } catch {
+    return null
+  }
+}
+
 interface TokenPayload {
   rid: string
   iat: number
