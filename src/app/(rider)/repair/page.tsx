@@ -78,8 +78,17 @@ export default async function RepairPage() {
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="text-[14.5px] font-black tracking-[-0.02em]">{s.name}</div>
+                  {s.phone ? (
+                    // 번호는 눈에 잘 보이는 크기의 텍스트로도 노출 — select-all 로 탭 한 번에 전체 선택(복사).
+                    <div className="mt-[3px] flex items-center gap-1.5">
+                      <Phone size={13} strokeWidth={2.2} className="shrink-0 text-jb-indigo" />
+                      <span className="tnum select-all text-[16px] font-black tracking-[-0.01em] text-jb-ink">
+                        {s.phone}
+                      </span>
+                    </div>
+                  ) : null}
                   {s.address ? (
-                    <div className="mt-0.5 flex items-center gap-1 text-[11.5px] text-jb-ink-soft">
+                    <div className="mt-1 flex items-center gap-1 text-[11.5px] text-jb-ink-soft">
                       <MapPin size={11} strokeWidth={2} className="shrink-0 text-jb-ink-mute" />
                       <span className="truncate">{s.address}</span>
                     </div>
