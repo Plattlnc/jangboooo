@@ -3,6 +3,9 @@ import { DEMO_MODE } from '@/lib/demo'
 import {
   ADMIN_SESSION_COOKIE,
   SESSION_COOKIE,
+  SESSION_RENEW_AFTER_SECONDS,
+  createSessionToken,
+  riderSessionCookieOptions,
   verifyAdminSessionToken,
   verifySessionToken,
 } from '@/lib/auth/session'
@@ -41,7 +44,17 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  return NextResponse.next()
+  // 슬라이딩 갱신: 발급 후 하루 지난 토큰은 재발급 — 접속이 이어지는 한 만료(365일)가 계속 뒤로 밀려
+  // 실사용자는 사실상 로그아웃되지 않는다. (매 요청 갱신은 Set-Cookie 낭비라 1일 간격으로 제한.)
+  const response = NextResponse.next()
+  if (Math.floor(Date.now() / 1000) - session.issuedAt >= SESSION_RENEW_AFTER_SECONDS) {
+    response.cookies.set(
+      SESSION_COOKIE,
+      await createSessionToken(session.adminRiderId),
+      riderSessionCookieOptions(),
+    )
+  }
+  return response
 }
 
 export const config = {

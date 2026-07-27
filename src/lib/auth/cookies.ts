@@ -2,8 +2,8 @@ import 'server-only'
 import { cookies } from 'next/headers'
 import {
   SESSION_COOKIE,
-  SESSION_TTL_SECONDS,
   createSessionToken,
+  riderSessionCookieOptions,
   verifySessionToken,
   type RiderSession,
 } from '@/lib/auth/session'
@@ -23,13 +23,7 @@ export async function getRiderSession(): Promise<RiderSession | null> {
 export async function setRiderSession(adminRiderId: string): Promise<void> {
   const token = await createSessionToken(adminRiderId)
   const store = await cookies()
-  store.set(SESSION_COOKIE, token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/',
-    maxAge: SESSION_TTL_SECONDS,
-  })
+  store.set(SESSION_COOKIE, token, riderSessionCookieOptions())
 }
 
 /**
@@ -39,12 +33,6 @@ export async function setRiderSession(adminRiderId: string): Promise<void> {
  */
 export async function clearRiderSession(): Promise<void> {
   const store = await cookies()
-  store.set(SESSION_COOKIE, '', {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/',
-    maxAge: 0,
-  })
+  store.set(SESSION_COOKIE, '', { ...riderSessionCookieOptions(), maxAge: 0 })
   store.delete({ name: SESSION_COOKIE, path: '/' })
 }
