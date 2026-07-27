@@ -33,6 +33,19 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
+  // 루트/로그인 진입 시 유효 세션이 있으면 대시보드로 — 브라우저 재시작 후 홈 URL 로
+  // 들어와도 쿠키가 살아있는 한 로그인 화면을 다시 보이지 않는다.
+  if (pathname === '/' || pathname === '/login') {
+    const session = await verifySessionToken(request.cookies.get(SESSION_COOKIE)?.value)
+    if (session) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/dashboard'
+      url.search = ''
+      return NextResponse.redirect(url)
+    }
+    return NextResponse.next()
+  }
+
   const isProtected = pathname === '/dashboard' || pathname.startsWith('/dashboard/')
   if (!isProtected) return NextResponse.next()
 
