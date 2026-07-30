@@ -4,6 +4,7 @@
 import { getRiderProfile } from "@/app/(rider)/_lib/rider-profile";
 import { centerDisplayName } from "@/lib/center-names";
 import { ProfileForm } from "./profile-form";
+import { AvatarEditor } from "./avatar-editor";
 
 // 저장 직후 revalidatePath 반영 위해 매 요청 fresh.
 export const dynamic = "force-dynamic";
@@ -74,11 +75,9 @@ export default async function MyInfoPage() {
       <h1 className="text-xl font-black tracking-[-0.03em]">내 정보</h1>
       <p className="mb-3.5 mt-1 text-[12.5px] text-jb-ink-mute">계정 · 차량 · 정산 계좌를 한 곳에서</p>
 
-      {/* 프로필 카드 (로그인 정보) */}
+      {/* 프로필 카드 (로그인 정보) — 아바타 탭 = 사진 변경(크롭 모달) */}
       <div className="flex items-center gap-[13px] rounded-2xl bg-[linear-gradient(135deg,#4F6AF5,#5d77ff)] p-[17px] text-white shadow-[0_8px_20px_rgba(79,106,245,0.26)]">
-        <div className="grid size-[52px] shrink-0 place-items-center rounded-2xl bg-white/20 text-[19px] font-black">
-          {p.initial}
-        </div>
+        <AvatarEditor avatarUrl={p.avatarUrl} initial={p.initial} />
         <div className="flex-1">
           <div className="text-lg font-black">{p.name}</div>
           <div className="tnum mt-[3px] text-xs opacity-90">

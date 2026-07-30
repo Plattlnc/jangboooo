@@ -61,9 +61,18 @@ export function MenuDrawer({ open, onClose, profile }: MenuDrawerProps) {
           className="block bg-gradient-to-br from-[#4F6AF5] to-[#5d77ff] px-[18px] pb-[18px] pt-[22px] text-white transition-opacity active:opacity-90"
         >
           <div className="flex items-center gap-3">
-            <div className="grid size-12 place-items-center rounded-[15px] bg-white/20 text-[18px] font-black">
-              {profile.initial}
-            </div>
+            {profile.avatarUrl ? (
+              /* eslint-disable-next-line @next/next/no-img-element -- 48px 고정 아바타, 원격 도메인 미설정 */
+              <img
+                src={profile.avatarUrl}
+                alt="프로필 사진"
+                className="size-12 shrink-0 rounded-[15px] object-cover"
+              />
+            ) : (
+              <div className="grid size-12 place-items-center rounded-[15px] bg-white/20 text-[18px] font-black">
+                {profile.initial}
+              </div>
+            )}
             <div className="flex-1">
               <div className="text-[17px] font-black">{profile.name}</div>
               <div className="tnum mt-0.5 text-xs opacity-90">UID {profile.uid}</div>
