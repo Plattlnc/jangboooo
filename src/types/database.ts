@@ -36,6 +36,8 @@ export type RiderRow = {
   insurance_start: string | null
   /** 보험 기간 일수 (0013, 내정보 등록) — 만료일 = start + days. */
   insurance_days: number | null
+  /** 프로필 사진 경로 (0015, 내정보 등록) — avatars 버킷 내 `<uid>/avatar-<ts>.<ext>`. */
+  avatar_path: string | null
   created_at: string
   updated_at: string
 }

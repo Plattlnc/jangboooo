@@ -95,3 +95,108 @@ export async function saveRiderProfile(input: unknown): Promise<SaveProfileResul
   revalidatePath('/roading')
   return { ok: true, message: '내 정보가 저장되었습니다.' }
 }
+
+/**
+ * 프로필 사진 업로드(0015): 클라이언트 크롭 결과(JPEG, 512px 정방형)를 avatars 버킷에 적재
+ * 후 riders.avatar_path 갱신. 경로에 타임스탬프 → 재업로드 시 캐시 자연 무효화, 구 파일은
+ * best-effort 정리. 세션 본인 행만.
+ */
+const AVATAR_MAX_BYTES = 3 * 1024 * 1024
+const AVATAR_EXT: Record<string, string> = {
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+}
+
+/** 라이더 폴더의 다른 파일 제거(best-effort — 실패해도 무시, keep 은 남김). */
+async function pruneAvatarFolder(
+  admin: ReturnType<typeof createAdminClient>,
+  folder: string,
+  keep: string | null,
+): Promise<void> {
+  try {
+    const { data: files } = await admin.storage.from('avatars').list(folder)
+    const stale = (files ?? [])
+      .map((f) => `${folder}/${f.name}`)
+      .filter((p) => p !== keep)
+    if (stale.length > 0) await admin.storage.from('avatars').remove(stale)
+  } catch {
+    /* 정리 실패는 무해(다음 업로드에서 재시도됨) */
+  }
+}
+
+export async function saveRiderAvatar(formData: FormData): Promise<SaveProfileResult> {
+  const file = formData.get('avatar')
+  if (!(file instanceof File) || file.size === 0) {
+    return { ok: false, message: '이미지 파일을 선택해주세요.' }
+  }
+  const ext = AVATAR_EXT[file.type]
+  if (!ext) return { ok: false, message: 'JPG · PNG · WebP 이미지만 업로드할 수 있어요.' }
+  if (file.size > AVATAR_MAX_BYTES) {
+    return { ok: false, message: '이미지는 3MB 이하로 업로드해주세요.' }
+  }
+
+  const { getRiderSession } = await import('@/lib/auth/cookies')
+  const session = await getRiderSession()
+  if (!session) {
+    return { ok: false, message: '로그인이 만료되었습니다. 다시 로그인해주세요.' }
+  }
+
+  let admin
+  try {
+    admin = createAdminClient()
+  } catch {
+    return { ok: false, message: '서버 설정 오류입니다. 잠시 후 다시 시도해주세요.' }
+  }
+
+  const path = `${session.adminRiderId}/avatar-${Date.now()}.${ext}`
+  const bytes = new Uint8Array(await file.arrayBuffer())
+  const { error: upErr } = await admin.storage
+    .from('avatars')
+    .upload(path, bytes, { contentType: file.type, upsert: true })
+  if (upErr) {
+    return { ok: false, message: '사진 업로드에 실패했습니다. 잠시 후 다시 시도해주세요.' }
+  }
+
+  const { data, error } = await admin
+    .from('riders')
+    .update({ avatar_path: path })
+    .eq('admin_rider_id', session.adminRiderId)
+    .select('admin_rider_id')
+  if (error || !data || data.length === 0) {
+    await admin.storage.from('avatars').remove([path]).catch(() => {})
+    return { ok: false, message: '저장에 실패했습니다. 잠시 후 다시 시도해주세요.' }
+  }
+
+  await pruneAvatarFolder(admin, session.adminRiderId, path)
+  revalidatePath('/', 'layout') // 드로어(전 페이지 레이아웃)에도 즉시 반영
+  return { ok: true, message: '프로필 사진이 변경되었습니다.' }
+}
+
+/** 프로필 사진 제거 → 이니셜 표시로 복귀. 파일도 best-effort 정리. */
+export async function removeRiderAvatar(): Promise<SaveProfileResult> {
+  const { getRiderSession } = await import('@/lib/auth/cookies')
+  const session = await getRiderSession()
+  if (!session) {
+    return { ok: false, message: '로그인이 만료되었습니다. 다시 로그인해주세요.' }
+  }
+
+  let admin
+  try {
+    admin = createAdminClient()
+  } catch {
+    return { ok: false, message: '서버 설정 오류입니다. 잠시 후 다시 시도해주세요.' }
+  }
+
+  const { error } = await admin
+    .from('riders')
+    .update({ avatar_path: null })
+    .eq('admin_rider_id', session.adminRiderId)
+  if (error) {
+    return { ok: false, message: '삭제에 실패했습니다. 잠시 후 다시 시도해주세요.' }
+  }
+
+  await pruneAvatarFolder(admin, session.adminRiderId, null)
+  revalidatePath('/', 'layout')
+  return { ok: true, message: '프로필 사진을 삭제했습니다.' }
+}

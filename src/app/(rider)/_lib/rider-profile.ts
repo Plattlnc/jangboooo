@@ -31,6 +31,8 @@ export interface RiderProfile {
   insuranceStart: string | null;
   /** 보험 기간 일수 (내정보 등록, 0013). */
   insuranceDays: number | null;
+  /** 프로필 사진 공개 URL (riders.avatar_path, 0015). 미등록/컬럼 미존재 시 null → 이니셜 표시. */
+  avatarUrl: string | null;
 }
 
 function hasSupabaseEnv(): boolean {
@@ -54,6 +56,7 @@ const DEMO_PROFILE: RiderProfile = {
   usageType: null,
   insuranceStart: null,
   insuranceDays: null,
+  avatarUrl: null,
 };
 
 function initialOf(name: string): string {
@@ -84,10 +87,11 @@ export const getRiderProfile = cache(async (): Promise<RiderProfile> => {
     let usageType: string | null = null;
     let insuranceStart: string | null = null;
     let insuranceDays: number | null = null;
+    let avatarUrl: string | null = null;
     try {
       const { data: pv } = await admin
         .from("riders")
-        .select("plate, real_name, real_phone, bike_model, usage_type, insurance_start, insurance_days")
+        .select("plate, real_name, real_phone, bike_model, usage_type, insurance_start, insurance_days, avatar_path")
         .eq("admin_rider_id", session.adminRiderId)
         .maybeSingle();
       plate = pv?.plate ?? null;
@@ -97,6 +101,9 @@ export const getRiderProfile = cache(async (): Promise<RiderProfile> => {
       usageType = pv?.usage_type ?? null;
       insuranceStart = pv?.insurance_start ?? null;
       insuranceDays = pv?.insurance_days ?? null;
+      if (pv?.avatar_path) {
+        avatarUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars/${pv.avatar_path}`;
+      }
     } catch {
       /* 컬럼 미존재 등 — 무시 */
     }
@@ -118,6 +125,7 @@ export const getRiderProfile = cache(async (): Promise<RiderProfile> => {
       usageType,
       insuranceStart,
       insuranceDays,
+      avatarUrl,
     };
   } catch {
     // 조회 실패 시에도 최소한 로그인 식별자는 보여줌(나머지 '-').
@@ -137,6 +145,7 @@ export const getRiderProfile = cache(async (): Promise<RiderProfile> => {
       usageType: null,
       insuranceStart: null,
       insuranceDays: null,
+      avatarUrl: null,
     };
   }
 });
