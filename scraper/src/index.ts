@@ -15,7 +15,7 @@ import { runScrapeCycle } from './scrape'
 import { runLoop } from './scheduler'
 import { isSessionExpired } from './sources/baemin'
 import { collectCenterGoals } from './sources/baemin-goals-session'
-import { delay, withTimeout } from './util'
+import { delay, setClockOffsetMs, withTimeout } from './util'
 
 /**
  * Railway 등 영속 FS 없는 환경: STORAGE_STATE_B64 가 있고 세션 파일이 없으면
@@ -38,6 +38,34 @@ async function restoreSessionFromB64(cfg: Config, log: Logger): Promise<void> {
     log.info('STORAGE_STATE_B64 → 세션 파일 복원', { path: cfg.storageStatePath })
   } catch (err) {
     log.error('STORAGE_STATE_B64 복원 실패(세션 만료처럼 동작할 수 있음)', serializeError(err))
+  }
+}
+
+/**
+ * 컨테이너 시계 스큐 감시(2026-07-30 Railway 호스트 +19h → 미래 snapshot_date 오염 사고).
+ * Supabase 응답의 HTTP Date 헤더(초 단위)로 오프셋을 측정해 영업일/captured_at 계산에 반영.
+ * best-effort: 실패 시 기존 오프셋 유지, 절대 throw 하지 않는다.
+ */
+let lastLoggedSkewMs = 0
+async function syncClock(cfg: Config, log: Logger): Promise<void> {
+  try {
+    const res = await fetch(new URL('/rest/v1/', cfg.supabaseUrl), {
+      signal: AbortSignal.timeout(10_000),
+    })
+    const header = res.headers.get('date')
+    if (!header) return
+    const server = Date.parse(header)
+    if (!Number.isFinite(server)) return
+    const skew = server - Date.now()
+    const offset = Math.abs(skew) < 5_000 ? 0 : skew // Date 헤더는 초 단위 → 미세 차는 무시
+    setClockOffsetMs(offset)
+    if (Math.abs(skew - lastLoggedSkewMs) >= 5_000) {
+      if (offset !== 0) log.warn('컨테이너 시계 스큐 감지 — 서버 시간으로 보정', { skewMs: skew })
+      else if (lastLoggedSkewMs !== 0) log.info('시계 스큐 해소 — 로컬 시계 복귀')
+      lastLoggedSkewMs = skew
+    }
+  } catch {
+    /* 네트워크 일시 실패 — 기존 오프셋 유지 */
   }
 }
 
@@ -87,7 +115,12 @@ async function main(): Promise<void> {
   process.on('SIGINT', () => shutdown('SIGINT'))
   process.on('SIGTERM', () => shutdown('SIGTERM'))
 
-  const cycle = (): Promise<unknown> => runScrapeCycle({ cfg, log, db, session })
+  await syncClock(cfg, log) // 첫 사이클 전 1회 — 스큐 상태로 첫 적재가 나가는 것 방지
+
+  const cycle = async (): Promise<unknown> => {
+    await syncClock(cfg, log) // 매 사이클 재측정(런타임 중 NTP 점프/드리프트 방어)
+    return runScrapeCycle({ cfg, log, db, session })
+  }
 
   // 공동목표(달성현황 beta): 구글 세션이 있을 때만, 배달현황과 독립된 느린 주기로 best-effort 수집.
   const goalsEnabled = cfg.goals.configured && !cfg.mock
@@ -132,6 +165,7 @@ async function main(): Promise<void> {
 /** 공동목표 1회 수집+적재(best-effort, 절대 throw 안 함). */
 async function collectAndUpsertGoals(cfg: Config, db: ReturnType<typeof createDb>, log: Logger): Promise<void> {
   try {
+    await syncClock(cfg, log) // 골격 모드(배달현황 루프 없음)에서도 goal snapshot_date 보정 보장
     // 워치독: 한 번의 수집이 행에 걸리면 goal 루프 전체가 영구 정지(2026-07-16 사고).
     // launch 60s + goto 30s + 응답 폴링 30s 를 넉넉히 덮는 4분 상한.
     const rows = await withTimeout(collectCenterGoals(cfg, log), 4 * 60_000, '공동목표 수집')

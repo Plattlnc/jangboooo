@@ -11,6 +11,7 @@ import type { Db } from './supabase'
 import { upsertCenterCurrents, upsertHourlyStats, upsertRiders, upsertSlaSnapshots } from './supabase'
 import { captureApiHeaders, fetchSlaDataWithHeaders, isSessionExpired, mockScrapeResult } from './sources/baemin'
 import type { ScrapeResult, UpsertCounts } from './types'
+import { trustedNow } from './util'
 
 export type CycleDeps = {
   cfg: Config
@@ -81,7 +82,7 @@ async function fetchWithParkedSession(deps: CycleDeps): Promise<ScrapeResult> {
 
 /** 파싱 결과를 멱등 upsert. captured_at 미지정 행엔 적재 시점을 일괄 부여. */
 async function persistResult(db: Db, result: ScrapeResult, log: Logger): Promise<UpsertCounts> {
-  const capturedAt = new Date().toISOString()
+  const capturedAt = trustedNow().toISOString()
   const snapshots = result.snapshots.map((s) => ({ captured_at: capturedAt, ...s }))
   const hourly = result.hourly.map((h) => ({ captured_at: capturedAt, ...h }))
 
