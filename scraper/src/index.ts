@@ -15,7 +15,7 @@ import { runScrapeCycle } from './scrape'
 import { runLoop } from './scheduler'
 import { isSessionExpired } from './sources/baemin'
 import { collectCenterGoals } from './sources/baemin-goals-session'
-import { delay, setClockOffsetMs, withTimeout } from './util'
+import { delay, syncClockOffsetFromServer, withTimeout } from './util'
 
 /**
  * Railway 등 영속 FS 없는 환경: STORAGE_STATE_B64 가 있고 세션 파일이 없으면
@@ -42,30 +42,18 @@ async function restoreSessionFromB64(cfg: Config, log: Logger): Promise<void> {
 }
 
 /**
- * 컨테이너 시계 스큐 감시(2026-07-30 Railway 호스트 +19h → 미래 snapshot_date 오염 사고).
- * Supabase 응답의 HTTP Date 헤더(초 단위)로 오프셋을 측정해 영업일/captured_at 계산에 반영.
+ * 실행 머신 시계 스큐 감시(2026-07-31 로컬 맥 시계 -19h → 전날 snapshot_date 오염 사고).
+ * Supabase 응답의 HTTP Date 헤더로 오프셋을 측정해 영업일/captured_at 계산에 반영.
  * best-effort: 실패 시 기존 오프셋 유지, 절대 throw 하지 않는다.
  */
 let lastLoggedSkewMs = 0
 async function syncClock(cfg: Config, log: Logger): Promise<void> {
-  try {
-    const res = await fetch(new URL('/rest/v1/', cfg.supabaseUrl), {
-      signal: AbortSignal.timeout(10_000),
-    })
-    const header = res.headers.get('date')
-    if (!header) return
-    const server = Date.parse(header)
-    if (!Number.isFinite(server)) return
-    const skew = server - Date.now()
-    const offset = Math.abs(skew) < 5_000 ? 0 : skew // Date 헤더는 초 단위 → 미세 차는 무시
-    setClockOffsetMs(offset)
-    if (Math.abs(skew - lastLoggedSkewMs) >= 5_000) {
-      if (offset !== 0) log.warn('컨테이너 시계 스큐 감지 — 서버 시간으로 보정', { skewMs: skew })
-      else if (lastLoggedSkewMs !== 0) log.info('시계 스큐 해소 — 로컬 시계 복귀')
-      lastLoggedSkewMs = skew
-    }
-  } catch {
-    /* 네트워크 일시 실패 — 기존 오프셋 유지 */
+  const skew = await syncClockOffsetFromServer(cfg.supabaseUrl)
+  if (skew == null) return
+  if (Math.abs(skew - lastLoggedSkewMs) >= 5_000) {
+    if (Math.abs(skew) >= 5_000) log.warn('머신 시계 스큐 감지 — 서버 시간으로 보정', { skewMs: skew })
+    else if (lastLoggedSkewMs !== 0) log.info('시계 스큐 해소 — 로컬 시계 복귀')
+    lastLoggedSkewMs = skew
   }
 }
 

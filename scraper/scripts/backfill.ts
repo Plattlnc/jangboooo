@@ -13,7 +13,7 @@ import { createLogger } from '../src/logger'
 import { createDb, upsertRiders, upsertSlaSnapshots, upsertHourlyStats } from '../src/supabase'
 import { BrowserSession } from '../src/browser'
 import { captureApiHeaders, fetchHistoryDay } from '../src/sources/baemin'
-import { businessDayInTz } from '../src/util'
+import { businessDayInTz, syncClockOffsetFromServer, trustedNow } from '../src/util'
 
 function arg(name: string): string | undefined {
   const i = process.argv.indexOf(`--${name}`)
@@ -36,6 +36,11 @@ function dateRange(from: string, to: string): string[] {
 async function main(): Promise<void> {
   const cfg = loadConfig()
   const log = createLogger(cfg.logLevel, { svc: 'backfill' })
+  // 로컬 시계 스큐 방어(2026-07-31 맥 -19h 사고): 서버 시간으로 '오늘' 판정.
+  const skew = await syncClockOffsetFromServer(cfg.supabaseUrl)
+  if (skew != null && Math.abs(skew) >= 5_000) {
+    log.warn('머신 시계 스큐 감지 — 서버 시간 기준으로 영업일 판정', { skewMs: skew })
+  }
   const today = businessDayInTz(cfg.timezone) // 현재 영업일(제외 대상)
 
   const days = arg('days')
@@ -66,7 +71,7 @@ async function main(): Promise<void> {
     let okDays = 0
     for (const day of targets) {
       const result = await fetchHistoryDay(page, headers, cfg, log, day)
-      const capturedAt = new Date().toISOString()
+      const capturedAt = trustedNow().toISOString()
       const riders = await upsertRiders(db, result.riders)
       const snapshots = await upsertSlaSnapshots(
         db,
