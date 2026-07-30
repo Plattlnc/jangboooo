@@ -1,9 +1,10 @@
 /** 공용 유틸: 시간대 기준 날짜, abort 가능한 delay. */
 
 /**
- * 컨테이너 시계 스큐 보정 오프셋(ms). 2026-07-30 Railway 호스트 시계가 +19h 틀어져
- * 미래 영업일(snapshot_date)로 데이터를 오염시킨 사고의 방어. 엔트리포인트가
- * 신뢰 서버(HTTP Date 헤더)와 대조해 갱신하며, 동기화 전/실패 시 0(기존 동작 동일).
+ * 실행 머신 시계 스큐 보정 오프셋(ms). 2026-07-31 로컬 맥 시계가 19h 느려
+ * 당일 데이터를 전날 영업일(snapshot_date)로 오염시킨 사고의 방어(어느 방향의
+ * 스큐든 커버). 신뢰 서버(HTTP Date 헤더)와 대조해 갱신하며, 동기화 전/실패 시
+ * 0(기존 동작 동일).
  */
 let clockOffsetMs = 0
 
@@ -14,6 +15,26 @@ export function setClockOffsetMs(ms: number): void {
 /** 스큐 보정이 반영된 현재 시각. 영업일 계산·captured_at 등 데이터에 남는 시각은 이걸 쓴다. */
 export function trustedNow(): Date {
   return new Date(Date.now() + clockOffsetMs)
+}
+
+/**
+ * 신뢰 서버(Supabase 등)의 HTTP Date 헤더(초 단위)로 clockOffsetMs 를 갱신.
+ * 성공 시 측정 skew(ms) 반환, 실패 시 null(오프셋 유지). 절대 throw 하지 않는다.
+ * ±5s 이내는 로컬 시계 신뢰(Date 헤더 정밀도 한계).
+ */
+export async function syncClockOffsetFromServer(baseUrl: string): Promise<number | null> {
+  try {
+    const res = await fetch(new URL('/rest/v1/', baseUrl), { signal: AbortSignal.timeout(10_000) })
+    const header = res.headers.get('date')
+    if (!header) return null
+    const server = Date.parse(header)
+    if (!Number.isFinite(server)) return null
+    const skew = server - Date.now()
+    clockOffsetMs = Math.abs(skew) < 5_000 ? 0 : skew
+    return skew
+  } catch {
+    return null
+  }
 }
 
 /**
