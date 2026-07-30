@@ -12,7 +12,7 @@ import { chromium, type BrowserContextOptions } from 'playwright'
 import type { Config } from '../config'
 import type { Logger } from '../logger'
 import { serializeError } from '../logger'
-import { businessDayInTz } from '../util'
+import { businessDayInTz, trustedNow } from '../util'
 import type { CenterGoalUpsert } from '../types'
 import { isValidCenterGoals, parseLookerGoals } from './baemin-goals'
 
@@ -104,7 +104,7 @@ export async function collectCenterGoals(cfg: Config, log: Logger): Promise<Cent
     }
 
     const snapshot_date = businessDayInTz(cfg.timezone)
-    const captured_at = new Date().toISOString()
+    const captured_at = trustedNow().toISOString()
     const rows: CenterGoalUpsert[] = []
     for (const c of validCenters) {
       for (const p of c.peaks) {

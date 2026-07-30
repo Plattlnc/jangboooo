@@ -1,11 +1,27 @@
 /** 공용 유틸: 시간대 기준 날짜, abort 가능한 delay. */
 
 /**
+ * 컨테이너 시계 스큐 보정 오프셋(ms). 2026-07-30 Railway 호스트 시계가 +19h 틀어져
+ * 미래 영업일(snapshot_date)로 데이터를 오염시킨 사고의 방어. 엔트리포인트가
+ * 신뢰 서버(HTTP Date 헤더)와 대조해 갱신하며, 동기화 전/실패 시 0(기존 동작 동일).
+ */
+let clockOffsetMs = 0
+
+export function setClockOffsetMs(ms: number): void {
+  clockOffsetMs = ms
+}
+
+/** 스큐 보정이 반영된 현재 시각. 영업일 계산·captured_at 등 데이터에 남는 시각은 이걸 쓴다. */
+export function trustedNow(): Date {
+  return new Date(Date.now() + clockOffsetMs)
+}
+
+/**
  * 주어진 시간대(기본 Asia/Seoul) 기준 영업일을 YYYY-MM-DD 로 반환.
  * sla_snapshots.snapshot_date / rider_hourly_stats.snapshot_date 의 키.
  * en-CA 로케일은 항상 YYYY-MM-DD 포맷을 낸다.
  */
-export function dateStringInTz(timeZone = 'Asia/Seoul', d: Date = new Date()): string {
+export function dateStringInTz(timeZone = 'Asia/Seoul', d: Date = trustedNow()): string {
   return new Intl.DateTimeFormat('en-CA', {
     timeZone,
     year: 'numeric',
@@ -19,7 +35,7 @@ export function dateStringInTz(timeZone = 'Asia/Seoul', d: Date = new Date()): s
  * 06:00 이전이면 전날이 영업일(예: 06/28 03:00 → 06/27). 시각에서 6h 빼면
  * 영업일 경계(06:00)가 자정 경계로 정렬되어 dateStringInTz 로 변환 가능.
  */
-export function businessDayInTz(timeZone = 'Asia/Seoul', d: Date = new Date()): string {
+export function businessDayInTz(timeZone = 'Asia/Seoul', d: Date = trustedNow()): string {
   return dateStringInTz(timeZone, new Date(d.getTime() - 6 * 60 * 60 * 1000))
 }
 
