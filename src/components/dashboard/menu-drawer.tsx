@@ -8,9 +8,10 @@ import { signOutRider } from "@/actions/auth";
 import { NAV_GROUPS } from "@/lib/nav";
 import type { RiderProfile } from "@/app/(rider)/_lib/rider-profile";
 
-// 시안 드로어 — 프로필(인디고 그라데이션) + 그룹 네비(활성표시) + 캐시 카드 + 로그아웃.
+// 시안 드로어 — 프로필(인디고 그라데이션) + 그룹 네비(활성표시) + 로그아웃.
 // 라우트 이동은 next/link. 활성 판정은 usePathname. 로그아웃만 서버액션 실동작.
 // 상단 회원정보는 로그인 라이더 정보(profile)로 통일.
+// 캐시/출금 카드는 정산 시스템 연동 전이라 미노출(2026-07-31 사용자 확정 — 돈 관련 UI 보류).
 
 interface MenuDrawerProps {
   open: boolean;
@@ -114,27 +115,12 @@ export function MenuDrawer({ open, onClose, profile }: MenuDrawerProps) {
           ))}
         </nav>
 
-        {/* 캐시 카드 + 로그아웃 */}
+        {/* 로그아웃 */}
         <div className="border-t border-jb-line-soft px-3.5 pb-[18px] pt-3">
-          <div className="rounded-[14px] border border-jb-line bg-[#f8f9fb] p-3.5">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-jb-ink-mute">출금 가능 캐시</span>
-              <span className="text-[11px] font-bold text-jb-indigo">내역 ›</span>
-            </div>
-            <div className="mt-[7px] flex items-end justify-between">
-              <span className="tnum text-[22px] font-black text-jb-ink">-</span>
-              <button
-                type="button"
-                className="rounded-[10px] bg-jb-indigo px-3.5 py-2 text-[12.5px] font-bold text-white"
-              >
-                출금
-              </button>
-            </div>
-          </div>
           <form action={signOutRider}>
             <button
               type="submit"
-              className="mt-[11px] w-full rounded-[11px] border border-jb-line bg-white py-[11px] text-[13px] font-semibold text-jb-ink-mute transition-transform active:scale-[.98]"
+              className="w-full rounded-[11px] border border-jb-line bg-white py-[11px] text-[13px] font-semibold text-jb-ink-mute transition-transform active:scale-[.98]"
             >
               로그아웃
             </button>
