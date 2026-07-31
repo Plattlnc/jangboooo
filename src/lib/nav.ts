@@ -1,7 +1,6 @@
 import {
   User,
-  ReceiptText,
-  Wallet,
+  CalendarCheck,
   TriangleAlert,
   ClipboardList,
   Bike,
@@ -14,8 +13,9 @@ import {
 // 각 화면 = (rider) 그룹의 실제 라우트. 활성표시는 usePathname 으로 판정.
 // 타일 색은 시안 목업 그대로(브랜드 멀티컬러).
 //
-// 2026-07-27 확정 구성: 내 정보 · 일차감 · 정산 · 사고접수 · 접수 내역 · 리스렌탈 · 정비소.
-// 2026-07-31 추가: 커뮤니티 > 랭킹(기간별 완료건 순위).
+// 2026-07-27 확정 구성: 내 정보 · 사고접수 · 접수 내역 · 리스렌탈 · 정비소.
+// 2026-07-31 추가: 커뮤니티 > 랭킹(기간별 완료건 순위) · 배달일지(일별 완료 기록).
+// 2026-07-31 제거: 일차감 관리 · 정산 내역(돈 관련 보류 — 라우트는 존치, 드로어만 제외).
 // 제거: 홈(로고 클릭으로 진입) / 긴급출동 / 라이더 용품 / 배달뉴스.
 // 리스·렌탈/정비소는 탭 유지 + 화면은 더미 데이터 없는 준비중 상태(목데이터 삭제됨).
 
@@ -36,11 +36,10 @@ export interface NavGroup {
 
 export const NAV_GROUPS: NavGroup[] = [
   {
-    title: "정산 · 내 정보",
+    title: "내 정보 · 활동",
     items: [
       { label: "내 정보", href: "/myinfo", icon: User, tileColor: "#4F6AF5", tileBg: "#eef1fe" },
-      { label: "일차감 관리", href: "/deduct", icon: ReceiptText, tileColor: "#E8590C", tileBg: "#fdf0e6" },
-      { label: "정산 내역", href: "/settle", icon: Wallet, tileColor: "#1E9E5A", tileBg: "#e7f5ee" },
+      { label: "배달일지", href: "/diary", icon: CalendarCheck, tileColor: "#1E9E5A", tileBg: "#e7f5ee" },
     ],
   },
   {
