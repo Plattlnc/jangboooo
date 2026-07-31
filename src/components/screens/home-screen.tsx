@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import type { HomeMetrics } from "@/lib/mock/home";
 import type { HomeProfile } from "./home-view";
 import { GoalIconArt } from "./goal-icon-art";
+import { PROMO_WEEKLY_THRESHOLD, PROMO_UNIT_KRW, weeklyPromo } from "@/lib/promo";
 
 // 시안 홈(SLA 대시보드) — 오늘/주간 탭 전환. 파생값은 시안 renderVals 로직 그대로.
 // 디자인(2026-06-29): 모든 코너 라운드 제거(각진 정렬형) — 홈 격리 변경(전역 토큰/타 화면 불변).
@@ -272,6 +273,68 @@ export function HomeScreen({
           </div>
         </div>
       </div>
+
+      {/* 자사 프로모션 (주간 보너스) — 탭과 무관하게 항상 이번 주 기준. 공동목표 상단 고정. */}
+      {(() => {
+        const promo = weeklyPromo(weekM.count);
+        return (
+          <div className="mt-2">
+            <div className="mb-1.5 px-0.5">
+              <span className="text-xs font-black text-jb-ink">
+                자사 프로모션 <span className="text-jb-indigo">· 주간 보너스</span>
+              </span>
+              <div className="mt-0.5 text-[11px] text-jb-ink-mute">
+                이번 주 {PROMO_WEEKLY_THRESHOLD}건 초과분 1건당 +{PROMO_UNIT_KRW.toLocaleString("ko-KR")}원 · 매주
+                초기화
+              </div>
+            </div>
+            <div className="border border-jb-line bg-white px-[13px] py-[11px] shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
+              <div className="flex items-baseline justify-between gap-2">
+                {promo.earning ? (
+                  <>
+                    <span className="text-[12.5px] font-bold text-jb-ink-soft">
+                      초과 <span className="tnum font-black text-jb-ink">{promo.bonusCount}건</span> ×{" "}
+                      {PROMO_UNIT_KRW.toLocaleString("ko-KR")}원
+                    </span>
+                    <span className="tnum text-[21px] font-black tracking-[-0.02em] text-jb-green">
+                      +{promo.bonusKrw.toLocaleString("ko-KR")}원
+                    </span>
+                  </>
+                ) : promo.reached ? (
+                  <>
+                    <span className="text-[12.5px] font-bold text-jb-ink-soft">구간 달성!</span>
+                    <span className="text-[14px] font-black text-jb-green">
+                      다음 배달부터 건당 +{PROMO_UNIT_KRW.toLocaleString("ko-KR")}원
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-[12.5px] font-bold text-jb-ink-soft">보너스 구간까지</span>
+                    <span className="tnum text-[21px] font-black tracking-[-0.02em] text-jb-indigo">
+                      {promo.remaining}건 남음
+                    </span>
+                  </>
+                )}
+              </div>
+              <div className="mt-2 h-[7px] overflow-hidden bg-jb-track">
+                <div
+                  className="h-full"
+                  style={{
+                    width: `${promo.progressPct}%`,
+                    background: promo.reached ? "#1E9E5A" : "#4F6AF5",
+                  }}
+                />
+              </div>
+              <div className="mt-1.5 flex justify-between text-[11px] text-jb-ink-mute">
+                <span className="tnum">
+                  이번 주 완료 <span className="font-black text-jb-ink">{weekM.count.toLocaleString("ko-KR")}건</span>
+                </span>
+                <span className="tnum">구간 {PROMO_WEEKLY_THRESHOLD}건</span>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* 구간별 달성률 */}
       <div className="mt-2">
