@@ -29,7 +29,8 @@ export function AdminBottomNav() {
               href={tab.href}
               aria-current={active ? "page" : undefined}
               className={
-                "touch-target rounded-full px-4 py-2 text-[12.5px] transition-colors " +
+                // 고정 폭 64px — 글자 수 무관 전 탭 동일 크기(터치 최소 44px 충족), 텍스트 중앙.
+                "w-16 rounded-full py-2 text-center text-[12.5px] leading-[18px] transition-colors " +
                 (active ? "bg-jb-indigo font-black text-white" : "font-bold text-jb-ink-mute")
               }
             >
