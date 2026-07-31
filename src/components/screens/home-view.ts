@@ -37,16 +37,19 @@ export interface HomeProfile {
   name: string;
   initial: string;
   uid: string;
+  /** 프로필 사진 URL (0015 avatar_path) — 없으면 이니셜 박스. */
+  avatarUrl: string | null;
   /** 마지막 수집이 신선(≤3분)하면 실시간으로 표기. */
   isLive: boolean;
 }
 
-export function toHomeProfile(data: DashboardData): HomeProfile {
+export function toHomeProfile(data: DashboardData, avatarUrl: string | null = null): HomeProfile {
   const name = data.riderName ?? "라이더";
   return {
     name,
     initial: name.trim().slice(0, 1) || "라",
     uid: data.summary.admin_rider_id ?? "—",
+    avatarUrl,
     isLive: !formatUpdatedAt(data.summary.last_captured_at).stale,
   };
 }

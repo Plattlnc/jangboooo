@@ -3,6 +3,7 @@
 // env(Supabase service_role) 미설정 시 getDashboardData 가 결정적 목으로 폴백.
 
 import { getDashboardData } from "@/app/(rider)/_lib/queries";
+import { getRiderProfile } from "@/app/(rider)/_lib/rider-profile";
 import { HomeScreen } from "@/components/screens/home-screen";
 import { toHomeMetrics, toHomeProfile, homeDateShort } from "@/components/screens/home-view";
 
@@ -10,7 +11,12 @@ import { toHomeMetrics, toHomeProfile, homeDateShort } from "@/components/screen
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const [today, week] = await Promise.all([getDashboardData("today"), getDashboardData("week")]);
+  // getRiderProfile 은 React cache — 레이아웃(드로어)과 같은 요청 내 재사용이라 추가 조회 없음.
+  const [today, week, riderProfile] = await Promise.all([
+    getDashboardData("today"),
+    getDashboardData("week"),
+    getRiderProfile(),
+  ]);
 
   return (
     <HomeScreen
@@ -18,7 +24,7 @@ export default async function DashboardPage() {
       week={toHomeMetrics(week, "week")}
       todayDateShort={homeDateShort(today, "today")}
       weekDateShort={homeDateShort(week, "week")}
-      profile={toHomeProfile(today)}
+      profile={toHomeProfile(today, riderProfile.avatarUrl)}
     />
   );
 }

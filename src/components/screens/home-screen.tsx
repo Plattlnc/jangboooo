@@ -130,16 +130,18 @@ export function HomeScreen({
 
   return (
     <div className="px-3.5 py-[9px]">
-      {/* 프로필 */}
+      {/* 프로필 — 아바타(내정보 등록 사진, 없으면 이니셜). UID 미표기(2026-07-31 사용자 확정). */}
       <div className="flex items-center gap-[11px] px-0.5 pb-1 pt-0.5">
-        <div className="grid size-10 shrink-0 place-items-center bg-jb-indigo-tint2 text-[15px] font-black text-jb-indigo">
-          {profile.initial}
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-baseline gap-2">
-            <span className="text-[17px] font-black tracking-[-0.02em]">{profile.name}</span>
-            <span className="tnum whitespace-nowrap text-[11px] text-jb-ink-mute">UID {profile.uid}</span>
+        {profile.avatarUrl ? (
+          /* eslint-disable-next-line @next/next/no-img-element -- 40px 고정 아바타, 원격 도메인 미설정 */
+          <img src={profile.avatarUrl} alt="" className="size-10 shrink-0 object-cover" />
+        ) : (
+          <div className="grid size-10 shrink-0 place-items-center bg-jb-indigo-tint2 text-[15px] font-black text-jb-indigo">
+            {profile.initial}
           </div>
+        )}
+        <div className="min-w-0 flex-1">
+          <span className="block truncate text-[17px] font-black tracking-[-0.02em]">{profile.name}</span>
         </div>
         {/* 상태 칩 = 탭하면 즉시 새로고침(수동). 자동은 60s 폴링. */}
         {profile.isLive ? (
