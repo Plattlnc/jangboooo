@@ -44,7 +44,7 @@ export default async function AdminGoalsPage({
       </div>
 
       {/* 오늘(영업일) 현황 — 실시간 수집분 */}
-      <div className="mt-1.5 border border-jb-line bg-white px-[13px] py-[9px] shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
+      <div className="mt-1.5 rounded-[14px] border border-jb-line bg-white px-[13px] py-[9px] shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
         {latest.length === 0 ? (
           <div className="flex flex-col items-center gap-1.5 py-4 text-center">
             <span className="text-[12.5px] font-bold text-jb-ink-soft">오늘 공동목표가 아직 수집 전이에요</span>
@@ -82,7 +82,7 @@ export default async function AdminGoalsPage({
                     </span>
                   ) : null}
                 </div>
-                <div className="mt-1 h-[7px] overflow-hidden bg-jb-track">
+                <div className="mt-1 h-[7px] overflow-hidden rounded-full bg-jb-track">
                   <div
                     className="h-full"
                     style={{ width: `${Math.min(pct ?? 0, 100)}%`, background: over ? "#4F6AF5" : "#E8590C" }}
@@ -110,11 +110,11 @@ export default async function AdminGoalsPage({
           note="과거 전체 일자 조회 가능 · 오늘은 상단 실시간 현황에서 확인"
         />
         {history.length === 0 ? (
-          <div className="mt-1.5 border border-jb-line bg-white px-4 py-6 text-center text-[12px] font-bold text-jb-ink-mute shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
+          <div className="mt-1.5 rounded-[14px] border border-jb-line bg-white px-4 py-6 text-center text-[12px] font-bold text-jb-ink-mute shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
             선택한 기간에 수집된 공동목표가 없어요
           </div>
         ) : (
-          <div className="mt-1.5 border border-jb-line bg-white shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
+          <div className="mt-1.5 rounded-[14px] border border-jb-line bg-white shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
             <div className="grid grid-cols-[auto_1fr_1fr_1fr_1fr] items-center gap-x-2 border-b border-jb-line-soft px-3 py-1.5 text-[10px] font-bold text-jb-ink-mute">
               <span className="w-[52px]">날짜</span>
               {PEAK_ORDER.map((p) => (

@@ -28,7 +28,7 @@ export function DateRangeForm({
           defaultValue={from}
           max={maxDate}
           aria-label="시작일"
-          className="tnum min-w-0 flex-1 border border-jb-line bg-white px-2 py-[7px] text-[12.5px] font-bold text-jb-ink focus:outline-none"
+          className="tnum min-w-0 flex-1 rounded-[10px] border border-jb-line bg-white px-2 py-[7px] text-[12.5px] font-bold text-jb-ink focus:outline-none"
         />
         <span className="shrink-0 text-[12px] font-bold text-jb-ink-mute">~</span>
         <input
@@ -37,9 +37,9 @@ export function DateRangeForm({
           defaultValue={to}
           max={maxDate}
           aria-label="마감일"
-          className="tnum min-w-0 flex-1 border border-jb-line bg-white px-2 py-[7px] text-[12.5px] font-bold text-jb-ink focus:outline-none"
+          className="tnum min-w-0 flex-1 rounded-[10px] border border-jb-line bg-white px-2 py-[7px] text-[12.5px] font-bold text-jb-ink focus:outline-none"
         />
-        <button type="submit" className="shrink-0 bg-jb-indigo px-3 py-[8px] text-[12px] font-black text-white">
+        <button type="submit" className="shrink-0 rounded-[10px] bg-jb-indigo px-3 py-[8px] text-[12px] font-black text-white">
           조회
         </button>
       </div>

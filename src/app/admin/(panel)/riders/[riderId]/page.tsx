@@ -29,8 +29,8 @@ export default async function AdminRiderDetailPage({
       </Link>
 
       {/* 프로필 */}
-      <div className="mt-2 flex items-center gap-[11px] border border-jb-line bg-white px-3.5 py-3 shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
-        <div className="grid size-10 shrink-0 place-items-center bg-jb-indigo-tint2 text-[15px] font-black text-jb-indigo">
+      <div className="mt-2 flex items-center gap-[11px] rounded-[14px] border border-jb-line bg-white px-3.5 py-3 shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
+        <div className="grid size-10 shrink-0 place-items-center rounded-[12px] bg-jb-indigo-tint2 text-[15px] font-black text-jb-indigo">
           {(detail.name ?? detail.adminRiderId).trim().slice(0, 1)}
         </div>
         <div className="min-w-0 flex-1">
@@ -59,7 +59,7 @@ export default async function AdminRiderDetailPage({
         <div className="mb-1.5 px-0.5">
           <span className="text-xs font-black text-jb-ink">기간 요약</span>
         </div>
-        <div className="border border-jb-line bg-white shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
+        <div className="rounded-[14px] border border-jb-line bg-white shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
           {summaries.map((s, i) => {
             const t = s.totals;
             const band = acceptBand(t.acceptanceRate);
@@ -107,7 +107,7 @@ export default async function AdminRiderDetailPage({
           <span className="text-xs font-black text-jb-ink">일별 내역</span>
           <span className="ml-1.5 text-[11px] font-bold text-jb-ink-mute">이번 달 · 최신순</span>
         </div>
-        <div className="border border-jb-line bg-white shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
+        <div className="rounded-[14px] border border-jb-line bg-white shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
           <div className="grid grid-cols-[1fr_auto_auto_auto_auto] items-center gap-x-2.5 border-b border-jb-line-soft px-3 py-1.5 text-[10.5px] font-bold text-jb-ink-mute">
             <span>날짜</span>
             <span className="w-[46px] text-right">완료</span>
