@@ -6,7 +6,8 @@ import { Menu, Siren } from "lucide-react";
 import { MenuDrawer } from "./menu-drawer";
 import type { RiderProfile } from "@/app/(rider)/_lib/rider-profile";
 
-// 시안 헤더 — 흰 배경 56px. 좌:햄버거 / 중:로고("배달 장부") / 우:사고접수(→/roading).
+// 시안 헤더 — 흰 배경 56px. 좌:햄버거 / 중:로고("배달장부2") / 우:사고접수(→/roading).
+// 로고 좌측 인디고 사각형은 플레이스홀더 — 사용자 제공 아이콘(SVG) 도착 시 교체 예정.
 // 햄버거 메뉴 2026-07-27 활성 복구(구 데모 잠금 해제) — 드로어 네비 오픈.
 //   사고접수는 2026-07-11 활성 복구 — ROADING 임베드(/roading) 연결.
 
@@ -29,7 +30,7 @@ export function AppBar({ profile }: { profile: RiderProfile }) {
           <span className="grid size-[22px] place-items-center rounded-md bg-jb-indigo">
             <span className="size-2 rounded-[2px] bg-white" />
           </span>
-          <span className="text-base font-black tracking-[-0.03em] text-jb-ink">배달 장부</span>
+          <span className="text-base font-black tracking-[-0.03em] text-jb-ink">배달장부2</span>
         </Link>
 
         <Link
