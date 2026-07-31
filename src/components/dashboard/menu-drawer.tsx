@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Lock } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { signOutRider } from "@/actions/auth";
 import { NAV_GROUPS } from "@/lib/nav";
@@ -21,6 +22,17 @@ interface MenuDrawerProps {
 
 export function MenuDrawer({ open, onClose, profile }: MenuDrawerProps) {
   const pathname = usePathname();
+  // 잠금 항목 터치 안내 토스트 — 1.8s 자동 소멸.
+  const [lockNotice, setLockNotice] = useState(false);
+  const lockTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const showLockNotice = () => {
+    if (lockTimer.current) clearTimeout(lockTimer.current);
+    setLockNotice(true);
+    lockTimer.current = setTimeout(() => setLockNotice(false), 1_800);
+  };
+  useEffect(() => () => {
+    if (lockTimer.current) clearTimeout(lockTimer.current);
+  }, []);
 
   // Esc 닫기.
   useEffect(() => {
@@ -91,6 +103,43 @@ export function MenuDrawer({ open, onClose, profile }: MenuDrawerProps) {
               {grp.items.map((it) => {
                 const active = pathname === it.href;
                 const Icon = it.icon;
+                const inner = (
+                  <>
+                    <span
+                      className="grid size-8 place-items-center rounded-[9px]"
+                      style={{ background: it.tileBg, color: it.tileColor }}
+                    >
+                      <Icon size={18} strokeWidth={1.8} />
+                    </span>
+                    <span
+                      className={cn(
+                        "flex-1 text-left text-sm",
+                        active ? "font-black text-jb-ink" : "font-semibold text-[#3a3f4c]",
+                        it.locked && "text-jb-ink-mute",
+                      )}
+                    >
+                      {it.label}
+                    </span>
+                    {it.locked ? (
+                      <Lock size={14} strokeWidth={2} className="text-jb-ink-mute" />
+                    ) : active ? (
+                      <span className="size-1.5 rounded-full bg-jb-indigo" />
+                    ) : null}
+                  </>
+                );
+                // 잠금 항목: 이동 없이 안내만 (2026-07-31 랭킹 잠금).
+                if (it.locked) {
+                  return (
+                    <button
+                      key={it.href}
+                      type="button"
+                      onClick={showLockNotice}
+                      className="flex w-full items-center gap-[11px] rounded-[11px] px-2.5 py-[9px] opacity-75"
+                    >
+                      {inner}
+                    </button>
+                  );
+                }
                 return (
                   <Link
                     key={it.href}
@@ -102,27 +151,27 @@ export function MenuDrawer({ open, onClose, profile }: MenuDrawerProps) {
                       active ? "bg-[#f4f6ff]" : "bg-transparent",
                     )}
                   >
-                    <span
-                      className="grid size-8 place-items-center rounded-[9px]"
-                      style={{ background: it.tileBg, color: it.tileColor }}
-                    >
-                      <Icon size={18} strokeWidth={1.8} />
-                    </span>
-                    <span
-                      className={cn(
-                        "flex-1 text-left text-sm",
-                        active ? "font-black text-jb-ink" : "font-semibold text-[#3a3f4c]",
-                      )}
-                    >
-                      {it.label}
-                    </span>
-                    {active ? <span className="size-1.5 rounded-full bg-jb-indigo" /> : null}
+                    {inner}
                   </Link>
                 );
               })}
             </div>
           ))}
         </nav>
+
+        {/* 잠금 안내 토스트 (드로어 하단 부유, 1.8s) */}
+        <div
+          aria-live="polite"
+          className={cn(
+            "pointer-events-none absolute inset-x-4 bottom-[84px] z-10 flex justify-center transition-opacity duration-200",
+            lockNotice ? "opacity-100" : "opacity-0",
+          )}
+        >
+          <span className="flex items-center gap-1.5 rounded-full bg-jb-ink px-3.5 py-2 text-[12px] font-bold text-white shadow-lg">
+            <Lock size={12} strokeWidth={2.2} />
+            현재 잠겨있습니다
+          </span>
+        </div>
 
         {/* 로그아웃 */}
         <div className="border-t border-jb-line-soft px-3.5 pb-[18px] pt-3">
