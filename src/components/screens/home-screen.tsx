@@ -7,7 +7,7 @@ import type { HomeProfile } from "./home-view";
 import { PROMO_WEEKLY_THRESHOLD, PROMO_UNIT_KRW, weeklyPromo } from "@/lib/promo";
 
 // 시안 홈(SLA 대시보드) — 오늘/주간 탭 전환. 파생값은 시안 renderVals 로직 그대로.
-// 디자인(2026-06-29): 모든 코너 라운드 제거(각진 정렬형) — 홈 격리 변경(전역 토큰/타 화면 불변).
+// 디자인(2026-06-29 각진 → 2026-07-31 라운드 복원): 카드 14px·타일 10px·칩 pill — 사용자 확정.
 //   구간별 달성률에 "N건 남음"(목표−실적) 표기 추가. 폰트는 전역 토큰 그대로(Pretendard/Tossface).
 
 const STATUS_TINT: Record<string, string> = {
@@ -134,9 +134,9 @@ export function HomeScreen({
       <div className="flex items-center gap-[11px] px-0.5 pb-1 pt-0.5">
         {profile.avatarUrl ? (
           /* eslint-disable-next-line @next/next/no-img-element -- 40px 고정 아바타, 원격 도메인 미설정 */
-          <img src={profile.avatarUrl} alt="" className="size-10 shrink-0 object-cover" />
+          <img src={profile.avatarUrl} alt="" className="size-10 shrink-0 rounded-[12px] object-cover" />
         ) : (
-          <div className="grid size-10 shrink-0 place-items-center bg-jb-indigo-tint2 text-[15px] font-black text-jb-indigo">
+          <div className="grid size-10 shrink-0 place-items-center rounded-[12px] bg-jb-indigo-tint2 text-[15px] font-black text-jb-indigo">
             {profile.initial}
           </div>
         )}
@@ -149,9 +149,9 @@ export function HomeScreen({
             type="button"
             onClick={() => router.refresh()}
             title="탭하면 새로고침"
-            className="inline-flex shrink-0 items-center gap-1 bg-jb-green-tint px-[9px] py-1 text-[11px] font-bold text-jb-green"
+            className="inline-flex shrink-0 items-center gap-1 rounded-full bg-jb-green-tint px-[9px] py-1 text-[11px] font-bold text-jb-green"
           >
-            <span className="animate-pulse-dot size-[5px] bg-jb-green" />
+            <span className="animate-pulse-dot size-[5px] rounded-full bg-jb-green" />
             실시간
           </button>
         ) : (
@@ -159,16 +159,16 @@ export function HomeScreen({
             type="button"
             onClick={() => router.refresh()}
             title="탭하면 새로고침"
-            className="inline-flex shrink-0 items-center gap-1 bg-jb-track px-[9px] py-1 text-[11px] font-bold text-jb-ink-mute"
+            className="inline-flex shrink-0 items-center gap-1 rounded-full bg-jb-track px-[9px] py-1 text-[11px] font-bold text-jb-ink-mute"
           >
-            <span className="size-[5px] bg-jb-ink-mute" />
+            <span className="size-[5px] rounded-full bg-jb-ink-mute" />
             갱신지연
           </button>
         )}
       </div>
 
       {/* 오늘/주간 탭 */}
-      <div className="mt-[9px] flex gap-1 bg-jb-tab-bg p-1">
+      <div className="mt-[9px] flex gap-1 rounded-[12px] bg-jb-tab-bg p-1">
         <TabButton active={today} onClick={() => setTab("today")}>
           오늘
         </TabButton>
@@ -180,10 +180,10 @@ export function HomeScreen({
       {/* 오늘 운행 요약 섹션 — 헤더 + 내부 카드(배달건수/수락률 통일 폰트) */}
       <div className="mt-2">
         <div className="mb-1.5 flex items-center gap-1.5 px-0.5">
-          <span className="text-xs font-black text-jb-ink">{summaryLabel}</span>
+          <span className="text-[15px] font-black text-jb-ink">{summaryLabel}</span>
           <span className="tnum text-[10px] font-semibold text-jb-ink-mute">{dateShort}</span>
         </div>
-        <div className="flex items-center justify-between border border-jb-line bg-white px-4 py-3 shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
+        <div className="flex items-center justify-between rounded-[14px] border border-jb-line bg-white px-4 py-3 shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
           <div className="flex items-baseline gap-1.5">
             <span className="text-[18px] font-bold text-jb-ink-soft">배달</span>
             <span className="tnum text-[18px] font-black text-jb-ink">{m.count}</span>
@@ -198,7 +198,7 @@ export function HomeScreen({
               </span>
             </span>
             <span
-              className="px-2.5 py-[3px] text-[10.5px] font-black text-white"
+              className="rounded-[6px] px-2.5 py-[3px] text-[10.5px] font-black text-white"
               style={{ background: v.acceptStatus.color }}
             >
               {v.acceptStatus.label}
@@ -210,15 +210,15 @@ export function HomeScreen({
       {/* 운행 상태 */}
       <div className="mt-2">
         <div className="mb-1.5 flex items-center justify-between px-0.5">
-          <span className="text-xs font-black text-jb-ink">운행 상태</span>
+          <span className="text-[15px] font-black text-jb-ink">운행 상태</span>
           {v.hasBmartSplit ? (
             <span className="text-[11px] font-bold text-jb-ink-mute">일반 배달 기준 · B마트/스토어 별도</span>
           ) : null}
         </div>
-        <div className="border border-jb-line bg-white p-3 shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
+        <div className="rounded-[14px] border border-jb-line bg-white p-3 shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
           <div className="grid grid-cols-4 gap-[7px]">
             {v.statusItems.map((it) => (
-              <div key={it.label} className="px-1 py-[7px] text-center" style={{ background: it.tileBg }}>
+              <div key={it.label} className="rounded-[10px] px-1 py-[7px] text-center" style={{ background: it.tileBg }}>
                 <div className="text-[11.5px] font-bold text-jb-ink-soft">{it.label}</div>
                 <div className="tnum mt-0.5 text-xl font-black tracking-[-0.02em]" style={{ color: it.numColor }}>
                   {it.value}
@@ -252,15 +252,15 @@ export function HomeScreen({
       {/* 시간대별 분포 */}
       <div className="mt-2">
         <div className="mb-1.5 flex items-center justify-between px-0.5">
-          <span className="text-xs font-black text-jb-ink">시간대별 분포</span>
+          <span className="text-[15px] font-black text-jb-ink">시간대별 분포</span>
           <span className="text-[11px] font-bold text-jb-indigo">최다 시간대 강조</span>
         </div>
-        <div className="border border-jb-line bg-white p-3 shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
+        <div className="rounded-[14px] border border-jb-line bg-white p-3 shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
           <div className="grid grid-cols-4 gap-[7px]">
             {v.peaks.map((p) => (
               <div
                 key={p.label}
-                className="px-1 py-[7px] text-center"
+                className="rounded-[10px] px-1 py-[7px] text-center"
                 style={{ background: p.tileBg, border: p.tileBorder }}
               >
                 <div className="text-[11.5px] font-bold" style={{ color: p.labelColor }}>
@@ -283,14 +283,14 @@ export function HomeScreen({
         return (
           <div className="mt-2">
             <div className="mb-1.5 px-0.5">
-              <span className="text-xs font-black text-jb-ink">
+              <span className="text-[15px] font-black text-jb-ink">
                 자사 프로모션 <span className="text-jb-indigo">· 주간 보너스</span>
               </span>
               <div className="mt-0.5 text-[11px] text-jb-ink-mute">
                 주간 {PROMO_WEEKLY_THRESHOLD}건 초과분 1건당 +{PROMO_UNIT_KRW.toLocaleString("ko-KR")}원 · 매주 초기화
               </div>
             </div>
-            <div className="border border-jb-line bg-white px-[13px] py-[11px] shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
+            <div className="rounded-[14px] border border-jb-line bg-white px-[13px] py-[11px] shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
               <div className="flex items-center gap-1.5">
                 <span className="text-[14.5px] font-black tracking-[-0.02em]">
                   현재 보너스{" "}
@@ -299,7 +299,7 @@ export function HomeScreen({
                   </span>
                 </span>
                 {promo.earning ? (
-                  <span className="bg-jb-green px-[7px] py-0.5 text-[9.5px] font-black text-white">적립중</span>
+                  <span className="rounded-[6px] bg-jb-green px-[7px] py-0.5 text-[9.5px] font-black text-white">적립중</span>
                 ) : null}
               </div>
               <div className="mt-0.5 flex items-baseline gap-1.5">
@@ -321,7 +321,7 @@ export function HomeScreen({
                       : `${promo.remaining}건 남음`}
                 </span>
               </div>
-              <div className="mt-1 h-[7px] overflow-hidden bg-jb-track">
+              <div className="mt-1 h-[7px] overflow-hidden rounded-full bg-jb-track">
                 <div className="h-full" style={{ width: `${promo.progressPct}%`, background: barColor }} />
               </div>
             </div>
@@ -332,12 +332,12 @@ export function HomeScreen({
       {/* 구간별 달성률 */}
       <div className="mt-2">
         <div className="mb-1.5 px-0.5">
-          <span className="text-xs font-black text-jb-ink">
+          <span className="text-[15px] font-black text-jb-ink">
             구간별 달성률 <span className="text-jb-indigo">· 협력사 공동목표</span>
           </span>
           <div className="mt-0.5 text-[11px] text-jb-ink-mute">구간 목표 대비 초과 달성 시 가점이 적립돼요</div>
         </div>
-        <div className="border border-jb-line bg-white px-[13px] py-[9px] shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
+        <div className="rounded-[14px] border border-jb-line bg-white px-[13px] py-[9px] shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
           {!hasGoalData ? (
             <div className="flex flex-col items-center gap-1.5 py-4 text-center">
               <span className="text-[12.5px] font-bold text-jb-ink-soft">아직 집계된 공동목표가 없어요</span>
@@ -345,7 +345,7 @@ export function HomeScreen({
               <button
                 type="button"
                 onClick={() => router.refresh()}
-                className="mt-0.5 bg-jb-indigo-tint px-3 py-1 text-[11.5px] font-bold text-jb-indigo"
+                className="mt-0.5 rounded-[8px] bg-jb-indigo-tint px-3 py-1 text-[11.5px] font-bold text-jb-indigo"
               >
                 새로고침
               </button>
@@ -357,7 +357,7 @@ export function HomeScreen({
                   <div className="flex items-center gap-1.5">
                     <span className="text-[14.5px] font-black tracking-[-0.02em]">{g.label}</span>
                     {g.badge ? (
-                      <span className="tnum bg-jb-indigo px-[7px] py-0.5 text-[9.5px] font-black text-white">
+                      <span className="tnum rounded-[6px] bg-jb-indigo px-[7px] py-0.5 text-[9.5px] font-black text-white">
                         {g.badge}
                       </span>
                     ) : null}
@@ -380,7 +380,7 @@ export function HomeScreen({
                         </span>
                       ) : null}
                     </div>
-                    <div className="mt-1 h-[7px] overflow-hidden bg-jb-track">
+                    <div className="mt-1 h-[7px] overflow-hidden rounded-full bg-jb-track">
                       <div
                         className="h-full"
                         style={{ width: `${g.width}%`, background: g.barColor }}
@@ -415,7 +415,7 @@ function TabButton({
       type="button"
       onClick={onClick}
       className={
-        "flex-1 py-[9px] text-[13.5px] transition-all " +
+        "flex-1 rounded-[9px] py-[9px] text-[13.5px] transition-all " +
         (active
           ? "bg-white font-black text-jb-ink shadow-[0_1px_3px_rgba(20,23,46,0.1)]"
           : "bg-transparent font-bold text-jb-ink-mute")
