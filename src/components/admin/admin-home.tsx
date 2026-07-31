@@ -64,7 +64,7 @@ export function AdminHome({
   return (
     <div className="px-3.5 py-[9px]">
       {/* 기간 토글 */}
-      <div className="flex gap-1 bg-jb-tab-bg p-1">
+      <div className="flex gap-1 rounded-[12px] bg-jb-tab-bg p-1">
         {PERIODS.map((p) => (
           <button
             key={p.key}
@@ -111,7 +111,7 @@ export function AdminHome({
           <span className="text-xs font-black text-jb-ink">통합 운행 요약</span>
           <span className="tnum text-[10px] font-semibold text-jb-ink-mute">{v.rangeLabel}</span>
         </div>
-        <div className="border border-jb-line bg-white px-4 py-3 shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
+        <div className="rounded-[14px] border border-jb-line bg-white px-4 py-3 shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
           <div className="flex items-center justify-between">
             <div className="flex items-baseline gap-1.5">
               <span className="text-[18px] font-bold text-jb-ink-soft">배달</span>
@@ -152,7 +152,7 @@ export function AdminHome({
             <span className="text-[11px] font-bold text-jb-ink-mute">일반 배달 기준 · B마트/스토어 별도</span>
           ) : null}
         </div>
-        <div className="border border-jb-line bg-white p-3 shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
+        <div className="rounded-[14px] border border-jb-line bg-white p-3 shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
           <div className="grid grid-cols-4 gap-[7px]">
             {v.status.map((it) => (
               <div key={it.label} className="px-1 py-[7px] text-center" style={{ background: it.tileBg }}>
@@ -190,7 +190,7 @@ export function AdminHome({
           <span className="text-xs font-black text-jb-ink">시간대별 분포</span>
           <span className="text-[11px] font-bold text-jb-indigo">최다 시간대 강조</span>
         </div>
-        <div className="border border-jb-line bg-white p-3 shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
+        <div className="rounded-[14px] border border-jb-line bg-white p-3 shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
           <div className="grid grid-cols-4 gap-[7px]">
             {v.peaks.map((p) => (
               <div
@@ -224,7 +224,7 @@ export function AdminHome({
             전체 보기
           </Link>
         </div>
-        <div className="border border-jb-line bg-white shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
+        <div className="rounded-[14px] border border-jb-line bg-white shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
           {v.atRisk.length === 0 ? (
             <div className="px-4 py-5 text-center text-[12px] font-bold text-jb-ink-mute">
               집계된 실적이 없어요
@@ -266,7 +266,7 @@ export function AdminHome({
             전체 보기
           </Link>
         </div>
-        <div className="border border-jb-line bg-white shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
+        <div className="rounded-[14px] border border-jb-line bg-white shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
           {v.top.length === 0 ? (
             <div className="px-4 py-5 text-center text-[12px] font-bold text-jb-ink-mute">
               집계된 실적이 없어요
@@ -305,7 +305,7 @@ export function AdminHome({
             <span className="text-xs font-black text-jb-ink">일별 추이</span>
             <span className="ml-1.5 text-[11px] font-bold text-jb-ink-mute">최근 {v.daily.length}일</span>
           </div>
-          <div className="border border-jb-line bg-white shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
+          <div className="rounded-[14px] border border-jb-line bg-white shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
             <div className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-x-3 border-b border-jb-line-soft px-3.5 py-1.5 text-[10.5px] font-bold text-jb-ink-mute">
               <span>날짜</span>
               <span className="text-right">완료</span>
