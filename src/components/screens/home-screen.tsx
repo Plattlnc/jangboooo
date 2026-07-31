@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { HomeMetrics } from "@/lib/mock/home";
 import type { HomeProfile } from "./home-view";
-import { GoalIconArt } from "./goal-icon-art";
 import { PROMO_WEEKLY_THRESHOLD, PROMO_UNIT_KRW, weeklyPromo } from "@/lib/promo";
 
 // 시안 홈(SLA 대시보드) — 오늘/주간 탭 전환. 파생값은 시안 renderVals 로직 그대로.
@@ -289,50 +288,39 @@ export function HomeScreen({
                 주간 {PROMO_WEEKLY_THRESHOLD}건 초과분 1건당 +{PROMO_UNIT_KRW.toLocaleString("ko-KR")}원 · 매주 초기화
               </div>
             </div>
-            <div className="border border-jb-line bg-white px-[13px] py-[9px] shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
-              <div className="mb-0.5 flex gap-[11px]">
-                <div className="relative shrink-0">
-                  {promo.earning ? (
-                    <span className="tnum absolute -left-1.5 -top-1.5 z-[2] bg-jb-green px-[7px] py-0.5 text-[9.5px] font-black text-white shadow-[0_2px_5px_rgba(30,158,90,0.35)]">
-                      적립중
-                    </span>
-                  ) : null}
-                  <div className="grid size-9 place-items-center" style={{ background: "#e7f5ee" }}>
-                    <span className="text-[16px] font-black leading-none text-jb-green">₩</span>
-                  </div>
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="text-[14.5px] font-black tracking-[-0.02em]">
-                    현재 보너스{" "}
-                    <span className={"tnum " + (promo.earning ? "text-jb-green" : "text-jb-ink-mute")}>
-                      +{promo.bonusKrw.toLocaleString("ko-KR")}원
-                    </span>
-                  </div>
-                  <div className="mt-0.5 flex items-baseline gap-1.5">
-                    <span className="tnum text-[18px] font-black" style={{ color: barColor }}>
-                      {weekM.count.toLocaleString("ko-KR")}
-                    </span>
-                    <span className="tnum text-[13px] font-bold text-jb-ink-mute">
-                      / {PROMO_WEEKLY_THRESHOLD}건
-                    </span>
-                    <span className="tnum text-[12.5px] font-black text-jb-ink-mute">{promo.progressPct}%</span>
-                    <span
-                      className={
-                        "tnum ml-auto whitespace-nowrap text-[12px] font-black " +
-                        (promo.reached ? "text-jb-green" : "text-jb-indigo")
-                      }
-                    >
-                      {promo.earning
-                        ? `초과 ${promo.bonusCount}건 × ${PROMO_UNIT_KRW.toLocaleString("ko-KR")}원`
-                        : promo.reached
-                          ? "다음 배달부터 적립!"
-                          : `${promo.remaining}건 남음`}
-                    </span>
-                  </div>
-                  <div className="mt-1 h-[7px] overflow-hidden bg-jb-track">
-                    <div className="h-full" style={{ width: `${promo.progressPct}%`, background: barColor }} />
-                  </div>
-                </div>
+            <div className="border border-jb-line bg-white px-[13px] py-[11px] shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[14.5px] font-black tracking-[-0.02em]">
+                  현재 보너스{" "}
+                  <span className={"tnum " + (promo.earning ? "text-jb-green" : "text-jb-ink-mute")}>
+                    +{promo.bonusKrw.toLocaleString("ko-KR")}원
+                  </span>
+                </span>
+                {promo.earning ? (
+                  <span className="bg-jb-green px-[7px] py-0.5 text-[9.5px] font-black text-white">적립중</span>
+                ) : null}
+              </div>
+              <div className="mt-0.5 flex items-baseline gap-1.5">
+                <span className="tnum text-[18px] font-black" style={{ color: barColor }}>
+                  {weekM.count.toLocaleString("ko-KR")}
+                </span>
+                <span className="tnum text-[13px] font-bold text-jb-ink-mute">/ {PROMO_WEEKLY_THRESHOLD}건</span>
+                <span className="tnum text-[12.5px] font-black text-jb-ink-mute">{promo.progressPct}%</span>
+                <span
+                  className={
+                    "tnum ml-auto whitespace-nowrap text-[12px] font-black " +
+                    (promo.reached ? "text-jb-green" : "text-jb-indigo")
+                  }
+                >
+                  {promo.earning
+                    ? `초과 ${promo.bonusCount}건 × ${PROMO_UNIT_KRW.toLocaleString("ko-KR")}원`
+                    : promo.reached
+                      ? "다음 배달부터 적립!"
+                      : `${promo.remaining}건 남음`}
+                </span>
+              </div>
+              <div className="mt-1 h-[7px] overflow-hidden bg-jb-track">
+                <div className="h-full" style={{ width: `${promo.progressPct}%`, background: barColor }} />
               </div>
             </div>
           </div>
@@ -363,19 +351,16 @@ export function HomeScreen({
           ) : (
             <div>
               {v.goals.map((g) => (
-                <div key={g.label} className="mb-0.5 flex gap-[11px]">
-                  <div className="relative shrink-0">
+                <div key={g.label} className="border-t border-jb-line-soft py-[9px] first:border-t-0 first:pt-1 last:pb-1">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[14.5px] font-black tracking-[-0.02em]">{g.label}</span>
                     {g.badge ? (
-                      <span className="tnum absolute -left-1.5 -top-1.5 z-[2] bg-jb-indigo px-[7px] py-0.5 text-[9.5px] font-black text-white shadow-[0_2px_5px_rgba(79,106,245,0.35)]">
+                      <span className="tnum bg-jb-indigo px-[7px] py-0.5 text-[9.5px] font-black text-white">
                         {g.badge}
                       </span>
                     ) : null}
-                    <div className="grid size-9 place-items-center" style={{ background: g.tileBg }}>
-                      <GoalIconArt icon={g.icon} />
-                    </div>
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-[14.5px] font-black tracking-[-0.02em]">{g.label}</div>
+                  <div className="min-w-0">
                     <div className="mt-0.5 flex items-baseline gap-1.5">
                       <span className="tnum text-[18px] font-black" style={{ color: g.barColor }}>
                         {g.actualText}
