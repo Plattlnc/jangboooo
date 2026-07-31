@@ -6,6 +6,7 @@ import {
   ClipboardList,
   Bike,
   Wrench,
+  Trophy,
   type LucideIcon,
 } from "lucide-react";
 
@@ -14,6 +15,7 @@ import {
 // 타일 색은 시안 목업 그대로(브랜드 멀티컬러).
 //
 // 2026-07-27 확정 구성: 내 정보 · 일차감 · 정산 · 사고접수 · 접수 내역 · 리스렌탈 · 정비소.
+// 2026-07-31 추가: 커뮤니티 > 랭킹(기간별 완료건 순위).
 // 제거: 홈(로고 클릭으로 진입) / 긴급출동 / 라이더 용품 / 배달뉴스.
 // 리스·렌탈/정비소는 탭 유지 + 화면은 더미 데이터 없는 준비중 상태(목데이터 삭제됨).
 
@@ -39,6 +41,12 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: "내 정보", href: "/myinfo", icon: User, tileColor: "#4F6AF5", tileBg: "#eef1fe" },
       { label: "일차감 관리", href: "/deduct", icon: ReceiptText, tileColor: "#E8590C", tileBg: "#fdf0e6" },
       { label: "정산 내역", href: "/settle", icon: Wallet, tileColor: "#1E9E5A", tileBg: "#e7f5ee" },
+    ],
+  },
+  {
+    title: "커뮤니티",
+    items: [
+      { label: "랭킹", href: "/ranking", icon: Trophy, tileColor: "#B8860B", tileBg: "#fbf3dd" },
     ],
   },
   {
