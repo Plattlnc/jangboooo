@@ -19,6 +19,9 @@ import {
 // 제거: 홈(로고 클릭으로 진입) / 긴급출동 / 라이더 용품 / 배달뉴스.
 // 리스·렌탈/정비소는 탭 유지 + 화면은 더미 데이터 없는 준비중 상태(목데이터 삭제됨).
 
+/** 랭킹 잠금 플래그(2026-07-31 사용자 지시) — 해제 시 false 로만 바꾸면 드로어·/ranking 동시 오픈. */
+export const RANKING_LOCKED = true;
+
 export interface NavItem {
   label: string;
   href: string;
@@ -27,6 +30,8 @@ export interface NavItem {
   tileColor: string;
   /** 아이콘 타일 배경 (시안 틴트) */
   tileBg: string;
+  /** 잠금 — 드로어에서 터치 시 이동 대신 "현재 잠겨있습니다" 안내. */
+  locked?: boolean;
 }
 
 export interface NavGroup {
@@ -45,7 +50,7 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     title: "커뮤니티",
     items: [
-      { label: "랭킹", href: "/ranking", icon: Trophy, tileColor: "#B8860B", tileBg: "#fbf3dd" },
+      { label: "랭킹", href: "/ranking", icon: Trophy, tileColor: "#B8860B", tileBg: "#fbf3dd", locked: RANKING_LOCKED },
     ],
   },
   {
