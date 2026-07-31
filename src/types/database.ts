@@ -143,6 +143,15 @@ export type RiderHourlyRow = {
   completed: number
 }
 
+/** 배달 랭킹 행 (0016) — 기간 완료건 합 순위. 동률=공동 순위(rank). */
+export type RiderRankingRow = {
+  rnk: number
+  admin_rider_id: string
+  rider_name: string
+  avatar_path: string | null
+  completed: number
+}
+
 /** 기간 피크 4버킷 합계 — 배민 원본(deliveryPeakTimeCount → sla_snapshots.peak_*) 합산값. */
 export type RiderPeakTotals = {
   morning: number
@@ -250,6 +259,8 @@ export type Database = {
         Args: { p_period: SlaPeriod; p_ref?: string | null }
         Returns: { start_date: string; end_date: string }[]
       }
+      // 배달 랭킹(0016): 기간 완료건 합 순위, 활동자(>0)만. service_role 전용.
+      get_rider_ranking: { Args: RpcArgs; Returns: RiderRankingRow[] }
     }
     Enums: Empty
     CompositeTypes: Empty
