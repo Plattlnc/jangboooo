@@ -71,7 +71,7 @@ export function AdminHome({
             type="button"
             onClick={() => setTab(p.key)}
             className={
-              "flex-1 py-[9px] text-[13.5px] transition-all " +
+              "flex-1 rounded-[9px] py-[9px] text-[13.5px] transition-all " +
               (tab === p.key
                 ? "bg-white font-black text-jb-ink shadow-[0_1px_3px_rgba(20,23,46,0.1)]"
                 : "bg-transparent font-bold text-jb-ink-mute")
@@ -85,7 +85,7 @@ export function AdminHome({
             type="button"
             onClick={() => setTab("custom")}
             className={
-              "flex-1 py-[9px] text-[13.5px] transition-all " +
+              "flex-1 rounded-[9px] py-[9px] text-[13.5px] transition-all " +
               (tab === "custom"
                 ? "bg-white font-black text-jb-indigo shadow-[0_1px_3px_rgba(20,23,46,0.1)]"
                 : "bg-transparent font-bold text-jb-ink-mute")
@@ -126,7 +126,7 @@ export function AdminHome({
                 </span>
               </span>
               <span
-                className="px-2.5 py-[3px] text-[10.5px] font-black text-white"
+                className="rounded-[6px] px-2.5 py-[3px] text-[10.5px] font-black text-white"
                 style={{ background: v.hero.bandColor }}
               >
                 {v.hero.bandLabel}
@@ -155,7 +155,7 @@ export function AdminHome({
         <div className="rounded-[14px] border border-jb-line bg-white p-3 shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
           <div className="grid grid-cols-4 gap-[7px]">
             {v.status.map((it) => (
-              <div key={it.label} className="px-1 py-[7px] text-center" style={{ background: it.tileBg }}>
+              <div key={it.label} className="rounded-[10px] px-1 py-[7px] text-center" style={{ background: it.tileBg }}>
                 <div className="text-[11.5px] font-bold text-jb-ink-soft">{it.label}</div>
                 <div className="tnum mt-0.5 text-xl font-black tracking-[-0.02em]" style={{ color: it.color }}>
                   {it.value}
@@ -195,7 +195,7 @@ export function AdminHome({
             {v.peaks.map((p) => (
               <div
                 key={p.label}
-                className="px-1 py-[7px] text-center"
+                className="rounded-[10px] px-1 py-[7px] text-center"
                 style={{
                   background: p.isMax ? "#eef1fe" : "#f8f9fb",
                   border: p.isMax ? "1px solid #c7d2fe" : "1px solid transparent",
@@ -247,7 +247,7 @@ export function AdminHome({
                   {r.rate}
                 </span>
                 <span
-                  className="px-1.5 py-0.5 text-[9.5px] font-black text-white"
+                  className="rounded-[5px] px-1.5 py-0.5 text-[9.5px] font-black text-white"
                   style={{ background: r.bandColor }}
                 >
                   {r.bandLabel}
