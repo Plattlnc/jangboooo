@@ -143,6 +143,13 @@ export type RiderHourlyRow = {
   completed: number
 }
 
+/** 앱 사용 현황 일별 행 (0017) — KST 달력일 기준 방문수·활성 라이더수. */
+export type AppUsageRow = {
+  day: string // YYYY-MM-DD
+  visits: number
+  riders: number
+}
+
 /** 배달 랭킹 행 (0016) — 기간 완료건 합 순위. 동률=공동 순위(rank). */
 export type RiderRankingRow = {
   rnk: number
@@ -261,6 +268,8 @@ export type Database = {
       }
       // 배달 랭킹(0016): 기간 완료건 합 순위, 활동자(>0)만. service_role 전용.
       get_rider_ranking: { Args: RpcArgs; Returns: RiderRankingRow[] }
+      // 앱 사용 현황(0017): KST 일별 방문·활성 라이더. service_role 전용.
+      get_app_usage: { Args: { p_days?: number }; Returns: AppUsageRow[] }
     }
     Enums: Empty
     CompositeTypes: Empty
