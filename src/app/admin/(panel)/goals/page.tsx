@@ -37,7 +37,7 @@ export default async function AdminGoalsPage({
   return (
     <div className="px-3.5 py-[9px]">
       <div className="flex items-center justify-between px-0.5">
-        <span className="text-xs font-black text-jb-ink">
+        <span className="text-[15px] font-black text-jb-ink">
           오늘 공동목표 <span className="text-jb-indigo">· 협력사 4피크</span>
         </span>
         <span className="tnum text-[10px] font-semibold text-jb-ink-mute">{fmtKDate(businessToday)} 실시간</span>
@@ -97,7 +97,7 @@ export default async function AdminGoalsPage({
       {/* 일자별 이력 — 과거 전체 자유 조회 */}
       <div className="mt-2">
         <div className="mb-1.5 flex items-center justify-between px-0.5">
-          <span className="text-xs font-black text-jb-ink">
+          <span className="text-[15px] font-black text-jb-ink">
             일자별 이력 <span className="ml-1 text-[11px] font-bold text-jb-ink-mute">달성/목표(달성률)</span>
           </span>
           <span className="tnum text-[10px] font-semibold text-jb-ink-mute">{fmtDateRange(range)}</span>

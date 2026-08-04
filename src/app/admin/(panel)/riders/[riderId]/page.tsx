@@ -57,7 +57,7 @@ export default async function AdminRiderDetailPage({
       {/* 기간 요약 3행 */}
       <div className="mt-2">
         <div className="mb-1.5 px-0.5">
-          <span className="text-xs font-black text-jb-ink">기간 요약</span>
+          <span className="text-[15px] font-black text-jb-ink">기간 요약</span>
         </div>
         <div className="rounded-[14px] border border-jb-line bg-white shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
           {summaries.map((s, i) => {
@@ -104,7 +104,7 @@ export default async function AdminRiderDetailPage({
       {/* 일별 내역(월간) */}
       <div className="mt-2">
         <div className="mb-1.5 px-0.5">
-          <span className="text-xs font-black text-jb-ink">일별 내역</span>
+          <span className="text-[15px] font-black text-jb-ink">일별 내역</span>
           <span className="ml-1.5 text-[11px] font-bold text-jb-ink-mute">이번 달 · 최신순</span>
         </div>
         <div className="rounded-[14px] border border-jb-line bg-white shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
