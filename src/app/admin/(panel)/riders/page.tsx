@@ -59,7 +59,7 @@ export default async function AdminRidersPage({
       />
 
       <div className="mt-2 flex items-center justify-between px-0.5">
-        <span className="text-xs font-black text-jb-ink">
+        <span className="text-[15px] font-black text-jb-ink">
           라이더 실적 <span className="tnum text-jb-indigo">{fmtCount(riders.length)}명</span>
         </span>
         <span className="tnum text-[10px] font-semibold text-jb-ink-mute">{rangeLabel}</span>

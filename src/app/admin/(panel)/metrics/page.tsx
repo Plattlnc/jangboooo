@@ -50,7 +50,7 @@ export default async function AdminMetricsPage({
       />
 
       <div className="mt-2 flex items-center justify-between px-0.5">
-        <span className="text-xs font-black text-jb-ink">전체 지표</span>
+        <span className="text-[15px] font-black text-jb-ink">전체 지표</span>
         <span className="tnum text-[10px] font-semibold text-jb-ink-mute">{rangeLabel}</span>
       </div>
 
@@ -71,7 +71,7 @@ export default async function AdminMetricsPage({
       {/* 수락률 랭킹(낮은 순) */}
       <div className="mt-2">
         <div className="mb-1.5 px-0.5">
-          <span className="text-xs font-black text-jb-ink">수락률 랭킹</span>
+          <span className="text-[15px] font-black text-jb-ink">수락률 랭킹</span>
           <span className="ml-1.5 text-[11px] font-bold text-jb-ink-mute">낮은 순 · 관리 필요 우선</span>
         </div>
         <div className="rounded-[14px] border border-jb-line bg-white shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
@@ -113,7 +113,7 @@ export default async function AdminMetricsPage({
       {/* 거절률 상위 */}
       <div className="mt-2">
         <div className="mb-1.5 px-0.5">
-          <span className="text-xs font-black text-jb-ink">거절률 상위</span>
+          <span className="text-[15px] font-black text-jb-ink">거절률 상위</span>
           <span className="ml-1.5 text-[11px] font-bold text-jb-ink-mute">높은 순 · 최대 10명</span>
         </div>
         <div className="rounded-[14px] border border-jb-line bg-white shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
