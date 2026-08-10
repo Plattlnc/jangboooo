@@ -46,7 +46,7 @@ export default async function AdminRidersPage({
     .sort((a, b) => (a.name ?? a.id).localeCompare(b.name ?? b.id, "ko"));
 
   return (
-    <div className="px-3.5 py-[9px]">
+    <div className="px-3.5 py-3">
       <PeriodTabs period={tab} basePath="/admin/riders" extraQuery={q ? { q } : {}} />
 
       <DateRangeForm

@@ -23,7 +23,7 @@ export default async function AdminRiderDetailPage({
   ];
 
   return (
-    <div className="px-3.5 py-[9px]">
+    <div className="px-3.5 py-3">
       <Link href="/admin/riders" className="text-[11.5px] font-bold text-jb-indigo">
         ← 라이더 목록
       </Link>
@@ -55,7 +55,7 @@ export default async function AdminRiderDetailPage({
       </div>
 
       {/* 기간 요약 3행 */}
-      <div className="mt-2">
+      <div className="mt-3">
         <div className="mb-1.5 px-0.5">
           <span className="text-[15px] font-black text-jb-ink">기간 요약</span>
         </div>
@@ -102,7 +102,7 @@ export default async function AdminRiderDetailPage({
       </div>
 
       {/* 일별 내역(월간) */}
-      <div className="mt-2">
+      <div className="mt-3">
         <div className="mb-1.5 px-0.5">
           <span className="text-[15px] font-black text-jb-ink">일별 내역</span>
           <span className="ml-1.5 text-[11px] font-bold text-jb-ink-mute">이번 달 · 최신순</span>

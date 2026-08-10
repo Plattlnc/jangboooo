@@ -38,7 +38,7 @@ export default async function AdminMetricsPage({
     .slice(0, 10);
 
   return (
-    <div className="px-3.5 py-[9px]">
+    <div className="px-3.5 py-3">
       <PeriodTabs period={tab} basePath="/admin/metrics" />
 
       <DateRangeForm
@@ -69,7 +69,7 @@ export default async function AdminMetricsPage({
       </div>
 
       {/* 수락률 랭킹(낮은 순) */}
-      <div className="mt-2">
+      <div className="mt-3">
         <div className="mb-1.5 px-0.5">
           <span className="text-[15px] font-black text-jb-ink">수락률 랭킹</span>
           <span className="ml-1.5 text-[11px] font-bold text-jb-ink-mute">낮은 순 · 관리 필요 우선</span>
@@ -111,7 +111,7 @@ export default async function AdminMetricsPage({
       </div>
 
       {/* 거절률 상위 */}
-      <div className="mt-2">
+      <div className="mt-3">
         <div className="mb-1.5 px-0.5">
           <span className="text-[15px] font-black text-jb-ink">거절률 상위</span>
           <span className="ml-1.5 text-[11px] font-bold text-jb-ink-mute">높은 순 · 최대 10명</span>

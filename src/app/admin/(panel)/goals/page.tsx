@@ -35,7 +35,7 @@ export default async function AdminGoalsPage({
     list.find((r) => r.peak_key === key);
 
   return (
-    <div className="px-3.5 py-[9px]">
+    <div className="px-3.5 py-3">
       <div className="flex items-center justify-between px-0.5">
         <span className="text-[15px] font-black text-jb-ink">
           오늘 공동목표 <span className="text-jb-indigo">· 협력사 4피크</span>
@@ -95,7 +95,7 @@ export default async function AdminGoalsPage({
       </div>
 
       {/* 일자별 이력 — 과거 전체 자유 조회 */}
-      <div className="mt-2">
+      <div className="mt-3">
         <div className="mb-1.5 flex items-center justify-between px-0.5">
           <span className="text-[15px] font-black text-jb-ink">
             일자별 이력 <span className="ml-1 text-[11px] font-bold text-jb-ink-mute">달성/목표(달성률)</span>

@@ -62,7 +62,7 @@ export function AdminHome({
   const v = tab === "custom" && custom ? custom : tab === "week" ? week : tab === "month" ? month : today;
 
   return (
-    <div className="px-3.5 py-[9px]">
+    <div className="px-3.5 py-3">
       {/* 기간 토글 */}
       <div className="flex gap-1 rounded-[12px] bg-jb-tab-bg p-1">
         {PERIODS.map((p) => (
@@ -106,7 +106,7 @@ export function AdminHome({
       />
 
       {/* 통합 요약 히어로 */}
-      <div className="mt-2">
+      <div className="mt-3">
         <div className="mb-1.5 flex items-center justify-between px-0.5">
           <span className="text-[15px] font-black text-jb-ink">통합 운행 요약</span>
           <span className="tnum text-[10px] font-semibold text-jb-ink-mute">{v.rangeLabel}</span>
@@ -145,7 +145,7 @@ export function AdminHome({
       </div>
 
       {/* 운행 상태 4타일 */}
-      <div className="mt-2">
+      <div className="mt-3">
         <div className="mb-1.5 flex items-center justify-between px-0.5">
           <span className="text-[15px] font-black text-jb-ink">운행 상태</span>
           {v.hasBreakdown ? (
@@ -185,7 +185,7 @@ export function AdminHome({
       </div>
 
       {/* 피크 분포 */}
-      <div className="mt-2">
+      <div className="mt-3">
         <div className="mb-1.5 flex items-center justify-between px-0.5">
           <span className="text-[15px] font-black text-jb-ink">시간대별 분포</span>
           <span className="text-[11px] font-bold text-jb-indigo">최다 시간대 강조</span>
@@ -217,7 +217,7 @@ export function AdminHome({
       </div>
 
       {/* 수락률 주의 라이더 */}
-      <div className="mt-2">
+      <div className="mt-3">
         <div className="mb-1.5 flex items-center justify-between px-0.5">
           <span className="text-[15px] font-black text-jb-ink">수락률 주의 라이더</span>
           <Link href="/admin/metrics" className="text-[11px] font-bold text-jb-indigo">
@@ -259,7 +259,7 @@ export function AdminHome({
       </div>
 
       {/* 완료 상위 라이더 */}
-      <div className="mt-2">
+      <div className="mt-3">
         <div className="mb-1.5 flex items-center justify-between px-0.5">
           <span className="text-[15px] font-black text-jb-ink">완료 상위 라이더</span>
           <Link href="/admin/riders" className="text-[11px] font-bold text-jb-indigo">
@@ -300,7 +300,7 @@ export function AdminHome({
 
       {/* 일별 추이 (주간/월간/기간) */}
       {tab !== "today" && v.daily.length > 0 ? (
-        <div className="mt-2">
+        <div className="mt-3">
           <div className="mb-1.5 px-0.5">
             <span className="text-[15px] font-black text-jb-ink">일별 추이</span>
             <span className="ml-1.5 text-[11px] font-bold text-jb-ink-mute">최근 {v.daily.length}일</span>

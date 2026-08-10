@@ -43,7 +43,7 @@ export default async function UsagePage() {
   const todayRow = rows.find((r) => r.day === today) ?? null;
 
   return (
-    <div className="px-3.5 py-[9px]">
+    <div className="px-3.5 py-3">
       <div className="mb-1.5 px-0.5 pt-1">
         <span className="text-[15px] font-black text-jb-ink">사용 현황</span>
         <div className="mt-0.5 text-[11px] text-jb-ink-mute">
@@ -73,7 +73,7 @@ export default async function UsagePage() {
       </div>
 
       {/* 일별 표 */}
-      <div className="mt-2">
+      <div className="mt-3">
         <div className="mb-1.5 px-0.5">
           <span className="text-[15px] font-black text-jb-ink">일별 추이</span>
           <span className="ml-1.5 text-[11px] font-bold text-jb-ink-mute">최근 14일</span>

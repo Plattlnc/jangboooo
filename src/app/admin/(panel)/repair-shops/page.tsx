@@ -19,7 +19,7 @@ export default async function AdminRepairShopsPage() {
   }
 
   return (
-    <div className="px-3.5 py-[9px]">
+    <div className="px-3.5 py-3">
       <div className="flex items-center justify-between px-0.5">
         <span className="text-[15px] font-black text-jb-ink">
           제휴 정비소 <span className="text-jb-indigo">· {shops.length}곳</span>
