@@ -56,7 +56,7 @@ export function RepairShopsManager({ shops }: Props) {
       {/* 등록 폼 */}
       <form
         onSubmit={onAdd}
-        className="mt-1.5 rounded-[12px] border border-jb-line bg-white px-[13px] py-[11px] shadow-[0_0_0_1px_rgba(0,0,0,0.05),0_1px_2px_0_rgba(0,0,0,0.04)]"
+        className="mt-1.5 rounded-[12px] border border-jb-line bg-white px-[13px] py-[11px] shadow-[0_1px_2px_0_rgba(0,0,0,0.04)]"
       >
         <div className="mb-2 text-[12.5px] font-black text-jb-ink">정비소 등록</div>
         <div className="space-y-2">
@@ -109,7 +109,7 @@ export function RepairShopsManager({ shops }: Props) {
       {/* 목록 */}
       <div className="mt-3 space-y-2">
         {shops.length === 0 ? (
-          <div className="rounded-[12px] border border-jb-line bg-white px-[13px] py-7 text-center shadow-[0_0_0_1px_rgba(0,0,0,0.05),0_1px_2px_0_rgba(0,0,0,0.04)]">
+          <div className="rounded-[12px] border border-jb-line bg-white px-[13px] py-7 text-center shadow-[0_1px_2px_0_rgba(0,0,0,0.04)]">
             <div className="text-[12.5px] font-bold text-jb-ink-soft">등록된 정비소가 없어요</div>
             <div className="mt-1 text-[11px] text-jb-ink-mute">
               위 폼으로 등록하면 라이더 화면에 바로 노출돼요
@@ -119,7 +119,7 @@ export function RepairShopsManager({ shops }: Props) {
           shops.map((s) => (
             <div
               key={s.id}
-              className="rounded-[12px] border border-jb-line bg-white px-[13px] py-[11px] shadow-[0_0_0_1px_rgba(0,0,0,0.05),0_1px_2px_0_rgba(0,0,0,0.04)]"
+              className="rounded-[12px] border border-jb-line bg-white px-[13px] py-[11px] shadow-[0_1px_2px_0_rgba(0,0,0,0.04)]"
             >
               <div className="flex items-center gap-2">
                 <span className="min-w-0 flex-1 truncate text-[13.5px] font-black text-jb-ink">

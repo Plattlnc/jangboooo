@@ -219,13 +219,13 @@
   --jb-hero-from: #2e2e2e;  --jb-hero-to: #0a0a0a; /* Geist 블랙 히어로 */
 
   /* 라인/트랙 */
-  --jb-line: #ebebeb;       /* gray-400 border */
-  --jb-line-soft: #f2f2f2;  /* gray-100 */
-  --jb-track: #ebebeb;
+  --jb-line: rgba(0,0,0,0.08);       /* 은은한 반투명 보더 */
+  --jb-line-soft: rgba(0,0,0,0.05);
+  --jb-track: #ececec;
   --jb-tab-bg: #f2f2f2;     /* gray-100 tab container */
-  --border: #ebebeb;
-  --input: #ebebeb;
-  --bar-track: #ebebeb;
+  --border: rgba(0,0,0,0.08);
+  --input: rgba(0,0,0,0.10);
+  --bar-track: #ececec;
 
   /* 액센트 = Geist blue */
   --jb-indigo: oklch(0.5761 0.2508 258.23);       /* blue-700 */
@@ -284,12 +284,12 @@
   --muted: #1f1f1f;
   --jb-hero-from: #1f1f1f;  --jb-hero-to: #000000;
 
-  --jb-line: #2e2e2e;       /* gray-400 */
-  --jb-line-soft: #1f1f1f;  /* gray-200 */
+  --jb-line: rgba(255,255,255,0.10);   /* 은은한 반투명 보더(다크) */
+  --jb-line-soft: rgba(255,255,255,0.06);
   --jb-track: #2e2e2e;
   --jb-tab-bg: #1a1a1a;
-  --border: #2e2e2e;
-  --input: #2e2e2e;
+  --border: rgba(255,255,255,0.10);
+  --input: rgba(255,255,255,0.12);
   --bar-track: #2e2e2e;
 
   --jb-indigo: oklch(0.5761 0.2321 258.23);       /* blue-700 dark */

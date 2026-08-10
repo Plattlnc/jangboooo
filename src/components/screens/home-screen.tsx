@@ -183,7 +183,7 @@ export function HomeScreen({
           <span className="text-[15px] font-black text-jb-ink">{summaryLabel}</span>
           <span className="tnum text-[10px] font-semibold text-jb-ink-mute">{dateShort}</span>
         </div>
-        <div className="flex items-center justify-between rounded-[12px] border border-jb-line bg-white px-4 py-3 shadow-[0_0_0_1px_rgba(0,0,0,0.05),0_1px_2px_0_rgba(0,0,0,0.04)]">
+        <div className="flex items-center justify-between rounded-[12px] border border-jb-line bg-white px-4 py-3 shadow-[0_1px_2px_0_rgba(0,0,0,0.04)]">
           <div className="flex items-baseline gap-1.5">
             <span className="text-[18px] font-bold text-jb-ink-soft">배달</span>
             <span className="tnum text-[18px] font-black text-jb-ink">{m.count}</span>
@@ -215,7 +215,7 @@ export function HomeScreen({
             <span className="text-[11px] font-bold text-jb-ink-mute">일반 배달 기준 · B마트/스토어 별도</span>
           ) : null}
         </div>
-        <div className="rounded-[12px] border border-jb-line bg-white p-3 shadow-[0_0_0_1px_rgba(0,0,0,0.05),0_1px_2px_0_rgba(0,0,0,0.04)]">
+        <div className="rounded-[12px] border border-jb-line bg-white p-3 shadow-[0_1px_2px_0_rgba(0,0,0,0.04)]">
           <div className="grid grid-cols-4 gap-[7px]">
             {v.statusItems.map((it) => (
               <div key={it.label} className="rounded-[8px] px-1 py-[7px] text-center" style={{ background: it.tileBg }}>
@@ -255,7 +255,7 @@ export function HomeScreen({
           <span className="text-[15px] font-black text-jb-ink">시간대별 분포</span>
           <span className="text-[11px] font-bold text-jb-indigo">최다 시간대 강조</span>
         </div>
-        <div className="rounded-[12px] border border-jb-line bg-white p-3 shadow-[0_0_0_1px_rgba(0,0,0,0.05),0_1px_2px_0_rgba(0,0,0,0.04)]">
+        <div className="rounded-[12px] border border-jb-line bg-white p-3 shadow-[0_1px_2px_0_rgba(0,0,0,0.04)]">
           <div className="grid grid-cols-4 gap-[7px]">
             {v.peaks.map((p) => (
               <div
@@ -290,7 +290,7 @@ export function HomeScreen({
                 주간 {PROMO_WEEKLY_THRESHOLD}건 초과분 1건당 +{PROMO_UNIT_KRW.toLocaleString("ko-KR")}원 · 매주 초기화
               </div>
             </div>
-            <div className="rounded-[12px] border border-jb-line bg-white px-[13px] py-[11px] shadow-[0_0_0_1px_rgba(0,0,0,0.05),0_1px_2px_0_rgba(0,0,0,0.04)]">
+            <div className="rounded-[12px] border border-jb-line bg-white px-[13px] py-[11px] shadow-[0_1px_2px_0_rgba(0,0,0,0.04)]">
               <div className="flex items-center gap-1.5">
                 <span className="text-[14.5px] font-black tracking-[-0.02em]">
                   현재 보너스{" "}
@@ -337,7 +337,7 @@ export function HomeScreen({
           </span>
           <div className="mt-0.5 text-[11px] text-jb-ink-mute">구간 목표 대비 초과 달성 시 가점이 적립돼요</div>
         </div>
-        <div className="rounded-[12px] border border-jb-line bg-white px-[13px] py-[9px] shadow-[0_0_0_1px_rgba(0,0,0,0.05),0_1px_2px_0_rgba(0,0,0,0.04)]">
+        <div className="rounded-[12px] border border-jb-line bg-white px-[13px] py-[9px] shadow-[0_1px_2px_0_rgba(0,0,0,0.04)]">
           {!hasGoalData ? (
             <div className="flex flex-col items-center gap-1.5 py-4 text-center">
               <span className="text-[12.5px] font-bold text-jb-ink-soft">아직 집계된 공동목표가 없어요</span>

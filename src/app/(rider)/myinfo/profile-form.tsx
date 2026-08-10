@@ -61,7 +61,7 @@ export function ProfileForm({ initial }: Props) {
   return (
     <form
       onSubmit={onSubmit}
-      className="mt-3 rounded-[12px] border border-jb-line bg-white px-4 pb-4 pt-1.5 shadow-[0_0_0_1px_rgba(0,0,0,0.05),0_1px_2px_0_rgba(0,0,0,0.04)]"
+      className="mt-3 rounded-[12px] border border-jb-line bg-white px-4 pb-4 pt-1.5 shadow-[0_1px_2px_0_rgba(0,0,0,0.04)]"
     >
       <div className="pb-1 pt-[11px] text-xs font-black text-jb-ink-mute">
         실사용자 · 바이크 등록

@@ -45,7 +45,7 @@ export default function EmergencyPage() {
           return (
             <div
               key={e.label}
-              className="rounded-[12px] border border-jb-line bg-white p-3.5 shadow-[0_0_0_1px_rgba(0,0,0,0.05),0_1px_2px_0_rgba(0,0,0,0.04)]"
+              className="rounded-[12px] border border-jb-line bg-white p-3.5 shadow-[0_1px_2px_0_rgba(0,0,0,0.04)]"
             >
               <span className="grid size-9 place-items-center rounded-[8px] bg-jb-red-tint text-jb-red">
                 <Icon size={19} strokeWidth={1.8} />
@@ -65,7 +65,7 @@ export default function EmergencyPage() {
         {EMERGENCY_AGENTS.map((a) => (
           <div
             key={a.name}
-            className="flex items-center gap-3 rounded-[12px] border border-jb-line bg-white px-3.5 py-[13px] shadow-[0_0_0_1px_rgba(0,0,0,0.05),0_1px_2px_0_rgba(0,0,0,0.04)]"
+            className="flex items-center gap-3 rounded-[12px] border border-jb-line bg-white px-3.5 py-[13px] shadow-[0_1px_2px_0_rgba(0,0,0,0.04)]"
           >
             <div className="size-11 shrink-0 rounded-xl bg-[repeating-linear-gradient(45deg,#fbe9e8,#fbe9e8_7px,#f7dcda_7px,#f7dcda_14px)]" />
             <div className="min-w-0 flex-1">

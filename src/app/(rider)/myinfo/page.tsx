@@ -90,7 +90,7 @@ export default async function MyInfoPage() {
       {sections.map((sec) => (
         <div
           key={sec.title}
-          className="mt-3 rounded-[12px] border border-jb-line bg-white px-4 py-1.5 shadow-[0_0_0_1px_rgba(0,0,0,0.05),0_1px_2px_0_rgba(0,0,0,0.04)]"
+          className="mt-3 rounded-[12px] border border-jb-line bg-white px-4 py-1.5 shadow-[0_1px_2px_0_rgba(0,0,0,0.04)]"
         >
           <div className="px-0 pb-[5px] pt-[11px] text-xs font-black text-jb-ink-mute">{sec.title}</div>
           {sec.rows.map((r) => (
@@ -103,7 +103,7 @@ export default async function MyInfoPage() {
       ))}
 
       {/* 정산 계좌 — 연동 전 준비 상태 */}
-      <div className="mt-3 rounded-[12px] border border-jb-line bg-white px-4 py-3.5 shadow-[0_0_0_1px_rgba(0,0,0,0.05),0_1px_2px_0_rgba(0,0,0,0.04)]">
+      <div className="mt-3 rounded-[12px] border border-jb-line bg-white px-4 py-3.5 shadow-[0_1px_2px_0_rgba(0,0,0,0.04)]">
         <div className="text-xs font-black text-jb-ink-mute">정산 계좌</div>
         <p className="mt-1.5 text-[12.5px] text-jb-ink-mute">정산 시스템 연동 후 등록할 수 있어요.</p>
       </div>

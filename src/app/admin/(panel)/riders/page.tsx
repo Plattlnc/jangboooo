@@ -86,7 +86,7 @@ export default async function AdminRidersPage({
         </button>
       </form>
 
-      <div className="mt-2 rounded-[12px] border border-jb-line bg-white shadow-[0_0_0_1px_rgba(0,0,0,0.05),0_1px_2px_0_rgba(0,0,0,0.04)]">
+      <div className="mt-2 rounded-[12px] border border-jb-line bg-white shadow-[0_1px_2px_0_rgba(0,0,0,0.04)]">
         <div className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-x-2.5 border-b border-jb-line-soft px-3 py-1.5 text-[10.5px] font-bold text-jb-ink-mute">
           <span>라이더</span>
           <span className="w-[52px] text-right">완료</span>
@@ -150,7 +150,7 @@ export default async function AdminRidersPage({
       </div>
 
       {idle.length > 0 ? (
-        <details className="mt-2 rounded-[12px] border border-jb-line bg-white shadow-[0_0_0_1px_rgba(0,0,0,0.05),0_1px_2px_0_rgba(0,0,0,0.04)]">
+        <details className="mt-2 rounded-[12px] border border-jb-line bg-white shadow-[0_1px_2px_0_rgba(0,0,0,0.04)]">
           <summary className="cursor-pointer px-3.5 py-2.5 text-[12px] font-bold text-jb-ink-soft">
             기간 실적 없는 라이더 <span className="tnum text-jb-ink-mute">{fmtCount(idle.length)}명</span>
           </summary>

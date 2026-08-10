@@ -48,7 +48,7 @@ export default async function RepairPage() {
           </div>
 
           {/* 빈 상태 */}
-          <div className="mt-3 rounded-[12px] border border-jb-line bg-white px-4 py-3.5 shadow-[0_0_0_1px_rgba(0,0,0,0.05),0_1px_2px_0_rgba(0,0,0,0.04)]">
+          <div className="mt-3 rounded-[12px] border border-jb-line bg-white px-4 py-3.5 shadow-[0_1px_2px_0_rgba(0,0,0,0.04)]">
             <div className="text-[13px] font-black">주변 정비소</div>
             <div className="flex flex-col items-center gap-2.5 py-9">
               <span className="grid size-11 place-items-center rounded-[12px] bg-[#eef0f3] text-[#5b6660]">
@@ -70,7 +70,7 @@ export default async function RepairPage() {
           {shops.map((s) => (
             <div
               key={s.id}
-              className="rounded-[12px] border border-jb-line bg-white p-3.5 shadow-[0_0_0_1px_rgba(0,0,0,0.05),0_1px_2px_0_rgba(0,0,0,0.04)]"
+              className="rounded-[12px] border border-jb-line bg-white p-3.5 shadow-[0_1px_2px_0_rgba(0,0,0,0.04)]"
             >
               <div className="flex items-center gap-[13px]">
                 <span className="grid size-[46px] shrink-0 place-items-center rounded-[12px] bg-[#eef0f3] text-[#5b6660]">

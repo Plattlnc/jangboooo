@@ -29,7 +29,7 @@ export default function GoodsPage() {
         {GOODS_ITEMS.map((p) => (
           <div
             key={p.name}
-            className="overflow-hidden rounded-[12px] border border-jb-line bg-white shadow-[0_0_0_1px_rgba(0,0,0,0.05),0_1px_2px_0_rgba(0,0,0,0.04)]"
+            className="overflow-hidden rounded-[12px] border border-jb-line bg-white shadow-[0_1px_2px_0_rgba(0,0,0,0.04)]"
           >
             <div className="relative aspect-[1.05] bg-[repeating-linear-gradient(45deg,#f4f6fa,#f4f6fa_9px,#e9edf3_9px,#e9edf3_18px)]">
               {p.badge ? (

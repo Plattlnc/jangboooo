@@ -95,7 +95,7 @@ export default async function DiaryPage({
       </div>
 
       {/* 일별 목록 — 최신일 우선 */}
-      <div className="mt-3 rounded-[12px] border border-jb-line bg-white px-4 py-1.5 shadow-[0_0_0_1px_rgba(0,0,0,0.05),0_1px_2px_0_rgba(0,0,0,0.04)]">
+      <div className="mt-3 rounded-[12px] border border-jb-line bg-white px-4 py-1.5 shadow-[0_1px_2px_0_rgba(0,0,0,0.04)]">
         {diary.days.length === 0 ? (
           <div className="py-9 text-center">
             <div className="text-[13.5px] font-bold text-jb-ink">이 달 배달 기록이 없어요</div>

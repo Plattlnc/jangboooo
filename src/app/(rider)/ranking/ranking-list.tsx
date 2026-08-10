@@ -63,7 +63,7 @@ export function RankingList({ entries }: { entries: RankingEntry[] }) {
 
   if (entries.length === 0) {
     return (
-      <div className="rounded-[12px] border border-jb-line bg-white p-3.5 shadow-[0_0_0_1px_rgba(0,0,0,0.05),0_1px_2px_0_rgba(0,0,0,0.04)]">
+      <div className="rounded-[12px] border border-jb-line bg-white p-3.5 shadow-[0_1px_2px_0_rgba(0,0,0,0.04)]">
         <div className="py-9 text-center">
           <div className="text-[13.5px] font-bold text-jb-ink">아직 집계된 기록이 없어요</div>
           <p className="mt-1 text-[12px] leading-relaxed text-jb-ink-mute">
@@ -75,7 +75,7 @@ export function RankingList({ entries }: { entries: RankingEntry[] }) {
   }
 
   return (
-    <div className="rounded-[12px] border border-jb-line bg-white px-4 py-1.5 shadow-[0_0_0_1px_rgba(0,0,0,0.05),0_1px_2px_0_rgba(0,0,0,0.04)]">
+    <div className="rounded-[12px] border border-jb-line bg-white px-4 py-1.5 shadow-[0_1px_2px_0_rgba(0,0,0,0.04)]">
       {visible.map((e) => (
         <Row key={e.uid} entry={e} />
       ))}

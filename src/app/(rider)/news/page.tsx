@@ -14,7 +14,7 @@ export default function NewsPage() {
       <p className="mb-3.5 text-[12.5px] text-jb-ink-mute">라이더에게 꼭 필요한 업계 소식</p>
 
       {/* 피처드 */}
-      <article className="overflow-hidden rounded-2xl border border-jb-line bg-white shadow-[0_0_0_1px_rgba(0,0,0,0.05),0_1px_2px_0_rgba(0,0,0,0.04)]">
+      <article className="overflow-hidden rounded-2xl border border-jb-line bg-white shadow-[0_1px_2px_0_rgba(0,0,0,0.04)]">
         <div className="flex h-[158px] items-end bg-[repeating-linear-gradient(45deg,#e3f6f6,#e3f6f6_11px,#d4f0f0_11px,#d4f0f0_22px)] p-[13px]">
           <span className="rounded-lg bg-jb-teal px-2.5 py-1 text-[11px] font-black text-white">
             {NEWS_FEATURED.badge}

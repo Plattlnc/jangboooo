@@ -24,7 +24,7 @@ export default function DeductPage() {
       </div>
 
       {/* 내역 — 빈 상태 */}
-      <div className="mt-3 rounded-[12px] border border-jb-line bg-white px-4 py-3.5 shadow-[0_0_0_1px_rgba(0,0,0,0.05),0_1px_2px_0_rgba(0,0,0,0.04)]">
+      <div className="mt-3 rounded-[12px] border border-jb-line bg-white px-4 py-3.5 shadow-[0_1px_2px_0_rgba(0,0,0,0.04)]">
         <div className="text-[13px] font-black">차감 내역</div>
         <div className="flex flex-col items-center gap-2.5 py-9">
           <span className="grid size-11 place-items-center rounded-[12px] bg-[#fdf0e6] text-[#E8590C]">

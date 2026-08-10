@@ -25,7 +25,7 @@ export default function SettlePage() {
 
       {/* 주차별 정산 — 빈 상태 */}
       <div className="mb-2.5 mt-4 text-[13px] font-black">주차별 정산</div>
-      <div className="rounded-[12px] border border-jb-line bg-white p-3.5 shadow-[0_0_0_1px_rgba(0,0,0,0.05),0_1px_2px_0_rgba(0,0,0,0.04)]">
+      <div className="rounded-[12px] border border-jb-line bg-white p-3.5 shadow-[0_1px_2px_0_rgba(0,0,0,0.04)]">
         <div className="flex flex-col items-center gap-2.5 py-9">
           <span className="grid size-11 place-items-center rounded-[12px] bg-[#e7f5ee] text-[#1E9E5A]">
             <Wallet size={20} strokeWidth={1.8} />
