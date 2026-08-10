@@ -186,6 +186,87 @@
   --scrim: oklch(0 0 0 / 0.6);
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+ * Geist 스코프 (관리자 전용) — 2026-08-10
+ * .geist-admin 하위에서만 jb 및 시맨틱 토큰을 Vercel Geist 라이트 값으로 오버라이드.
+ * 라이더 앱(스코프 밖)은 무영향. 값 출처: ~/.claude/geist/tokens.css(light).
+ * 폰트: Geist Sans/Mono(라틴·숫자) → Pretendard(한글) 폴백.
+ * ═══════════════════════════════════════════════════════════════════════════ */
+.geist-admin {
+  --font-sans: var(--font-geist-sans), "Pretendard Variable", "Pretendard",
+               "Apple SD Gothic Neo", -apple-system, BlinkMacSystemFont, system-ui,
+               "Noto Sans KR", "Malgun Gothic", "Tossface", "Apple Color Emoji", sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SFMono-Regular", monospace;
+  font-family: var(--font-sans);
+  letter-spacing: -0.011em;
+  --radius: 0.75rem; /* 12px */
+
+  /* 텍스트 (Geist gray) */
+  --jb-ink: #171717;        /* gray-1000 primary */
+  --jb-ink-soft: #4d4d4d;   /* gray-900 secondary */
+  --jb-ink-mute: #8f8f8f;   /* gray-700 caption */
+  --foreground: #171717;
+  --text-secondary: #4d4d4d;
+  --text-muted-strong: #8f8f8f;
+  --text-disabled: #a8a8a8;
+
+  /* 서피스 */
+  --jb-surface: #fafafa;    /* background-200 */
+  --jb-card: #ffffff;
+  --background: #ffffff;
+  --card: #ffffff;
+  --muted: #f2f2f2;
+  --jb-hero-from: #2e2e2e;  --jb-hero-to: #0a0a0a; /* Geist 블랙 히어로 */
+
+  /* 라인/트랙 */
+  --jb-line: #ebebeb;       /* gray-400 border */
+  --jb-line-soft: #f2f2f2;  /* gray-100 */
+  --jb-track: #ebebeb;
+  --jb-tab-bg: #f2f2f2;     /* gray-100 tab container */
+  --border: #ebebeb;
+  --input: #ebebeb;
+  --bar-track: #ebebeb;
+
+  /* 액센트 = Geist blue */
+  --jb-indigo: oklch(0.5761 0.2508 258.23);       /* blue-700 */
+  --jb-indigo-tint: oklch(0.9732 0.0141 251.56);  /* blue-100 */
+  --jb-indigo-tint2: oklch(0.9629 0.0195 250.59); /* blue-200 */
+  --primary: oklch(0.5761 0.2508 258.23);
+  --ring: oklch(0.5761 0.2508 258.23);
+  --primary-strong: oklch(0.5151 0.2399 257.85);  /* blue-800 */
+
+  /* 시맨틱 = Geist green/amber/red */
+  --jb-green: oklch(0.5175 0.1453 147.65);        /* green-900 */
+  --jb-green-tint: oklch(0.9692 0.037 147.15);    /* green-200 */
+  --jb-red: oklch(0.6256 0.2524 23.03);           /* red-700 */
+  --jb-red-tint: oklch(0.9541 0.0299 14.25);      /* red-200 */
+  --jb-orange: oklch(0.5279 0.1496 54.65);        /* amber-900 */
+  --jb-orange-tint: oklch(0.9748 0.0331 85.79);   /* amber-100 */
+  --jb-teal: oklch(0.6492 0.1572 181.95);         /* teal-700 */
+  --jb-teal-tint: oklch(0.9706 0.0347 180.66);    /* teal-200 */
+  --success: oklch(0.5175 0.1453 147.65);
+  --warning: oklch(0.5279 0.1496 54.65);
+  --destructive: oklch(0.6256 0.2524 23.03);
+  --danger: oklch(0.6256 0.2524 23.03);
+  --danger-strong: oklch(0.5499 0.232 25.29);     /* red-900 */
+  --live: oklch(0.6458 0.1746 147.27);            /* green-700 */
+
+  /* 게이지(수락률) = Geist blue 스케일 */
+  --gauge-track: #ebebeb;
+  --gauge-high: oklch(0.5761 0.2508 258.23);
+  --gauge-mid: oklch(0.7308 0.1583 248.13);
+  --gauge-low: oklch(0.8275 0.0979 248.48);
+  --gauge-high-text: oklch(0.5151 0.2399 257.85);
+  --gauge-mid-text: oklch(0.5151 0.2399 257.85);
+  --gauge-low-text: oklch(0.5151 0.2399 257.85);
+
+  /* 그림자 = Geist material */
+  --shadow-xs: 0 0 0 1px rgba(0,0,0,.06);
+  --shadow-card: 0 0 0 1px rgba(0,0,0,.06), 0 2px 2px 0 rgba(0,0,0,.04);
+  --shadow-md: 0 0 0 1px rgba(0,0,0,.06), 0 2px 2px rgba(0,0,0,.04), 0 8px 16px -4px rgba(0,0,0,.06);
+  --shadow-lg: 0 0 0 1px rgba(0,0,0,.06), 0 8px 16px -4px rgba(0,0,0,.06), 0 24px 32px -8px rgba(0,0,0,.08);
+}
+
 @theme inline {
   /* ── shadcn 표준 색 유틸 ── */
   --color-background: var(--background);

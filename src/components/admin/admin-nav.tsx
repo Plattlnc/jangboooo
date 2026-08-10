@@ -20,7 +20,7 @@ export function AdminBottomNav() {
       aria-label="관리자 메뉴"
       className="fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+14px)] z-20 flex justify-center"
     >
-      <div className="flex gap-1 rounded-full border border-jb-line bg-white/95 p-1.5 shadow-[0_10px_30px_rgba(20,23,46,0.16)] backdrop-blur">
+      <div className="flex gap-1 rounded-full border border-jb-line bg-white/95 p-1.5 shadow-[0_0_0_1px_rgba(0,0,0,0.06),0_8px_16px_-4px_rgba(0,0,0,0.08),0_24px_32px_-8px_rgba(0,0,0,0.10)] backdrop-blur">
         {TABS.map((tab) => {
           const active = tab.exact ? pathname === tab.href : pathname.startsWith(tab.href);
           return (

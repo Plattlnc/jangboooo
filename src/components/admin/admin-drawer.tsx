@@ -81,12 +81,12 @@ export function AdminMenuButton() {
                 onClick={() => setOpen(false)}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex w-full items-center gap-[11px] rounded-[11px] px-2.5 py-[9px]",
+                  "flex w-full items-center gap-[11px] rounded-[8px] px-2.5 py-[9px]",
                   active ? "bg-[#f4f6ff]" : "bg-transparent",
                 )}
               >
                 <span
-                  className="grid size-8 place-items-center rounded-[9px]"
+                  className="grid size-8 place-items-center rounded-[8px]"
                   style={{ background: it.tileBg, color: it.tileColor }}
                 >
                   <Icon size={18} strokeWidth={1.8} />
