@@ -82,6 +82,17 @@ export type HourlyStatUpsert = {
   captured_at?: string
 }
 
+/** rider_daily_fees upsert: 라이더 × 영업일 배달처리비(세전 수입) + 본사미션. */
+export type RiderDailyFee = {
+  admin_rider_id: string
+  snapshot_date: string
+  fee_krw: number // 배달처리비 합(전달완료 + 무귀책 배달취소), 세전
+  mission_krw: number // 본사 미션 지급 금액 합
+  completed_cnt: number // 전달완료 건수(교차검증용)
+  source: string
+  captured_at?: string
+}
+
 /** 한 번의 수집 사이클 파싱 결과. */
 export type ScrapeResult = {
   riders: RiderUpsert[]

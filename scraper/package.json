@@ -20,8 +20,10 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",
+    "officecrypto-tool": "^0.0.19",
     "playwright": "1.49.1",
     "tsx": "^4.19.2",
+    "xlsx": "^0.18.5",
     "zod": "^3.23.8"
   },
   "devDependencies": {
