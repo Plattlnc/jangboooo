@@ -47,7 +47,7 @@ export default async function DiaryPage({
   return (
     <div className="px-3.5 pb-10 pt-3.5">
       <h1 className="text-xl font-black tracking-[-0.03em]">배달일지</h1>
-      <p className="mb-3.5 mt-1 text-[12.5px] text-jb-ink-mute">일별 배달 완료 기록</p>
+      <p className="mb-3.5 mt-1 text-[12.5px] text-jb-ink-mute">일별 완료·수입(세전) 기록</p>
 
       {/* 월 이동 + 월 합계 */}
       <div className="rounded-2xl bg-[linear-gradient(135deg,#1E9E5A,#27b069)] px-[17px] py-[15px] text-white shadow-[0_8px_16px_-4px_rgba(0,0,0,0.14)]">
@@ -76,21 +76,40 @@ export default async function DiaryPage({
             </span>
           )}
         </div>
-        <div className="mt-3 flex items-end justify-between border-t border-white/20 pt-3">
-          <div>
-            <div className="text-[11.5px] font-semibold opacity-90">이 달 완료</div>
-            <div className="tnum mt-0.5 text-[24px] font-black leading-none tracking-[-0.02em]">
-              {diary.totalCompleted.toLocaleString("ko-KR")}
-              <span className="ml-0.5 text-[13px] font-bold opacity-90">건</span>
+        <div className="mt-3 border-t border-white/20 pt-3">
+          {diary.totalFeeKrw != null ? (
+            <>
+              <div className="text-[11.5px] font-semibold opacity-90">이 달 수입 (세전)</div>
+              <div className="tnum mt-0.5 text-[27px] font-black leading-none tracking-[-0.02em]">
+                <span className="mr-0.5 text-[17px] font-bold opacity-90">₩</span>
+                {diary.totalFeeKrw.toLocaleString("ko-KR")}
+              </div>
+              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11.5px] font-semibold opacity-90">
+                <span className="tnum">완료 {diary.totalCompleted.toLocaleString("ko-KR")}건</span>
+                <span className="tnum">활동일 {diary.activeDays}일</span>
+                {diary.totalMissionKrw > 0 ? (
+                  <span className="tnum">미션 +₩{diary.totalMissionKrw.toLocaleString("ko-KR")}</span>
+                ) : null}
+              </div>
+            </>
+          ) : (
+            <div className="flex items-end justify-between">
+              <div>
+                <div className="text-[11.5px] font-semibold opacity-90">이 달 완료</div>
+                <div className="tnum mt-0.5 text-[24px] font-black leading-none tracking-[-0.02em]">
+                  {diary.totalCompleted.toLocaleString("ko-KR")}
+                  <span className="ml-0.5 text-[13px] font-bold opacity-90">건</span>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-[11.5px] font-semibold opacity-90">활동일</div>
+                <div className="tnum mt-0.5 text-[24px] font-black leading-none tracking-[-0.02em]">
+                  {diary.activeDays}
+                  <span className="ml-0.5 text-[13px] font-bold opacity-90">일</span>
+                </div>
+              </div>
             </div>
-          </div>
-          <div className="text-right">
-            <div className="text-[11.5px] font-semibold opacity-90">활동일</div>
-            <div className="tnum mt-0.5 text-[24px] font-black leading-none tracking-[-0.02em]">
-              {diary.activeDays}
-              <span className="ml-0.5 text-[13px] font-bold opacity-90">일</span>
-            </div>
-          </div>
+          )}
         </div>
       </div>
 
@@ -105,8 +124,8 @@ export default async function DiaryPage({
           </div>
         ) : (
           diary.days.map((d) => (
-            <div key={d.date} className="flex items-center gap-3 border-t border-jb-line-soft py-2.5 first:border-t-0">
-              <div className="w-[64px] shrink-0">
+            <div key={d.date} className="flex items-center gap-3 border-t border-jb-line-soft py-3.5 first:border-t-0">
+              <div className="w-[56px] shrink-0">
                 <span className="tnum text-[13.5px] font-black text-jb-ink">
                   {Number(d.date.slice(5, 7))}.{d.date.slice(8, 10)}
                 </span>
@@ -119,15 +138,34 @@ export default async function DiaryPage({
                   {d.weekday}
                 </span>
               </div>
-              <div className="min-w-0 flex-1 text-[11.5px] text-jb-ink-mute">
-                {d.rejected > 0 ? <span className="tnum mr-2">거절 {d.rejected}</span> : null}
-                {d.canceled > 0 ? <span className="tnum mr-2">취소 {d.canceled}</span> : null}
-                {d.acceptanceRate != null ? <span className="tnum">수락률 {d.acceptanceRate}%</span> : null}
+              <div className="min-w-0 flex-1">
+                <div className="tnum text-[13px] font-bold text-jb-ink">
+                  완료 {d.completed.toLocaleString("ko-KR")}건
+                </div>
+                <div className="mt-1 flex flex-wrap gap-x-2 text-[11px] text-jb-ink-mute">
+                  {d.rejected > 0 ? <span className="tnum">거절 {d.rejected}</span> : null}
+                  {d.canceled > 0 ? <span className="tnum">취소 {d.canceled}</span> : null}
+                  {d.acceptanceRate != null ? <span className="tnum">수락률 {d.acceptanceRate}%</span> : null}
+                </div>
               </div>
-              <span className="tnum shrink-0 text-[15px] font-black text-jb-green">
-                {d.completed.toLocaleString("ko-KR")}
-                <span className="ml-0.5 text-[11.5px] font-semibold text-jb-ink-mute">건</span>
-              </span>
+              {d.feeKrw != null ? (
+                <div className="shrink-0 text-right">
+                  <div className="tnum text-[16px] font-black text-jb-green">
+                    <span className="mr-0.5 text-[11px] font-bold text-jb-ink-mute">₩</span>
+                    {d.feeKrw.toLocaleString("ko-KR")}
+                  </div>
+                  {d.missionKrw > 0 ? (
+                    <div className="tnum mt-1 text-[11.5px] font-bold text-jb-indigo">
+                      +₩{d.missionKrw.toLocaleString("ko-KR")} 미션
+                    </div>
+                  ) : null}
+                </div>
+              ) : (
+                <span className="tnum shrink-0 text-[15px] font-black text-jb-green">
+                  {d.completed.toLocaleString("ko-KR")}
+                  <span className="ml-0.5 text-[11.5px] font-semibold text-jb-ink-mute">건</span>
+                </span>
+              )}
             </div>
           ))
         )}

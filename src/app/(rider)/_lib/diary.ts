@@ -16,6 +16,10 @@ export interface DiaryDay {
   canceled: number;
   /** 0~100 또는 null */
   acceptanceRate: number | null;
+  /** 배달처리비(세전 수입, 원). 적재 데이터 없으면 null. */
+  feeKrw: number | null;
+  /** 본사 미션 금액(원). 없으면 0. */
+  missionKrw: number;
 }
 
 export interface DiaryMonth {
@@ -24,7 +28,14 @@ export interface DiaryMonth {
   days: DiaryDay[]; // 최신일 우선
   totalCompleted: number;
   activeDays: number;
+  /** 이 달 배달처리비 합(세전, 원). 적재 데이터 없으면 null. */
+  totalFeeKrw: number | null;
+  /** 이 달 본사 미션 합(원). */
+  totalMissionKrw: number;
 }
+
+/** 일자별 배달처리비/미션 (rider_daily_fees 적재분). */
+type FeeMap = Map<string, { fee: number; mission: number }>;
 
 const WEEKDAY = ["일", "월", "화", "수", "목", "금", "토"] as const;
 
@@ -33,29 +44,38 @@ function weekdayOf(date: string): string {
   return WEEKDAY[new Date(`${date}T12:00:00Z`).getUTCDay()];
 }
 
-function toDiary(month: string, rows: RiderDailyRow[]): DiaryMonth {
+function toDiary(month: string, rows: RiderDailyRow[], fees?: FeeMap): DiaryMonth {
   const days = rows
     .filter((r) => r.completed > 0 || r.rejected > 0 || r.assigned > 0) // 무활동 빈 행 제외
-    .map((r) => ({
-      date: r.snapshot_date,
-      weekday: weekdayOf(r.snapshot_date),
-      completed: r.completed,
-      rejected: r.rejected,
-      canceled: r.dispatch_canceled + r.delivery_canceled,
-      acceptanceRate: r.acceptance_rate,
-    }))
+    .map((r) => {
+      const f = fees?.get(r.snapshot_date);
+      return {
+        date: r.snapshot_date,
+        weekday: weekdayOf(r.snapshot_date),
+        completed: r.completed,
+        rejected: r.rejected,
+        canceled: r.dispatch_canceled + r.delivery_canceled,
+        acceptanceRate: r.acceptance_rate,
+        feeKrw: f ? f.fee : null,
+        missionKrw: f ? f.mission : 0,
+      };
+    })
     .sort((a, b) => (a.date < b.date ? 1 : -1));
+  const hasFees = days.some((d) => d.feeKrw != null);
   return {
     month,
     days,
     totalCompleted: days.reduce((sum, d) => sum + d.completed, 0),
     activeDays: days.length,
+    totalFeeKrw: hasFees ? days.reduce((sum, d) => sum + (d.feeKrw ?? 0), 0) : null,
+    totalMissionKrw: days.reduce((sum, d) => sum + d.missionKrw, 0),
   };
 }
 
 // 데모용 결정적 목 — 요청 월의 1~26일 중 주 5~6일 활동.
 function demoDiary(month: string): DiaryMonth {
   const rows: RiderDailyRow[] = [];
+  const fees: FeeMap = new Map();
   for (let d = 1; d <= 26; d++) {
     if (d % 7 === 3) continue; // 주 1일 휴무
     const date = `${month}-${String(d).padStart(2, "0")}`;
@@ -70,8 +90,10 @@ function demoDiary(month: string): DiaryMonth {
       assigned: completed + 5,
       acceptance_rate: 80 + ((d * 11) % 15),
     });
+    // 데모 수입: 완료 1건당 대략 4,300~5,000원 + 가끔 미션.
+    fees.set(date, { fee: completed * (4300 + ((d * 37) % 700)), mission: d % 6 === 0 ? 15000 : 0 });
   }
-  return toDiary(month, rows);
+  return toDiary(month, rows, fees);
 }
 
 export async function getDeliveryDiary(month: string): Promise<DiaryMonth> {
@@ -98,7 +120,25 @@ export async function getDeliveryDiary(month: string): Promise<DiaryMonth> {
       console.error("[diary] get_rider_daily_for RPC 실패:", error.code, error.message);
       return toDiary(month, []);
     }
-    return toDiary(month, data ?? []);
+    // 배달처리비(세전 수입) 병합 — rider_daily_fees(엑셀 적재분). 테이블/데이터 없으면 수입 미표시로 폴백.
+    const fees: FeeMap = new Map();
+    const { data: feeRows, error: feeErr } = await admin
+      .from("rider_daily_fees")
+      .select("snapshot_date, fee_krw, mission_krw")
+      .eq("admin_rider_id", session.adminRiderId)
+      .gte("snapshot_date", `${month}-01`)
+      .lte("snapshot_date", `${month}-${String(lastDay).padStart(2, "0")}`);
+    if (feeErr) {
+      console.error("[diary] rider_daily_fees 조회 실패(수입 미표시):", feeErr.code, feeErr.message);
+    } else {
+      for (const r of feeRows ?? []) {
+        fees.set(r.snapshot_date as string, {
+          fee: (r.fee_krw as number) ?? 0,
+          mission: (r.mission_krw as number) ?? 0,
+        });
+      }
+    }
+    return toDiary(month, data ?? [], fees.size ? fees : undefined);
   } catch (e) {
     console.error("[diary] 예기치 못한 예외:", e);
     return toDiary(month, []);

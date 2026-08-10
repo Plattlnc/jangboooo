@@ -63,6 +63,17 @@ export type RiderAccountRow = {
   created_at: string
 }
 
+// 0018: 라이더 일별 배달처리비(세전 수입) — 배민 배달처리비 엑셀 적재분.
+export type RiderDailyFeeRow = {
+  admin_rider_id: string
+  snapshot_date: string
+  fee_krw: number
+  mission_krw: number
+  completed_cnt: number
+  source: string | null
+  captured_at: string
+}
+
 export type SlaSnapshotRow = {
   id: number
   admin_rider_id: string
@@ -241,6 +252,13 @@ export type Database = {
         Insert: Pick<CenterPeakGoalRow, 'center_id' | 'snapshot_date' | 'peak_key'> &
           Partial<Omit<CenterPeakGoalRow, 'id' | 'center_id' | 'snapshot_date' | 'peak_key'>>
         Update: Partial<Omit<CenterPeakGoalRow, 'id'>>
+        Relationships: []
+      }
+      rider_daily_fees: {
+        Row: RiderDailyFeeRow
+        Insert: Pick<RiderDailyFeeRow, 'admin_rider_id' | 'snapshot_date'> &
+          Partial<Omit<RiderDailyFeeRow, 'admin_rider_id' | 'snapshot_date'>>
+        Update: Partial<RiderDailyFeeRow>
         Relationships: []
       }
     }
