@@ -10,7 +10,7 @@ export default function SettlePage() {
       <p className="mb-3.5 mt-1 text-[12.5px] text-jb-ink-mute">주간 단위로 정산되는 배달 수익 내역</p>
 
       {/* 누적 정산 카드 — 연동 전 준비 상태 */}
-      <div className="rounded-2xl bg-[linear-gradient(135deg,#1E9E5A,#27b069)] px-[18px] py-[17px] text-white shadow-[0_8px_20px_rgba(30,158,90,0.26)]">
+      <div className="rounded-2xl bg-[linear-gradient(135deg,#1E9E5A,#27b069)] px-[18px] py-[17px] text-white shadow-[0_8px_16px_-4px_rgba(0,0,0,0.14)]">
         <div className="text-[12.5px] font-semibold opacity-90">이번 달 누적 정산</div>
         <div className="mt-[7px] flex items-center gap-2">
           <Clock size={18} strokeWidth={2.2} className="opacity-90" />
@@ -25,9 +25,9 @@ export default function SettlePage() {
 
       {/* 주차별 정산 — 빈 상태 */}
       <div className="mb-2.5 mt-4 text-[13px] font-black">주차별 정산</div>
-      <div className="rounded-[14px] border border-jb-line bg-white p-3.5 shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
+      <div className="rounded-[12px] border border-jb-line bg-white p-3.5 shadow-[0_0_0_1px_rgba(0,0,0,0.05),0_1px_2px_0_rgba(0,0,0,0.04)]">
         <div className="flex flex-col items-center gap-2.5 py-9">
-          <span className="grid size-11 place-items-center rounded-[13px] bg-[#e7f5ee] text-[#1E9E5A]">
+          <span className="grid size-11 place-items-center rounded-[12px] bg-[#e7f5ee] text-[#1E9E5A]">
             <Wallet size={20} strokeWidth={1.8} />
           </span>
           <div className="text-center">

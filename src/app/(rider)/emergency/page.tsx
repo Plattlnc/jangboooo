@@ -20,9 +20,9 @@ export default function EmergencyPage() {
       <p className="my-[5px] mb-3.5 text-[12.5px] text-jb-ink-mute">사고·고장 시 가까운 출동대를 즉시 연결해요</p>
 
       {/* SOS 히어로 */}
-      <div className="rounded-2xl bg-[linear-gradient(135deg,#FF6B35,#FF3B5C)] px-[18px] py-[17px] text-white shadow-[0_10px_24px_rgba(217,52,43,0.28)]">
+      <div className="rounded-2xl bg-[linear-gradient(135deg,#FF6B35,#FF3B5C)] px-[18px] py-[17px] text-white shadow-[0_8px_16px_-4px_rgba(0,0,0,0.16),0_24px_32px_-8px_rgba(0,0,0,0.10)]">
         <div className="flex items-center gap-[11px]">
-          <span className="grid size-[42px] shrink-0 place-items-center rounded-[13px] bg-white/20">
+          <span className="grid size-[42px] shrink-0 place-items-center rounded-[12px] bg-white/20">
             <Siren size={22} strokeWidth={2} className="animate-pulse-dot" />
           </span>
           <div>
@@ -32,7 +32,7 @@ export default function EmergencyPage() {
         </div>
         <button
           type="button"
-          className="mt-3.5 w-full rounded-[13px] bg-white py-3.5 text-[15px] font-black text-jb-red transition-transform active:scale-[.98]"
+          className="mt-3.5 w-full rounded-[12px] bg-white py-3.5 text-[15px] font-black text-jb-red transition-transform active:scale-[.98]"
         >
           긴급출동 요청하기
         </button>
@@ -45,9 +45,9 @@ export default function EmergencyPage() {
           return (
             <div
               key={e.label}
-              className="rounded-[14px] border border-jb-line bg-white p-3.5 shadow-[0_1px_2px_rgba(20,23,46,0.04)]"
+              className="rounded-[12px] border border-jb-line bg-white p-3.5 shadow-[0_0_0_1px_rgba(0,0,0,0.05),0_1px_2px_0_rgba(0,0,0,0.04)]"
             >
-              <span className="grid size-9 place-items-center rounded-[10px] bg-jb-red-tint text-jb-red">
+              <span className="grid size-9 place-items-center rounded-[8px] bg-jb-red-tint text-jb-red">
                 <Icon size={19} strokeWidth={1.8} />
               </span>
               <div className="mt-[9px] text-sm font-black tracking-[-0.02em]">{e.label}</div>
@@ -65,7 +65,7 @@ export default function EmergencyPage() {
         {EMERGENCY_AGENTS.map((a) => (
           <div
             key={a.name}
-            className="flex items-center gap-3 rounded-[14px] border border-jb-line bg-white px-3.5 py-[13px] shadow-[0_1px_2px_rgba(20,23,46,0.04)]"
+            className="flex items-center gap-3 rounded-[12px] border border-jb-line bg-white px-3.5 py-[13px] shadow-[0_0_0_1px_rgba(0,0,0,0.05),0_1px_2px_0_rgba(0,0,0,0.04)]"
           >
             <div className="size-11 shrink-0 rounded-xl bg-[repeating-linear-gradient(45deg,#fbe9e8,#fbe9e8_7px,#f7dcda_7px,#f7dcda_14px)]" />
             <div className="min-w-0 flex-1">
@@ -88,7 +88,7 @@ export default function EmergencyPage() {
             </div>
             <button
               type="button"
-              className="shrink-0 rounded-[10px] bg-jb-red px-3.5 py-[9px] text-xs font-black text-white"
+              className="shrink-0 rounded-[8px] bg-jb-red px-3.5 py-[9px] text-xs font-black text-white"
             >
               호출
             </button>

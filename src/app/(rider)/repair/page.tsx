@@ -34,7 +34,7 @@ export default async function RepairPage() {
       {shops.length === 0 ? (
         <>
           {/* 히어로 — 준비 상태 */}
-          <div className="rounded-2xl bg-[linear-gradient(135deg,#5b6660,#77837c)] px-[18px] py-[17px] text-white shadow-[0_8px_20px_rgba(91,102,96,0.26)]">
+          <div className="rounded-2xl bg-[linear-gradient(135deg,#5b6660,#77837c)] px-[18px] py-[17px] text-white shadow-[0_8px_16px_-4px_rgba(0,0,0,0.14)]">
             <div className="text-[12.5px] font-semibold opacity-90">제휴 준비 중</div>
             <div className="mt-[7px] flex items-center gap-2">
               <Clock size={18} strokeWidth={2.2} className="opacity-90" />
@@ -48,10 +48,10 @@ export default async function RepairPage() {
           </div>
 
           {/* 빈 상태 */}
-          <div className="mt-3 rounded-[14px] border border-jb-line bg-white px-4 py-3.5 shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
+          <div className="mt-3 rounded-[12px] border border-jb-line bg-white px-4 py-3.5 shadow-[0_0_0_1px_rgba(0,0,0,0.05),0_1px_2px_0_rgba(0,0,0,0.04)]">
             <div className="text-[13px] font-black">주변 정비소</div>
             <div className="flex flex-col items-center gap-2.5 py-9">
-              <span className="grid size-11 place-items-center rounded-[13px] bg-[#eef0f3] text-[#5b6660]">
+              <span className="grid size-11 place-items-center rounded-[12px] bg-[#eef0f3] text-[#5b6660]">
                 <Wrench size={20} strokeWidth={1.8} />
               </span>
               <div className="text-center">
@@ -70,10 +70,10 @@ export default async function RepairPage() {
           {shops.map((s) => (
             <div
               key={s.id}
-              className="rounded-[14px] border border-jb-line bg-white p-3.5 shadow-[0_1px_2px_rgba(20,23,46,0.04)]"
+              className="rounded-[12px] border border-jb-line bg-white p-3.5 shadow-[0_0_0_1px_rgba(0,0,0,0.05),0_1px_2px_0_rgba(0,0,0,0.04)]"
             >
               <div className="flex items-center gap-[13px]">
-                <span className="grid size-[46px] shrink-0 place-items-center rounded-[13px] bg-[#eef0f3] text-[#5b6660]">
+                <span className="grid size-[46px] shrink-0 place-items-center rounded-[12px] bg-[#eef0f3] text-[#5b6660]">
                   <Wrench size={20} strokeWidth={1.8} />
                 </span>
                 <div className="min-w-0 flex-1">

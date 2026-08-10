@@ -228,7 +228,7 @@ export function AvatarEditor({ avatarUrl, initial }: AvatarEditorProps) {
             {initial}
           </span>
         )}
-        <span className="absolute -bottom-1 -right-1 grid size-[22px] place-items-center rounded-full bg-white text-jb-indigo shadow-[0_1px_4px_rgba(20,23,46,0.25)]">
+        <span className="absolute -bottom-1 -right-1 grid size-[22px] place-items-center rounded-full bg-white text-jb-indigo shadow-[0_1px_2px_0_rgba(0,0,0,0.08)]">
           <Camera size={13} strokeWidth={2.4} />
         </span>
       </button>
@@ -276,7 +276,7 @@ export function AvatarEditor({ avatarUrl, initial }: AvatarEditorProps) {
                 onPointerMove={onPointerMove}
                 onPointerUp={onPointerEnd}
                 onPointerCancel={onPointerEnd}
-                className="relative overflow-hidden rounded-[28px] bg-[#f0f1f5]"
+                className="relative overflow-hidden rounded-[16px] bg-[#f0f1f5]"
                 style={{ width: VIEW, height: VIEW, touchAction: "none" }}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element -- objectURL 크롭 캔버스 소스 */}
@@ -320,7 +320,7 @@ export function AvatarEditor({ avatarUrl, initial }: AvatarEditorProps) {
                 type="button"
                 onClick={closeModal}
                 disabled={pending}
-                className="flex-1 rounded-[11px] border border-jb-line bg-white py-[11px] text-[13px] font-semibold text-jb-ink-mute"
+                className="flex-1 rounded-[8px] border border-jb-line bg-white py-[11px] text-[13px] font-semibold text-jb-ink-mute"
               >
                 취소
               </button>
@@ -329,7 +329,7 @@ export function AvatarEditor({ avatarUrl, initial }: AvatarEditorProps) {
                 onClick={apply}
                 disabled={pending || !natural}
                 className={cn(
-                  "flex-1 rounded-[11px] bg-jb-indigo py-[11px] text-[13px] font-bold text-white transition-transform active:scale-[.98]",
+                  "flex-1 rounded-[8px] bg-jb-indigo py-[11px] text-[13px] font-bold text-white transition-transform active:scale-[.98]",
                   (pending || !natural) && "opacity-60",
                 )}
               >

@@ -27,7 +27,7 @@ function Row({ entry }: { entry: RankingEntry }) {
     <div className="flex items-center gap-3 border-t border-jb-line-soft py-2.5 first:border-t-0">
       {/* 순위 배지 */}
       <span
-        className="tnum grid size-7 shrink-0 place-items-center rounded-[9px] text-[13px] font-black"
+        className="tnum grid size-7 shrink-0 place-items-center rounded-[8px] text-[13px] font-black"
         style={medal ? { background: medal.bg, color: medal.color } : undefined}
       >
         {medal ? entry.rank : <span className="text-jb-ink-mute">{entry.rank}</span>}
@@ -38,10 +38,10 @@ function Row({ entry }: { entry: RankingEntry }) {
         <img
           src={entry.avatarUrl}
           alt=""
-          className="size-9 shrink-0 rounded-[11px] object-cover"
+          className="size-9 shrink-0 rounded-[8px] object-cover"
         />
       ) : (
-        <span className="grid size-9 shrink-0 place-items-center rounded-[11px] bg-[#eef1fe] text-[14px] font-black text-jb-indigo">
+        <span className="grid size-9 shrink-0 place-items-center rounded-[8px] bg-[#eef1fe] text-[14px] font-black text-jb-indigo">
           {initialOf(entry.name)}
         </span>
       )}
@@ -63,7 +63,7 @@ export function RankingList({ entries }: { entries: RankingEntry[] }) {
 
   if (entries.length === 0) {
     return (
-      <div className="rounded-[14px] border border-jb-line bg-white p-3.5 shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
+      <div className="rounded-[12px] border border-jb-line bg-white p-3.5 shadow-[0_0_0_1px_rgba(0,0,0,0.05),0_1px_2px_0_rgba(0,0,0,0.04)]">
         <div className="py-9 text-center">
           <div className="text-[13.5px] font-bold text-jb-ink">아직 집계된 기록이 없어요</div>
           <p className="mt-1 text-[12px] leading-relaxed text-jb-ink-mute">
@@ -75,7 +75,7 @@ export function RankingList({ entries }: { entries: RankingEntry[] }) {
   }
 
   return (
-    <div className="rounded-[14px] border border-jb-line bg-white px-4 py-1.5 shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
+    <div className="rounded-[12px] border border-jb-line bg-white px-4 py-1.5 shadow-[0_0_0_1px_rgba(0,0,0,0.05),0_1px_2px_0_rgba(0,0,0,0.04)]">
       {visible.map((e) => (
         <Row key={e.uid} entry={e} />
       ))}

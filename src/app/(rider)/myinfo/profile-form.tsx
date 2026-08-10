@@ -61,7 +61,7 @@ export function ProfileForm({ initial }: Props) {
   return (
     <form
       onSubmit={onSubmit}
-      className="mt-3 rounded-[14px] border border-jb-line bg-white px-4 pb-4 pt-1.5 shadow-[0_1px_2px_rgba(20,23,46,0.04)]"
+      className="mt-3 rounded-[12px] border border-jb-line bg-white px-4 pb-4 pt-1.5 shadow-[0_0_0_1px_rgba(0,0,0,0.05),0_1px_2px_0_rgba(0,0,0,0.04)]"
     >
       <div className="pb-1 pt-[11px] text-xs font-black text-jb-ink-mute">
         실사용자 · 바이크 등록
@@ -81,7 +81,7 @@ export function ProfileForm({ initial }: Props) {
               placeholder={f.placeholder}
               maxLength={f.maxLength}
               onChange={(e) => setValues((prev) => ({ ...prev, [f.key]: e.target.value }))}
-              className="w-full rounded-[11px] border border-jb-line bg-[#f8f9fb] px-3.5 py-[11px] text-[14px] font-semibold text-jb-ink outline-none transition-colors placeholder:font-normal placeholder:text-[#b0b6c3] focus:border-jb-indigo focus:bg-white"
+              className="w-full rounded-[8px] border border-jb-line bg-[#f8f9fb] px-3.5 py-[11px] text-[14px] font-semibold text-jb-ink outline-none transition-colors placeholder:font-normal placeholder:text-[#b0b6c3] focus:border-jb-indigo focus:bg-white"
             />
           </label>
         ))}
@@ -102,8 +102,8 @@ export function ProfileForm({ initial }: Props) {
                   }
                   className={
                     selected
-                      ? "rounded-[11px] border border-jb-indigo bg-[#eef1fe] py-[11px] text-[14px] font-bold text-jb-indigo transition-[background-color,border-color,color,transform] duration-150 active:scale-[.97]"
-                      : "rounded-[11px] border border-jb-line bg-[#f8f9fb] py-[11px] text-[14px] font-semibold text-jb-ink-soft transition-[background-color,border-color,color,transform] duration-150 active:scale-[.97]"
+                      ? "rounded-[8px] border border-jb-indigo bg-[#eef1fe] py-[11px] text-[14px] font-bold text-jb-indigo transition-[background-color,border-color,color,transform] duration-150 active:scale-[.97]"
+                      : "rounded-[8px] border border-jb-line bg-[#f8f9fb] py-[11px] text-[14px] font-semibold text-jb-ink-soft transition-[background-color,border-color,color,transform] duration-150 active:scale-[.97]"
                   }
                 >
                   {t}
@@ -121,7 +121,7 @@ export function ProfileForm({ initial }: Props) {
               type="date"
               value={values.insuranceStart}
               onChange={(e) => setValues((prev) => ({ ...prev, insuranceStart: e.target.value }))}
-              className="w-full rounded-[11px] border border-jb-line bg-[#f8f9fb] px-3.5 py-[10px] text-[14px] font-semibold text-jb-ink outline-none transition-colors focus:border-jb-indigo focus:bg-white"
+              className="w-full rounded-[8px] border border-jb-line bg-[#f8f9fb] px-3.5 py-[10px] text-[14px] font-semibold text-jb-ink outline-none transition-colors focus:border-jb-indigo focus:bg-white"
             />
           </label>
           <label className="block">
@@ -129,7 +129,7 @@ export function ProfileForm({ initial }: Props) {
             <select
               value={values.insuranceDays}
               onChange={(e) => setValues((prev) => ({ ...prev, insuranceDays: e.target.value }))}
-              className="w-full appearance-none rounded-[11px] border border-jb-line bg-[#f8f9fb] px-3.5 py-[11px] text-[14px] font-semibold text-jb-ink outline-none transition-colors focus:border-jb-indigo focus:bg-white"
+              className="w-full appearance-none rounded-[8px] border border-jb-line bg-[#f8f9fb] px-3.5 py-[11px] text-[14px] font-semibold text-jb-ink outline-none transition-colors focus:border-jb-indigo focus:bg-white"
             >
               <option value="">선택 안 함</option>
               {INSURANCE_DAY_OPTIONS.map((d) => (

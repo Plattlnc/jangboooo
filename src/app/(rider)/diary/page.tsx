@@ -50,12 +50,12 @@ export default async function DiaryPage({
       <p className="mb-3.5 mt-1 text-[12.5px] text-jb-ink-mute">일별 배달 완료 기록</p>
 
       {/* 월 이동 + 월 합계 */}
-      <div className="rounded-2xl bg-[linear-gradient(135deg,#1E9E5A,#27b069)] px-[17px] py-[15px] text-white shadow-[0_8px_20px_rgba(30,158,90,0.26)]">
+      <div className="rounded-2xl bg-[linear-gradient(135deg,#1E9E5A,#27b069)] px-[17px] py-[15px] text-white shadow-[0_8px_16px_-4px_rgba(0,0,0,0.14)]">
         <div className="flex items-center justify-between">
           <Link
             href={`/diary?m=${prev}`}
             aria-label="이전 달"
-            className="grid size-8 place-items-center rounded-[10px] bg-white/15 active:bg-white/25"
+            className="grid size-8 place-items-center rounded-[8px] bg-white/15 active:bg-white/25"
           >
             <ChevronLeft size={17} strokeWidth={2.4} />
           </Link>
@@ -66,12 +66,12 @@ export default async function DiaryPage({
             <Link
               href={`/diary?m=${next}`}
               aria-label="다음 달"
-              className="grid size-8 place-items-center rounded-[10px] bg-white/15 active:bg-white/25"
+              className="grid size-8 place-items-center rounded-[8px] bg-white/15 active:bg-white/25"
             >
               <ChevronRight size={17} strokeWidth={2.4} />
             </Link>
           ) : (
-            <span aria-hidden className="grid size-8 place-items-center rounded-[10px] bg-white/5 opacity-40">
+            <span aria-hidden className="grid size-8 place-items-center rounded-[8px] bg-white/5 opacity-40">
               <ChevronRight size={17} strokeWidth={2.4} />
             </span>
           )}
@@ -95,7 +95,7 @@ export default async function DiaryPage({
       </div>
 
       {/* 일별 목록 — 최신일 우선 */}
-      <div className="mt-3 rounded-[14px] border border-jb-line bg-white px-4 py-1.5 shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
+      <div className="mt-3 rounded-[12px] border border-jb-line bg-white px-4 py-1.5 shadow-[0_0_0_1px_rgba(0,0,0,0.05),0_1px_2px_0_rgba(0,0,0,0.04)]">
         {diary.days.length === 0 ? (
           <div className="py-9 text-center">
             <div className="text-[13.5px] font-bold text-jb-ink">이 달 배달 기록이 없어요</div>

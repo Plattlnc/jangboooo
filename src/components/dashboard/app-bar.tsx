@@ -35,7 +35,7 @@ export function AppBar({ profile }: { profile: RiderProfile }) {
 
         <Link
           href="/roading"
-          className="flex h-[34px] items-center gap-1.5 rounded-[10px] border border-[#f5d2cf] bg-jb-red-tint pl-[7px] pr-[9px]"
+          className="flex h-[34px] items-center gap-1.5 rounded-[8px] border border-[#f5d2cf] bg-jb-red-tint pl-[7px] pr-[9px]"
         >
           <Siren size={16} strokeWidth={2} className="animate-pulse-dot text-jb-red" />
           <span className="whitespace-nowrap text-[11.5px] font-black tracking-[-0.03em] text-jb-red">

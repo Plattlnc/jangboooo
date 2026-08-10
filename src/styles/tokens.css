@@ -187,12 +187,12 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
- * Geist 스코프 (관리자 전용) — 2026-08-10
- * .geist-admin 하위에서만 jb 및 시맨틱 토큰을 Vercel Geist 라이트 값으로 오버라이드.
- * 라이더 앱(스코프 밖)은 무영향. 값 출처: ~/.claude/geist/tokens.css(light).
- * 폰트: Geist Sans/Mono(라틴·숫자) → Pretendard(한글) 폴백.
+ * Geist 전역 적용 (관리자 + 일반 사용자) — 2026-08-10 관리자 → 2026-08-11 전역 확장
+ * 라이트 값을 :root(앱 전체)와 .geist-admin(관리자 래퍼) 공유로 적용.
+ * 관리자는 근접 상속으로 이 라이트 값 유지(다크 테마여도 안 깨짐), 라이더 앱은 :root/.dark로 라이트·다크.
+ * 값 출처: ~/.claude/geist/tokens.css. 폰트: Geist Sans/Mono(라틴·숫자) → Pretendard(한글) 폴백.
  * ═══════════════════════════════════════════════════════════════════════════ */
-.geist-admin {
+:root, .geist-admin {
   --font-sans: var(--font-geist-sans), "Pretendard Variable", "Pretendard",
                "Apple SD Gothic Neo", -apple-system, BlinkMacSystemFont, system-ui,
                "Noto Sans KR", "Malgun Gothic", "Tossface", "Apple Color Emoji", sans-serif;
@@ -265,6 +265,67 @@
   --shadow-card: 0 0 0 1px rgba(0,0,0,.06), 0 2px 2px 0 rgba(0,0,0,.04);
   --shadow-md: 0 0 0 1px rgba(0,0,0,.06), 0 2px 2px rgba(0,0,0,.04), 0 8px 16px -4px rgba(0,0,0,.06);
   --shadow-lg: 0 0 0 1px rgba(0,0,0,.06), 0 8px 16px -4px rgba(0,0,0,.06), 0 24px 32px -8px rgba(0,0,0,.08);
+}
+
+/* Geist 다크 (라이더 앱 다크 테마 — 관리자는 근접상속으로 라이트 유지). 값=~/.claude/geist tokens(dark). */
+.dark {
+  --jb-ink: #ededed;        /* gray-1000 */
+  --jb-ink-soft: #a1a1a1;   /* gray-900 */
+  --jb-ink-mute: #8f8f8f;   /* gray-700 */
+  --foreground: #ededed;
+  --text-secondary: #a1a1a1;
+  --text-muted-strong: #8f8f8f;
+  --text-disabled: #7d7d7d;
+
+  --jb-surface: #0a0a0a;    /* background-100 */
+  --jb-card: #1a1a1a;       /* gray-100 raised */
+  --background: #0a0a0a;
+  --card: #1a1a1a;
+  --muted: #1f1f1f;
+  --jb-hero-from: #1f1f1f;  --jb-hero-to: #000000;
+
+  --jb-line: #2e2e2e;       /* gray-400 */
+  --jb-line-soft: #1f1f1f;  /* gray-200 */
+  --jb-track: #2e2e2e;
+  --jb-tab-bg: #1a1a1a;
+  --border: #2e2e2e;
+  --input: #2e2e2e;
+  --bar-track: #2e2e2e;
+
+  --jb-indigo: oklch(0.5761 0.2321 258.23);       /* blue-700 dark */
+  --jb-indigo-tint: oklch(0.2217 0.069 259.89);   /* blue-100 dark */
+  --jb-indigo-tint2: oklch(0.2545 0.0811 255.8);  /* blue-200 dark */
+  --primary: oklch(0.5761 0.2321 258.23);
+  --ring: oklch(0.5761 0.2321 258.23);
+  --primary-strong: oklch(0.717 0.1648 250.794);  /* blue-900 dark */
+
+  --jb-green: oklch(0.731 0.2158 148.29);         /* green-900 dark */
+  --jb-green-tint: oklch(0.2712 0.0895 150.09);   /* green-200 dark */
+  --jb-red: oklch(0.6996 0.2136 22.03);           /* red-900 dark */
+  --jb-red-tint: oklch(0.2593 0.0834 19.02);      /* red-200 dark */
+  --jb-orange: oklch(0.7721 0.1991 64.28);        /* amber-800 dark */
+  --jb-orange-tint: oklch(0.2495 0.0642 64.78);   /* amber-200 dark */
+  --jb-teal: oklch(0.7456 0.1765 182.8);          /* teal-900 dark */
+  --jb-teal-tint: oklch(0.2506 0.062 178.76);
+  --success: oklch(0.731 0.2158 148.29);
+  --warning: oklch(0.7721 0.1991 64.28);
+  --destructive: oklch(0.6996 0.2136 22.03);
+  --danger: oklch(0.6996 0.2136 22.03);
+  --danger-strong: oklch(0.6996 0.2136 22.03);
+  --live: oklch(0.731 0.2158 148.29);
+
+  --gauge-track: #2e2e2e;
+  --gauge-high: oklch(0.717 0.1648 250.794);
+  --gauge-mid: oklch(0.6494 0.1982 251.813);
+  --gauge-low: oklch(0.5761 0.2321 258.23);
+  --gauge-high-text: oklch(0.717 0.1648 250.794);
+  --gauge-mid-text: oklch(0.717 0.1648 250.794);
+  --gauge-low-text: oklch(0.717 0.1648 250.794);
+
+  --shadow-xs: 0 0 0 1px rgba(255,255,255,.06);
+  --shadow-card: 0 0 0 1px rgba(255,255,255,.06), 0 2px 4px 0 rgba(0,0,0,.4);
+  --shadow-md: 0 0 0 1px rgba(255,255,255,.06), 0 4px 8px -2px rgba(0,0,0,.5);
+  --shadow-lg: 0 0 0 1px rgba(255,255,255,.08), 0 12px 24px -6px rgba(0,0,0,.6);
 }
 
 @theme inline {
@@ -365,15 +426,15 @@
   --radius-2xl: calc(var(--radius) + 10px);
   --radius-full: 9999px;
 
-  /* ── 폰트 ── */
-  /* Pretendard 선두 — 텍스트/숫자/한글은 Pretendard 가 담당. "Tossface" 는 폴백 말미로.
-   * (Tossface @font-face 의 unicode-range 가 U+30-39=숫자 0~9 키캡 코드포인트를 포함 →
-   *  선두에 두면 평범한 숫자까지 Tossface 로 렌더되어 자간이 벌어짐. 이모지는 뒤에서 폴백 처리.) */
-  --font-sans: "Pretendard Variable", "Pretendard", "Apple SD Gothic Neo",
+  /* ── 폰트 (Geist 전역 적용 2026-08-11) ── */
+  /* Geist Sans 선두 — 라틴/숫자는 Geist(디자인시스템 서체), 한글은 Pretendard 폴백(Geist Sans엔
+   * 한글 글리프 없음). Tossface 는 말미(이모지 폴백). Geist가 숫자를 제공하므로 Tossface 키캡
+   * unicode-range(U+30-39) 문제도 회피됨. var(--font-geist-sans)=<html>의 GeistSans.variable. */
+  --font-sans: var(--font-geist-sans), "Pretendard Variable", "Pretendard", "Apple SD Gothic Neo",
                -apple-system, BlinkMacSystemFont, system-ui, "Noto Sans KR",
                "Malgun Gothic", "Tossface", "Apple Color Emoji", "Segoe UI Emoji",
                "Noto Color Emoji", sans-serif;
-  --font-mono: ui-monospace, "SFMono-Regular", "Roboto Mono", monospace;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SFMono-Regular", "Roboto Mono", monospace;
   --font-emoji: "Tossface", "Apple Color Emoji", "Segoe UI Emoji",
                 "Noto Color Emoji", sans-serif;
 

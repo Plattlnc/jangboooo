@@ -10,7 +10,7 @@ export default function DeductPage() {
       <p className="mb-3.5 mt-1 text-[12.5px] text-jb-ink-mute">매일 캐시에서 자동 차감되는 고정비 내역</p>
 
       {/* 합계 카드 — 연동 전 준비 상태 */}
-      <div className="rounded-2xl bg-[linear-gradient(135deg,#E8590C,#f0712c)] px-[18px] py-[17px] text-white shadow-[0_8px_20px_rgba(232,89,12,0.26)]">
+      <div className="rounded-2xl bg-[linear-gradient(135deg,#E8590C,#f0712c)] px-[18px] py-[17px] text-white shadow-[0_8px_16px_-4px_rgba(0,0,0,0.14)]">
         <div className="text-[12.5px] font-semibold opacity-90">오늘 차감 합계</div>
         <div className="mt-[7px] flex items-center gap-2">
           <Clock size={18} strokeWidth={2.2} className="opacity-90" />
@@ -24,10 +24,10 @@ export default function DeductPage() {
       </div>
 
       {/* 내역 — 빈 상태 */}
-      <div className="mt-3 rounded-[14px] border border-jb-line bg-white px-4 py-3.5 shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
+      <div className="mt-3 rounded-[12px] border border-jb-line bg-white px-4 py-3.5 shadow-[0_0_0_1px_rgba(0,0,0,0.05),0_1px_2px_0_rgba(0,0,0,0.04)]">
         <div className="text-[13px] font-black">차감 내역</div>
         <div className="flex flex-col items-center gap-2.5 py-9">
-          <span className="grid size-11 place-items-center rounded-[13px] bg-[#fdf0e6] text-[#E8590C]">
+          <span className="grid size-11 place-items-center rounded-[12px] bg-[#fdf0e6] text-[#E8590C]">
             <ReceiptText size={20} strokeWidth={1.8} />
           </span>
           <div className="text-center">

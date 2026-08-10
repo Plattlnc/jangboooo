@@ -78,10 +78,10 @@ export function MenuDrawer({ open, onClose, profile }: MenuDrawerProps) {
               <img
                 src={profile.avatarUrl}
                 alt="프로필 사진"
-                className="size-12 shrink-0 rounded-[15px] object-cover"
+                className="size-12 shrink-0 rounded-[12px] object-cover"
               />
             ) : (
-              <div className="grid size-12 place-items-center rounded-[15px] bg-white/20 text-[18px] font-black">
+              <div className="grid size-12 place-items-center rounded-[12px] bg-white/20 text-[18px] font-black">
                 {profile.initial}
               </div>
             )}
@@ -106,7 +106,7 @@ export function MenuDrawer({ open, onClose, profile }: MenuDrawerProps) {
                 const inner = (
                   <>
                     <span
-                      className="grid size-8 place-items-center rounded-[9px]"
+                      className="grid size-8 place-items-center rounded-[8px]"
                       style={{ background: it.tileBg, color: it.tileColor }}
                     >
                       <Icon size={18} strokeWidth={1.8} />
@@ -134,7 +134,7 @@ export function MenuDrawer({ open, onClose, profile }: MenuDrawerProps) {
                       key={it.href}
                       type="button"
                       onClick={showLockNotice}
-                      className="flex w-full items-center gap-[11px] rounded-[11px] px-2.5 py-[9px] opacity-75"
+                      className="flex w-full items-center gap-[11px] rounded-[8px] px-2.5 py-[9px] opacity-75"
                     >
                       {inner}
                     </button>
@@ -147,7 +147,7 @@ export function MenuDrawer({ open, onClose, profile }: MenuDrawerProps) {
                     onClick={onClose}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "flex w-full items-center gap-[11px] rounded-[11px] px-2.5 py-[9px]",
+                      "flex w-full items-center gap-[11px] rounded-[8px] px-2.5 py-[9px]",
                       active ? "bg-[#f4f6ff]" : "bg-transparent",
                     )}
                   >
@@ -178,7 +178,7 @@ export function MenuDrawer({ open, onClose, profile }: MenuDrawerProps) {
           <form action={signOutRider}>
             <button
               type="submit"
-              className="w-full rounded-[11px] border border-jb-line bg-white py-[11px] text-[13px] font-semibold text-jb-ink-mute transition-transform active:scale-[.98]"
+              className="w-full rounded-[8px] border border-jb-line bg-white py-[11px] text-[13px] font-semibold text-jb-ink-mute transition-transform active:scale-[.98]"
             >
               로그아웃
             </button>

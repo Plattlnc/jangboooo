@@ -21,9 +21,9 @@ export default async function RankingPage({
     return (
       <div className="px-3.5 pb-10 pt-3.5">
         <h1 className="text-xl font-black tracking-[-0.03em]">랭킹</h1>
-        <div className="mt-3 rounded-[14px] border border-jb-line bg-white p-3.5 shadow-[0_1px_2px_rgba(20,23,46,0.04)]">
+        <div className="mt-3 rounded-[12px] border border-jb-line bg-white p-3.5 shadow-[0_0_0_1px_rgba(0,0,0,0.05),0_1px_2px_0_rgba(0,0,0,0.04)]">
           <div className="flex flex-col items-center gap-2.5 py-10">
-            <span className="grid size-11 place-items-center rounded-[13px] bg-jb-track text-jb-ink-mute">
+            <span className="grid size-11 place-items-center rounded-[12px] bg-jb-track text-jb-ink-mute">
               <Lock size={20} strokeWidth={1.8} />
             </span>
             <div className="text-center">

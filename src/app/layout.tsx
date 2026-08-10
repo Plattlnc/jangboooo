@@ -1,4 +1,6 @@
 import type { Metadata, Viewport } from "next";
+import { GeistSans } from "geist/font/sans";
+import { GeistMono } from "geist/font/mono";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 
@@ -60,7 +62,7 @@ export default function RootLayout({
   // 테마: next-themes(attribute="class") 라이트 기본 + 다크 토글(#15). suppressHydrationWarning 필수.
   // 폰트: --font-sans 선두 Pretendard(텍스트)+Tossface(이모지, unicode-range). 둘 다 <link> 로드.
   return (
-    <html lang="ko" suppressHydrationWarning>
+    <html lang="ko" className={`${GeistSans.variable} ${GeistMono.variable}`} suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
         <link
