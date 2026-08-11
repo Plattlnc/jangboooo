@@ -2,10 +2,10 @@
 // 최상위 카드(현재 등급·실시간 보상·승급 안내) + 구간별 내역 + 등급 조건표.
 
 import type { CSSProperties } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { getMyGrade } from "@/app/(rider)/_lib/grade";
+import { TierBadge } from "@/components/ui/tier-badge";
 import { seasonOf, TIERS, type Tier } from "@/lib/grade";
 
 /** 티어 컬러를 CSS 변수(--tier)로 — .tier-glow 아웃라인용. */
@@ -14,21 +14,6 @@ function tierVar(color: string): CSSProperties {
 }
 
 export const dynamic = "force-dynamic";
-
-/** 티어 아이콘 — 배경 채움 없이 아이콘만(투명 PNG, /public/tiers/{key}.png). */
-function TierBadge({ tier, size = 44 }: { tier: Tier; size?: number }) {
-  return (
-    <Image
-      src={`/tiers/${tier.key}.png`}
-      alt=""
-      aria-hidden="true"
-      width={size}
-      height={size}
-      className="shrink-0 select-none object-contain"
-      style={{ width: size, height: size }}
-    />
-  );
-}
 
 function rangeLabel(t: Tier): string {
   return t.max === Infinity ? `${t.min}건 이상` : `${t.min}~${t.max}건`;

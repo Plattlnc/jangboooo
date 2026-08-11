@@ -2,6 +2,8 @@
 // 실사용자·바이크 정보는 하단 폼으로 등록 → ROADING 사고접수 프리필에 사용.
 
 import { getRiderProfile } from "@/app/(rider)/_lib/rider-profile";
+import { getMyGrade } from "@/app/(rider)/_lib/grade";
+import { TierBadge } from "@/components/ui/tier-badge";
 import { centerDisplayName } from "@/lib/center-names";
 import { ProfileForm } from "./profile-form";
 import { AvatarEditor } from "./avatar-editor";
@@ -44,7 +46,7 @@ function fmtInsuranceExpiry(start: string | null, days: number | null): string {
 }
 
 export default async function MyInfoPage() {
-  const p = await getRiderProfile();
+  const [p, grade] = await Promise.all([getRiderProfile(), getMyGrade()]);
 
   // riders 에 있는 값만 채우고, 컬럼이 없는 항목(이메일·계좌)은 '-'.
   const sections: InfoSection[] = [
@@ -79,7 +81,10 @@ export default async function MyInfoPage() {
       <div className="flex items-center gap-[13px] rounded-2xl bg-[linear-gradient(135deg,#4F6AF5,#5d77ff)] p-[17px] text-white shadow-[0_8px_16px_-4px_rgba(0,112,243,0.28)]">
         <AvatarEditor avatarUrl={p.avatarUrl} initial={p.initial} />
         <div className="flex-1">
-          <div className="text-lg font-black">{p.name}</div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-lg font-black">{p.name}</span>
+            <TierBadge tier={grade.tier} size={26} />
+          </div>
           <div className="tnum mt-[3px] text-xs opacity-90">
             UID {p.uid} · {p.isActive ? "운행중" : "비활성"}
           </div>
