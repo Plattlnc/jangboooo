@@ -83,6 +83,34 @@ export async function saveNotice(input: unknown): Promise<NoticeActionResult> {
   return { ok: true, message: '공지가 등록되었습니다.', id: data?.id }
 }
 
+export interface NoticeImageResult {
+  ok: boolean
+  url?: string
+  message: string
+}
+
+/** 공지 본문 이미지 업로드 → Supabase Storage(notice-images 버킷) 공개 URL 반환. */
+export async function uploadNoticeImage(formData: FormData): Promise<NoticeImageResult> {
+  if (!(await isAdminSession())) return { ok: false, message: '관리자 로그인이 필요합니다.' }
+  const file = formData.get('image')
+  if (!(file instanceof File)) return { ok: false, message: '이미지를 선택해주세요.' }
+  if (!file.type.startsWith('image/')) return { ok: false, message: '이미지 파일만 업로드할 수 있어요.' }
+  if (file.size > 5 * 1024 * 1024) return { ok: false, message: '5MB 이하 이미지만 업로드할 수 있어요.' }
+
+  const admin = createAdminClient()
+  const ext = (file.name.split('.').pop() ?? 'png').toLowerCase().replace(/[^a-z0-9]/g, '') || 'png'
+  const path = `notices/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
+  const bytes = new Uint8Array(await file.arrayBuffer())
+  const { error } = await admin.storage
+    .from('notice-images')
+    .upload(path, bytes, { contentType: file.type, upsert: false })
+  if (error) {
+    return { ok: false, message: '업로드에 실패했습니다. (Storage 버킷 notice-images 를 확인해주세요.)' }
+  }
+  const { data } = admin.storage.from('notice-images').getPublicUrl(path)
+  return { ok: true, url: data.publicUrl, message: '이미지가 업로드되었습니다.' }
+}
+
 export async function deleteNotice(id: string): Promise<NoticeActionResult> {
   if (!(await isAdminSession())) return { ok: false, message: '관리자 로그인이 필요합니다.' }
   if (!z.string().uuid().safeParse(id).success) return { ok: false, message: '잘못된 요청입니다.' }

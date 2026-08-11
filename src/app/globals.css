@@ -215,4 +215,41 @@
         0 0 36px 3px color-mix(in srgb, var(--tier, var(--jb-indigo)) 34%, transparent);
     }
   }
+
+  /* 공지 본문 서식(Tiptap 에디터 + 라이더 렌더 공용) */
+  .notice-prose {
+    color: var(--jb-ink);
+    font-size: 14px;
+    line-height: 1.7;
+    word-break: break-word;
+  }
+  .notice-prose:focus { outline: none; }
+  .notice-prose p { margin: 0 0 0.6em; }
+  .notice-prose > :last-child { margin-bottom: 0; }
+  .notice-prose h1 { font-size: 1.4em; font-weight: 800; margin: 0.8em 0 0.4em; letter-spacing: -0.02em; }
+  .notice-prose h2 { font-size: 1.2em; font-weight: 800; margin: 0.8em 0 0.4em; letter-spacing: -0.02em; }
+  .notice-prose h3 { font-size: 1.08em; font-weight: 700; margin: 0.7em 0 0.3em; }
+  .notice-prose ul, .notice-prose ol { margin: 0.5em 0; padding-left: 1.3em; }
+  .notice-prose ul { list-style: disc; }
+  .notice-prose ol { list-style: decimal; }
+  .notice-prose li { margin: 0.2em 0; }
+  .notice-prose a { color: var(--jb-indigo); text-decoration: underline; }
+  .notice-prose strong, .notice-prose b { font-weight: 800; }
+  .notice-prose u { text-decoration: underline; }
+  .notice-prose s, .notice-prose del { text-decoration: line-through; }
+  .notice-prose img { max-width: 100%; height: auto; border-radius: 12px; margin: 0.6em 0; }
+  .notice-prose blockquote {
+    border-left: 3px solid var(--jb-line);
+    padding-left: 0.8em;
+    color: var(--jb-ink-soft);
+    margin: 0.6em 0;
+  }
+  .notice-prose code {
+    background: var(--jb-surface);
+    padding: 0.1em 0.35em;
+    border-radius: 6px;
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+  }
+  .notice-prose hr { border: 0; border-top: 1px solid var(--jb-line); margin: 1em 0; }
 }

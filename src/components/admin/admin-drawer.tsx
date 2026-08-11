@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, Menu, Wrench, type LucideIcon } from "lucide-react";
+import { BarChart3, Megaphone, Menu, Wrench, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 // 관리자 햄버거 드로어 — 2026-07-31 신설. 하단 플로팅 탭(홈/라이더/지표/목표)에서
@@ -18,6 +18,7 @@ interface DrawerItem {
 }
 
 const ITEMS: DrawerItem[] = [
+  { label: "공지사항 관리", href: "/admin/notices", icon: Megaphone, tileColor: "#4F6AF5", tileBg: "#eef1fe" },
   { label: "사용 현황", href: "/admin/usage", icon: BarChart3, tileColor: "#4F6AF5", tileBg: "#eef1fe" },
   { label: "제휴 정비소 관리", href: "/admin/repair-shops", icon: Wrench, tileColor: "#5b6660", tileBg: "#eef0f3" },
 ];

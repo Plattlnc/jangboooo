@@ -2,10 +2,18 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Megaphone, ChevronRight } from "lucide-react";
 import type { HomeMetrics } from "@/lib/mock/home";
 import type { HomeProfile } from "./home-view";
 import { TierBadge } from "@/components/ui/tier-badge";
 import { PROMO_WEEKLY_THRESHOLD, PROMO_UNIT_KRW, weeklyPromo } from "@/lib/promo";
+
+export interface HomeFeatured {
+  id: string;
+  title: string;
+  excerpt: string;
+}
 
 // 홈(SLA 대시보드) — 오늘/주간 탭 전환. 파생값 로직은 유지, 스타일은 토스 라이트 핀테크(.toss-home 스코프).
 // 색은 시맨틱 CSS 변수(var(--jb-*))로 지정 → .toss-home 스코프에서 Toss 팔레트로 해석(라이트/다크 자동).
@@ -81,6 +89,7 @@ interface HomeScreenProps {
   todayDateShort: string;
   weekDateShort: string;
   profile: HomeProfile;
+  featured: HomeFeatured | null;
 }
 
 export function HomeScreen({
@@ -89,6 +98,7 @@ export function HomeScreen({
   todayDateShort,
   weekDateShort,
   profile,
+  featured,
 }: HomeScreenProps) {
   const [tab, setTab] = useState<"today" | "week">("today");
   const today = tab === "today";
@@ -166,6 +176,25 @@ export function HomeScreen({
           </button>
         )}
       </div>
+
+      {/* 공지 배너 — 홈 노출(featured) 공지 1건 */}
+      {featured ? (
+        <Link
+          href={`/notice/${featured.id}`}
+          className="mt-2.5 flex items-center gap-2.5 rounded-[16px] bg-jb-card px-3.5 py-2.5 shadow-[var(--toss-shadow)] transition-transform active:scale-[0.99]"
+        >
+          <span className="grid size-7 shrink-0 place-items-center rounded-full bg-jb-indigo-tint text-jb-indigo">
+            <Megaphone size={15} strokeWidth={2.2} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-[12.5px] font-black text-jb-ink">{featured.title}</span>
+            {featured.excerpt ? (
+              <span className="block truncate text-[11px] text-jb-ink-mute">{featured.excerpt}</span>
+            ) : null}
+          </span>
+          <ChevronRight size={16} strokeWidth={2.2} className="shrink-0 text-jb-ink-mute" />
+        </Link>
+      ) : null}
 
       {/* 오늘/주간 세그먼트 토글 — 트랙 위에 선택 항목만 카드색+옅은 그림자 */}
       <div className="mt-2.5 flex gap-1 rounded-[16px] bg-jb-tab-bg p-1">
