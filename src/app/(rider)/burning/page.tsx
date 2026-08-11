@@ -3,7 +3,7 @@
 
 import { Flame, TriangleAlert } from "lucide-react";
 import { getMyBurning } from "@/app/(rider)/_lib/grade";
-import { BURNING_MIN_COMPLETED, BURNING_MIN_TIER_NAME, BURNING_RATE } from "@/lib/burning";
+import { BURNING_MIN_COMPLETED, BURNING_MIN_TIER_NAME, BURNING_RATE, BURNING_START_DATE } from "@/lib/burning";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +12,13 @@ function md(s: string): string {
 }
 function krw(n: number): string {
   return n.toLocaleString("ko-KR");
+}
+
+const WEEKDAY = ["일", "월", "화", "수", "목", "금", "토"] as const;
+/** 이벤트 시작일 라벨 — '8월 12일(수)'. */
+function eventStartLabel(): string {
+  const d = new Date(`${BURNING_START_DATE}T12:00:00Z`);
+  return `${md(BURNING_START_DATE)}(${WEEKDAY[d.getUTCDay()]})`;
 }
 
 export default async function BurningPage() {
@@ -27,9 +34,7 @@ export default async function BurningPage() {
         <h1 className="text-xl font-black tracking-[-0.03em]">버닝 이벤트</h1>
         <span className="rounded-full bg-jb-orange-tint px-2 py-0.5 text-[11px] font-black text-jb-orange">기간 한정</span>
       </div>
-      <p className="mb-3 mt-1 text-[12.5px] text-jb-ink-mute">
-        {BURNING_MIN_TIER_NAME} 이상 · 주간 배달료의 {b.ratePct}% 추가 정산
-      </p>
+      <p className="mb-3 mt-1 text-[12.5px] text-jb-ink-mute">기간 한정 자사 프로모션</p>
 
       {/* 기간 한정 안내 */}
       <div className="flex items-start gap-1.5 rounded-[12px] bg-jb-orange-tint px-3.5 py-2.5 text-[11.5px] font-bold leading-relaxed text-jb-orange">
@@ -37,40 +42,57 @@ export default async function BurningPage() {
         <span>기간 한정 프로모션이에요. 별도 공지 없이 종료될 수 있어요.</span>
       </div>
 
-      {/* 이번 주 버닝 히어로 */}
-      <div className="mt-3 rounded-2xl bg-[linear-gradient(135deg,#FF6B35,#F04452)] px-[18px] py-[17px] text-white shadow-[0_8px_16px_-4px_rgba(240,68,82,0.28)]">
-        <div className="flex items-center gap-2">
-          <Flame size={18} strokeWidth={2.4} />
-          <span className="text-[12.5px] font-bold opacity-95">이번 주 버닝 보너스</span>
-          {cur ? (
-            <span className="ml-auto rounded-full bg-white/20 px-2 py-0.5 text-[10.5px] font-black">
-              {cur.eligible ? "지급 대상" : "미자격"}
-            </span>
-          ) : null}
+      {/* 히어로 — 프로모션 조건을 크게 + 이번 주 예상 */}
+      <div className="mt-3 rounded-2xl bg-[linear-gradient(135deg,#FF6B35,#F04452)] px-[18px] py-[18px] text-white shadow-[0_8px_16px_-4px_rgba(240,68,82,0.28)]">
+        <div className="flex items-center gap-1.5">
+          <Flame size={16} strokeWidth={2.6} />
+          <span className="text-[11.5px] font-bold opacity-90">기간 한정 버닝 이벤트</span>
         </div>
 
-        {cur && cur.eligible ? (
-          <>
-            <div className="tnum mt-1.5 text-[30px] font-black leading-none tracking-[-0.02em]">
-              +{krw(cur.bonusKrw)}
-              <span className="ml-1 text-[16px] font-bold opacity-90">원</span>
+        {/* 조건 헤드라인(크게) */}
+        <div className="mt-2 text-[21px] font-black leading-[1.28] tracking-[-0.02em]">
+          {BURNING_MIN_TIER_NAME} 등급 이상
+          <br />
+          주간 배달료 <span className="rounded-[7px] bg-white/25 px-1.5 py-0.5">{b.ratePct}% 추가 정산</span>
+        </div>
+        <div className="mt-2 text-[11.5px] font-bold opacity-95">
+          미션비 제외 · {eventStartLabel()}부터 시작
+        </div>
+
+        {/* 이번 주 예상 */}
+        {cur ? (
+          <div className="mt-3.5 border-t border-white/25 pt-3">
+            <div className="flex items-center justify-between">
+              <span className="text-[11.5px] font-semibold opacity-90">이번 주 예상 보너스</span>
+              <span className="rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-black">
+                {cur.eligible ? "지급 대상" : "미자격"}
+              </span>
             </div>
-            <div className="mt-2 text-[11.5px] font-semibold opacity-90">
-              배달료 {krw(cur.feeKrw)}원 × {b.ratePct}% · <b>{cur.daysWithData}일치</b> 반영(예상)
-            </div>
-          </>
-        ) : cur ? (
-          <>
-            <div className="tnum mt-1.5 text-[24px] font-black leading-tight tracking-[-0.02em]">
-              {BURNING_MIN_TIER_NAME}까지 {krw(toEligible)}건
-            </div>
-            <div className="mt-2 text-[11.5px] font-semibold opacity-90">
-              도달 시 배달료 {b.ratePct}% 지급 · 현재 <b>{cur.daysWithData}일치</b> 배달료 {krw(cur.feeKrw)}원
-              (예상 +{krw(curPotential)}원)
-            </div>
-          </>
+            {cur.eligible ? (
+              <>
+                <div className="tnum mt-0.5 text-[27px] font-black leading-none tracking-[-0.02em]">
+                  +{krw(cur.bonusKrw)}
+                  <span className="ml-1 text-[15px] font-bold opacity-90">원</span>
+                </div>
+                <div className="mt-1.5 text-[11px] font-semibold opacity-90">
+                  배달료 {krw(cur.feeKrw)}원 × {b.ratePct}% · <b>{cur.daysWithData}일치</b> 반영
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="tnum mt-0.5 text-[20px] font-black leading-tight tracking-[-0.02em]">
+                  {BURNING_MIN_TIER_NAME}까지 {krw(toEligible)}건
+                </div>
+                <div className="mt-1.5 text-[11px] font-semibold opacity-90">
+                  도달 시 지급 · 현재 <b>{cur.daysWithData}일치</b> 배달료 {krw(cur.feeKrw)}원(예상 +{krw(curPotential)}원)
+                </div>
+              </>
+            )}
+          </div>
         ) : (
-          <div className="mt-2 text-[12.5px] font-semibold opacity-90">이번 주 집계된 데이터가 아직 없어요.</div>
+          <div className="mt-3.5 border-t border-white/25 pt-3 text-[12px] font-semibold opacity-90">
+            이번 주 집계된 데이터가 아직 없어요.
+          </div>
         )}
       </div>
 
