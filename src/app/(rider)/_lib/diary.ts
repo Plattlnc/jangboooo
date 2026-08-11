@@ -20,6 +20,12 @@ export interface DiaryDay {
   feeKrw: number | null;
   /** 본사 미션 금액(원). 없으면 0. */
   missionKrw: number;
+  /** 총 이동거리(km, 소수1). 상세 없으면 null. */
+  distanceKm: number | null;
+  /** KM당 단가(원/km). 거리 있을 때만. */
+  perKmKrw: number | null;
+  /** 시급(원/시간) = 수입 / (첫픽업~마지막전달). 근무시간 있을 때만. */
+  hourlyKrw: number | null;
 }
 
 export interface DiaryMonth {
@@ -32,10 +38,18 @@ export interface DiaryMonth {
   totalFeeKrw: number | null;
   /** 이 달 본사 미션 합(원). */
   totalMissionKrw: number;
+  /** 이 달 총 이동거리(km, 소수1). 상세 없으면 null. */
+  totalDistanceKm: number | null;
+  /** 이 달 KM당 단가(원/km). */
+  perKmKrw: number | null;
+  /** 이 달 시급(원/시간) = 총수입 / 총근무시간. */
+  hourlyKrw: number | null;
 }
 
 /** 일자별 배달처리비/미션 (rider_daily_fees 적재분). */
 type FeeMap = Map<string, { fee: number; mission: number }>;
+/** 일자별 이동거리(m)·근무시간(분) — delivery_fee_details 집계. */
+type MetricMap = Map<string, { distanceM: number; workMin: number | null }>;
 
 const WEEKDAY = ["일", "월", "화", "수", "목", "금", "토"] as const;
 
@@ -44,11 +58,25 @@ function weekdayOf(date: string): string {
   return WEEKDAY[new Date(`${date}T12:00:00Z`).getUTCDay()];
 }
 
-function toDiary(month: string, rows: RiderDailyRow[], fees?: FeeMap): DiaryMonth {
+/** 수입/거리(m) → KM당 단가(원/km). 거리 0이면 null. */
+function perKm(fee: number | null, distanceM: number): number | null {
+  if (fee == null || distanceM <= 0) return null;
+  return Math.round(fee / (distanceM / 1000));
+}
+/** 수입/근무(분) → 시급(원/시간). 근무 0이면 null. */
+function hourly(fee: number | null, workMin: number | null): number | null {
+  if (fee == null || workMin == null || workMin <= 0) return null;
+  return Math.round(fee / (workMin / 60));
+}
+
+function toDiary(month: string, rows: RiderDailyRow[], fees?: FeeMap, metrics?: MetricMap): DiaryMonth {
   const days = rows
     .filter((r) => r.completed > 0 || r.rejected > 0 || r.assigned > 0) // 무활동 빈 행 제외
     .map((r) => {
       const f = fees?.get(r.snapshot_date);
+      const met = metrics?.get(r.snapshot_date);
+      const fee = f ? f.fee : null;
+      const distanceM = met?.distanceM ?? 0;
       return {
         date: r.snapshot_date,
         weekday: weekdayOf(r.snapshot_date),
@@ -56,19 +84,28 @@ function toDiary(month: string, rows: RiderDailyRow[], fees?: FeeMap): DiaryMont
         rejected: r.rejected,
         canceled: r.dispatch_canceled + r.delivery_canceled,
         acceptanceRate: r.acceptance_rate,
-        feeKrw: f ? f.fee : null,
+        feeKrw: fee,
         missionKrw: f ? f.mission : 0,
+        distanceKm: distanceM > 0 ? Math.floor(distanceM / 100) / 10 : null,
+        perKmKrw: perKm(fee, distanceM),
+        hourlyKrw: hourly(fee, met?.workMin ?? null),
       };
     })
     .sort((a, b) => (a.date < b.date ? 1 : -1));
   const hasFees = days.some((d) => d.feeKrw != null);
+  const totalFee = hasFees ? days.reduce((sum, d) => sum + (d.feeKrw ?? 0), 0) : null;
+  const totalDistM = days.reduce((sum, d) => sum + (metrics?.get(d.date)?.distanceM ?? 0), 0);
+  const totalWorkMin = days.reduce((sum, d) => sum + (metrics?.get(d.date)?.workMin ?? 0), 0);
   return {
     month,
     days,
     totalCompleted: days.reduce((sum, d) => sum + d.completed, 0),
     activeDays: days.length,
-    totalFeeKrw: hasFees ? days.reduce((sum, d) => sum + (d.feeKrw ?? 0), 0) : null,
+    totalFeeKrw: totalFee,
     totalMissionKrw: days.reduce((sum, d) => sum + d.missionKrw, 0),
+    totalDistanceKm: totalDistM > 0 ? Math.floor(totalDistM / 100) / 10 : null,
+    perKmKrw: perKm(totalFee, totalDistM),
+    hourlyKrw: hourly(totalFee, totalWorkMin > 0 ? totalWorkMin : null),
   };
 }
 
@@ -76,6 +113,7 @@ function toDiary(month: string, rows: RiderDailyRow[], fees?: FeeMap): DiaryMont
 function demoDiary(month: string): DiaryMonth {
   const rows: RiderDailyRow[] = [];
   const fees: FeeMap = new Map();
+  const metrics: MetricMap = new Map();
   for (let d = 1; d <= 26; d++) {
     if (d % 7 === 3) continue; // 주 1일 휴무
     const date = `${month}-${String(d).padStart(2, "0")}`;
@@ -92,8 +130,10 @@ function demoDiary(month: string): DiaryMonth {
     });
     // 데모 수입: 완료 1건당 대략 4,300~5,000원 + 가끔 미션.
     fees.set(date, { fee: completed * (4300 + ((d * 37) % 700)), mission: d % 6 === 0 ? 15000 : 0 });
+    // 데모 지표: 1건당 ~1.6km 이동, ~11분/건 근무.
+    metrics.set(date, { distanceM: completed * (1400 + ((d * 53) % 500)), workMin: completed * 11 + 30 });
   }
-  return toDiary(month, rows, fees);
+  return toDiary(month, rows, fees, metrics);
 }
 
 // ── 일자별 배달건 상세 (배달일지 카드 터치 시) ──
@@ -259,7 +299,38 @@ export async function getDeliveryDiary(month: string): Promise<DiaryMonth> {
         });
       }
     }
-    return toDiary(month, data ?? [], fees.size ? fees : undefined);
+    // KM당 단가·시급용 — delivery_fee_details 에서 일자별 총이동거리(전달완료)·근무시간(첫픽업~마지막전달) 집계.
+    const metrics: MetricMap = new Map();
+    const { data: detRows, error: detErr } = await admin
+      .from("delivery_fee_details")
+      .select("snapshot_date, status, distance_m, pickup_at, delivered_at")
+      .eq("admin_rider_id", session.adminRiderId)
+      .gte("snapshot_date", `${month}-01`)
+      .lte("snapshot_date", `${month}-${String(lastDay).padStart(2, "0")}`);
+    if (detErr) {
+      console.error("[diary] delivery_fee_details 집계 실패(지표 미표시):", detErr.code, detErr.message);
+    } else {
+      const agg = new Map<string, { distanceM: number; firstPickup: string | null; lastDeliver: string | null }>();
+      for (const r of detRows ?? []) {
+        const date = r.snapshot_date as string;
+        const a = agg.get(date) ?? { distanceM: 0, firstPickup: null, lastDeliver: null };
+        if (r.status === "전달완료" && r.distance_m != null) a.distanceM += r.distance_m as number;
+        const pu = r.pickup_at as string | null;
+        const dl = r.delivered_at as string | null;
+        if (pu && (a.firstPickup == null || pu < a.firstPickup)) a.firstPickup = pu;
+        if (dl && (a.lastDeliver == null || dl > a.lastDeliver)) a.lastDeliver = dl;
+        agg.set(date, a);
+      }
+      for (const [date, a] of agg) {
+        let workMin: number | null = null;
+        if (a.firstPickup && a.lastDeliver) {
+          const ms = new Date(a.lastDeliver).getTime() - new Date(a.firstPickup).getTime();
+          if (ms > 0) workMin = Math.round(ms / 60000);
+        }
+        metrics.set(date, { distanceM: a.distanceM, workMin });
+      }
+    }
+    return toDiary(month, data ?? [], fees.size ? fees : undefined, metrics.size ? metrics : undefined);
   } catch (e) {
     console.error("[diary] 예기치 못한 예외:", e);
     return toDiary(month, []);

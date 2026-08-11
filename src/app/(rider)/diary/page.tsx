@@ -91,6 +91,23 @@ export default async function DiaryPage({
                   <span className="tnum">미션 +{diary.totalMissionKrw.toLocaleString("ko-KR")}원</span>
                 ) : null}
               </div>
+              {diary.hourlyKrw != null || diary.perKmKrw != null ? (
+                <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-white/20 pt-2.5 text-[12px] font-bold">
+                  {diary.hourlyKrw != null ? (
+                    <span className="tnum">
+                      내 시급 <span className="text-[13px] font-black">{diary.hourlyKrw.toLocaleString("ko-KR")}</span>원
+                    </span>
+                  ) : null}
+                  {diary.perKmKrw != null ? (
+                    <span className="tnum">
+                      KM당 <span className="text-[13px] font-black">{diary.perKmKrw.toLocaleString("ko-KR")}</span>원
+                    </span>
+                  ) : null}
+                  {diary.totalDistanceKm != null ? (
+                    <span className="tnum opacity-80">총 {diary.totalDistanceKm.toFixed(1)}KM</span>
+                  ) : null}
+                </div>
+              ) : null}
             </>
           ) : (
             <div className="flex items-end justify-between">
@@ -147,6 +164,12 @@ export default async function DiaryPage({
                   {d.canceled > 0 ? <span className="tnum">취소 {d.canceled}</span> : null}
                   {d.acceptanceRate != null ? <span className="tnum">수락률 {d.acceptanceRate}%</span> : null}
                 </div>
+                {d.perKmKrw != null || d.hourlyKrw != null ? (
+                  <div className="mt-1 flex flex-wrap gap-x-2.5 text-[11px] font-bold text-jb-indigo">
+                    {d.hourlyKrw != null ? <span className="tnum">시급 {d.hourlyKrw.toLocaleString("ko-KR")}원</span> : null}
+                    {d.perKmKrw != null ? <span className="tnum">KM당 {d.perKmKrw.toLocaleString("ko-KR")}원</span> : null}
+                  </div>
+                ) : null}
               </div>
               {d.feeKrw != null ? (
                 <div className="shrink-0 text-right">
