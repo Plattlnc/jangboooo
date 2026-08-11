@@ -15,13 +15,17 @@ export interface DailySettlementRow {
   fee: number;
   feeWht: number;
   feeIns: number;
-  /** 배달처리비 지급액 = 세전 − 원천세 − 고용산재 */
+  /** 배달처리비 수수료(정액) */
+  feeFee: number;
+  /** 배달처리비 지급액 = 세전 − 원천세 − 고용산재 − 수수료 */
   feePayout: number;
   /** 미션비(세전) */
   mission: number;
   missionWht: number;
   missionIns: number;
-  /** 미션비 지급액 = 세전 − 원천세 − 고용산재 */
+  /** 미션비 수수료(정액) */
+  missionFee: number;
+  /** 미션비 지급액 = 세전 − 원천세 − 고용산재 − 수수료 */
   missionPayout: number;
   /** 총 지급액 = 배달처리비 지급액 + 미션비 지급액 */
   total: number;
@@ -33,10 +37,12 @@ export interface DailyTotals {
   fee: number;
   feeWht: number;
   feeIns: number;
+  feeFee: number;
   feePayout: number;
   mission: number;
   missionWht: number;
   missionIns: number;
+  missionFee: number;
   missionPayout: number;
   total: number;
 }
@@ -52,10 +58,12 @@ const NUMERIC_KEYS: (keyof DailyTotals & keyof DailySettlementRow)[] = [
   "fee",
   "feeWht",
   "feeIns",
+  "feeFee",
   "feePayout",
   "mission",
   "missionWht",
   "missionIns",
+  "missionFee",
   "missionPayout",
   "total",
 ];
@@ -94,17 +102,19 @@ export async function fetchDailySettlement(date: string): Promise<DailySettlemen
       fee: f.fee_krw,
       feeWht: feeD.wht,
       feeIns: feeD.ins,
+      feeFee: feeD.fee,
       feePayout: feeD.payout,
       mission: f.mission_krw,
       missionWht: missionD.wht,
       missionIns: missionD.ins,
+      missionFee: missionD.fee,
       missionPayout: missionD.payout,
       total: feeD.payout + missionD.payout,
     };
   });
   rows.sort((a, b) => b.total - a.total || a.name.localeCompare(b.name, "ko"));
 
-  const totals: DailyTotals = { riders: rows.length, completed: 0, fee: 0, feeWht: 0, feeIns: 0, feePayout: 0, mission: 0, missionWht: 0, missionIns: 0, missionPayout: 0, total: 0 };
+  const totals: DailyTotals = { riders: rows.length, completed: 0, fee: 0, feeWht: 0, feeIns: 0, feeFee: 0, feePayout: 0, mission: 0, missionWht: 0, missionIns: 0, missionFee: 0, missionPayout: 0, total: 0 };
   for (const r of rows) {
     for (const k of NUMERIC_KEYS) totals[k] += r[k];
   }
