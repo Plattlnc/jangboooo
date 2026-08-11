@@ -55,7 +55,7 @@ def parse(path, password):
         sys.exit(f"[배달 내역 상세] 필수 컬럼 누락: {dict(User_ID=ui, 운행일=di, 배달상태=si, 배달처리비=fi, 귀책=gi)}")
     # 상세 컬럼(없으면 -1 → None 저장)
     no_i = col_index(hdr, "배달번호")
-    sn_i = col_index(hdr, "가맹점명", "가게명")
+    sn_i = col_index(hdr, "가게이름", "가맹점명", "가게명")
     pu_i = col_index(hdr, "픽업완료")
     dl_i = col_index(hdr, "전달완료")
     ds_i = col_index(hdr, "거리")
