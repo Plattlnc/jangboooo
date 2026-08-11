@@ -3,6 +3,7 @@
 // 라이더 키 = admin_rider_id(=User ID). 폴백: 데모/미설정/세션없음.
 
 import { computeGrade, GRADE_SEASON_START, type GradeResult, type Tier } from "@/lib/grade";
+import { computeAttendance, type AttendanceResult } from "@/lib/attendance";
 import { DEMO_MODE } from "@/lib/demo";
 import { getRiderProfile } from "./rider-profile";
 
@@ -118,5 +119,64 @@ export async function getMyGradeHistory(): Promise<GradeWeek[]> {
   } catch (e) {
     console.error("[grade] 기록 예외:", e);
     return [];
+  }
+}
+
+// ── 출석체크(주간 수~화 일별 30건, 7일 중 5일 달성 시 35,000원) ──
+const WEEKDAY_KO = ["일", "월", "화", "수", "목", "금", "토"] as const;
+function weekdayKo(dateStr: string): string {
+  return WEEKDAY_KO[new Date(`${dateStr}T12:00:00Z`).getUTCDay()]!;
+}
+
+export interface MyAttendance extends AttendanceResult {
+  weekStart: string; // 수
+  weekEnd: string; // 화
+  today: string; // 오늘(KST) — 진행 중 날짜 강조용
+}
+
+export async function getMyAttendance(): Promise<MyAttendance> {
+  const today = kstToday();
+  const ws = weekStartWed(today);
+  const weekStart = ymd(ws);
+  const weekEnd = ymd(addDays(ws, 6));
+  const dayDates = Array.from({ length: 7 }, (_, i) => ymd(addDays(ws, i)));
+  const build = (byDate: Map<string, number>): MyAttendance => ({
+    weekStart,
+    weekEnd,
+    today,
+    ...computeAttendance(
+      dayDates.map((date) => ({ date, weekday: weekdayKo(date), completed: byDate.get(date) ?? 0 })),
+    ),
+  });
+
+  const hasEnv = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
+  if (DEMO_MODE || !hasEnv) {
+    // 데모: 5일 달성(30+), 1일 미달(12), 1일 0 → 지급 조건 충족 예시
+    const demo = new Map<string, number>();
+    dayDates.forEach((d, i) => demo.set(d, i < 5 ? 30 + i * 5 : i === 5 ? 12 : 0));
+    return build(demo);
+  }
+
+  const { getRiderSession } = await import("@/lib/auth/cookies");
+  const session = await getRiderSession();
+  if (!session) return build(new Map());
+
+  try {
+    const { createAdminClient } = await import("@/lib/supabase/admin");
+    const admin = createAdminClient();
+    const { data, error } = await admin.rpc("get_rider_daily_for", {
+      p_admin_rider_id: session.adminRiderId,
+      p_period: "week",
+    });
+    if (error) {
+      console.error("[attendance] get_rider_daily_for 실패:", error.code, error.message);
+      return build(new Map());
+    }
+    const byDate = new Map<string, number>();
+    for (const r of data ?? []) byDate.set(r.snapshot_date as string, (r.completed as number) ?? 0);
+    return build(byDate);
+  } catch (e) {
+    console.error("[attendance] 예외:", e);
+    return build(new Map());
   }
 }
