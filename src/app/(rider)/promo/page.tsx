@@ -31,9 +31,9 @@ export default async function PromoPage() {
   const seasonOpen = season.number != null;
   const promo = weeklyPromo(grade.completed);
 
-  // 진행 중(쌓이고 있는) 금액
+  // 진행 중(쌓이고 있는) 금액 — 등급·출석은 시즌(8/12) 시작 후부터 집계
   const gradeReward = seasonOpen ? grade.reward : 0;
-  const attReward = attendance.reached ? ATTENDANCE_REWARD : 0;
+  const attReward = seasonOpen && attendance.reached ? ATTENDANCE_REWARD : 0;
   const total = gradeReward + attReward + promo.bonusKrw;
 
   const weekLabel = attendance.weekStart ? `${md(attendance.weekStart)} ~ ${md(attendance.weekEnd)}` : "이번 주";
@@ -100,7 +100,12 @@ export default async function PromoPage() {
             </div>
           </div>
           <div className="shrink-0 text-right">
-            {attendance.reached ? (
+            {!seasonOpen ? (
+              <>
+                <div className="tnum text-[15px] font-black text-jb-ink">{krw(ATTENDANCE_REWARD)}원</div>
+                <div className="text-[10.5px] font-bold text-jb-ink-mute">시작 전</div>
+              </>
+            ) : attendance.reached ? (
               <>
                 <div className="tnum text-[15px] font-black text-jb-green">{krw(ATTENDANCE_REWARD)}원</div>
                 <div className="text-[10.5px] font-bold text-jb-green">달성</div>

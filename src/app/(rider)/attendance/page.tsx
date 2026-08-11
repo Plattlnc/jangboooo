@@ -3,7 +3,7 @@
 
 import { Gift } from "lucide-react";
 import { getMyAttendance } from "@/app/(rider)/_lib/grade";
-import { seasonOf } from "@/lib/grade";
+import { seasonOf, GRADE_SEASON_START } from "@/lib/grade";
 import {
   ATTENDANCE_DAILY_TARGET,
   ATTENDANCE_DAYS_REQUIRED,
@@ -16,6 +16,13 @@ export const dynamic = "force-dynamic";
 /** 'YYYY-MM-DD' → 'M월 D일'. */
 function md(s: string): string {
   return `${Number(s.slice(5, 7))}월 ${Number(s.slice(8, 10))}일`;
+}
+
+const WEEKDAY = ["일", "월", "화", "수", "목", "금", "토"] as const;
+/** 이벤트 시작일 라벨 — '8월 12일(수)'. (라이더 등급 시즌과 동일 시작) */
+function eventStartLabel(): string {
+  const d = new Date(`${GRADE_SEASON_START}T12:00:00Z`);
+  return `${md(GRADE_SEASON_START)}(${WEEKDAY[d.getUTCDay()]})`;
 }
 
 export default async function AttendancePage() {
@@ -39,11 +46,13 @@ export default async function AttendancePage() {
           <div
             className={
               "grid size-11 shrink-0 place-items-center rounded-full " +
-              (att.reached
-                ? "bg-jb-green-tint text-jb-green"
-                : att.failed
-                  ? "bg-jb-red-tint text-jb-red"
-                  : "bg-jb-track text-jb-ink-mute")
+              (!seasonOpen
+                ? "bg-jb-track text-jb-ink-mute"
+                : att.reached
+                  ? "bg-jb-green-tint text-jb-green"
+                  : att.failed
+                    ? "bg-jb-red-tint text-jb-red"
+                    : "bg-jb-track text-jb-ink-mute")
             }
           >
             <Gift size={22} strokeWidth={2.2} />
@@ -54,20 +63,22 @@ export default async function AttendancePage() {
               <span
                 className={
                   "rounded-full px-2 py-0.5 text-[10.5px] font-black " +
-                  (att.reached
-                    ? "bg-jb-green-tint text-jb-green"
-                    : att.failed
-                      ? "bg-jb-red-tint text-jb-red"
-                      : "bg-jb-indigo-tint text-jb-indigo")
+                  (!seasonOpen
+                    ? "bg-jb-track text-jb-ink-mute"
+                    : att.reached
+                      ? "bg-jb-green-tint text-jb-green"
+                      : att.failed
+                        ? "bg-jb-red-tint text-jb-red"
+                        : "bg-jb-indigo-tint text-jb-indigo")
                 }
               >
-                {att.reached ? "달성" : att.failed ? "미달성" : "진행중"}
+                {!seasonOpen ? "시작 전" : att.reached ? "달성" : att.failed ? "미달성" : "진행중"}
               </span>
             </div>
             <div
               className={
                 "tnum text-[22px] font-black leading-tight tracking-[-0.02em] " +
-                (att.reached ? "text-jb-green" : att.failed ? "text-jb-red" : "text-jb-ink")
+                (!seasonOpen ? "text-jb-ink" : att.reached ? "text-jb-green" : att.failed ? "text-jb-red" : "text-jb-ink")
               }
             >
               {ATTENDANCE_REWARD.toLocaleString("ko-KR")}
@@ -78,14 +89,18 @@ export default async function AttendancePage() {
         <div
           className={
             "mt-3 rounded-[10px] px-3 py-2 text-[12px] font-bold " +
-            (att.reached
-              ? "bg-jb-green-tint text-jb-green"
-              : att.failed
-                ? "bg-jb-red-tint text-jb-red"
-                : "bg-jb-surface text-jb-ink")
+            (!seasonOpen
+              ? "bg-jb-indigo-tint text-jb-indigo"
+              : att.reached
+                ? "bg-jb-green-tint text-jb-green"
+                : att.failed
+                  ? "bg-jb-red-tint text-jb-red"
+                  : "bg-jb-surface text-jb-ink")
           }
         >
-          {att.reached ? (
+          {!seasonOpen ? (
+            <>출석체크 이벤트는 {eventStartLabel()}부터 시작돼요</>
+          ) : att.reached ? (
             <>이번 주 {att.required}일 달성! {ATTENDANCE_REWARD.toLocaleString("ko-KR")}원이 적립돼요 🎉</>
           ) : att.failed ? (
             <>남은 일수로는 {att.required}일 달성이 어려워 이번 주는 미달성이에요</>
@@ -95,13 +110,19 @@ export default async function AttendancePage() {
             </>
           )}
         </div>
-        {!seasonOpen ? (
-          <div className="mt-2 text-[11px] text-jb-ink-mute">시즌이 열리면 출석 보상이 지급돼요.</div>
-        ) : null}
       </div>
 
-      {/* 메인 카드 — 주차·달성일 + 7일 일별 진행 */}
+      {/* 메인 카드 — 주차·달성일 + 7일 일별 진행 (시작 전이면 안내) */}
       <div className="mt-3 rounded-2xl border border-jb-line bg-white px-[18px] py-[17px] shadow-[0_1px_2px_0_rgba(0,0,0,0.04)]">
+        {!seasonOpen ? (
+          <div className="py-8 text-center">
+            <div className="text-[13.5px] font-bold text-jb-ink">아직 시작 전이에요</div>
+            <p className="mt-1.5 text-[12px] leading-relaxed text-jb-ink-mute">
+              <b className="text-jb-ink">{eventStartLabel()}부터</b> 매주(수~화) 출석 현황이 여기에 표시돼요.
+            </p>
+          </div>
+        ) : (
+        <>
         <div className="flex items-center justify-between">
           <div className="tnum text-[13px] font-black text-jb-ink">
             {md(att.weekStart)} ~ {md(att.weekEnd)}
@@ -153,6 +174,8 @@ export default async function AttendancePage() {
             );
           })}
         </div>
+        </>
+        )}
       </div>
 
       {/* 설명 */}
