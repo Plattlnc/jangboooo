@@ -4,6 +4,14 @@
 
 import { computeGrade, GRADE_SEASON_START, type GradeResult, type Tier } from "@/lib/grade";
 import { computeAttendance, type AttendanceResult } from "@/lib/attendance";
+import {
+  BURNING_START_DATE,
+  BURNING_RATE,
+  BURNING_MIN_TIER_NAME,
+  computeBurningBonus,
+  isBurningEligible,
+  type BurningWeek,
+} from "@/lib/burning";
 import { DEMO_MODE } from "@/lib/demo";
 import { getRiderProfile } from "./rider-profile";
 
@@ -180,4 +188,121 @@ export async function getMyAttendance(): Promise<MyAttendance> {
     console.error("[attendance] 예외:", e);
     return build(new Map());
   }
+}
+
+// ── 버닝 이벤트(플래티넘 이상 · 주간 배달료 5% · 주별 기록) ──
+export interface MyBurning {
+  ratePct: number; // 5
+  minTierName: string; // 플래티넘
+  current: BurningWeek | null;
+  history: BurningWeek[]; // 과거 완료 주(최신순)
+}
+
+/** 주(수~화)별 완료건·배달료 집계 → BurningWeek[]. 이벤트 시작일 이후 날짜만, 오늘까지. */
+function buildBurningWeeks(
+  today: string,
+  curWeekStart: Date,
+  completedByDate: Map<string, number>,
+  feeByDate: Map<string, number>,
+): BurningWeek[] {
+  const weeks: BurningWeek[] = [];
+  let ws = weekStartWed(BURNING_START_DATE);
+  const curStr = ymd(curWeekStart);
+  while (ymd(ws) <= curStr) {
+    const inProgress = ymd(ws) === curStr;
+    let completed = 0;
+    let feeKrw = 0;
+    let daysWithData = 0;
+    for (let i = 0; i < 7; i++) {
+      const d = ymd(addDays(ws, i));
+      if (d > today) break;
+      if (d < BURNING_START_DATE) continue;
+      completed += completedByDate.get(d) ?? 0;
+      if (feeByDate.has(d)) {
+        feeKrw += feeByDate.get(d) ?? 0;
+        daysWithData += 1;
+      }
+    }
+    weeks.push({
+      weekStart: ymd(ws),
+      weekEnd: ymd(addDays(ws, 6)),
+      completed,
+      tierName: computeGrade(completed).tier.name,
+      eligible: isBurningEligible(completed),
+      feeKrw,
+      daysWithData,
+      bonusKrw: computeBurningBonus(completed, feeKrw),
+      inProgress,
+    });
+    ws = addDays(ws, 7);
+  }
+  return weeks;
+}
+
+export async function getMyBurning(): Promise<MyBurning> {
+  const ratePct = Math.round(BURNING_RATE * 100);
+  const today = kstToday();
+  const curWeekStart = weekStartWed(today);
+
+  const hasEnv = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
+  if (DEMO_MODE || !hasEnv) return demoBurning(curWeekStart);
+
+  const { getRiderSession } = await import("@/lib/auth/cookies");
+  const session = await getRiderSession();
+  if (!session) return { ratePct, minTierName: BURNING_MIN_TIER_NAME, current: null, history: [] };
+
+  try {
+    const { createAdminClient } = await import("@/lib/supabase/admin");
+    const admin = createAdminClient();
+    const [snapRes, feeRes] = await Promise.all([
+      admin
+        .from("sla_snapshots")
+        .select("snapshot_date, completed")
+        .eq("admin_rider_id", session.adminRiderId)
+        .gte("snapshot_date", BURNING_START_DATE)
+        .lte("snapshot_date", today),
+      admin
+        .from("rider_daily_fees")
+        .select("snapshot_date, fee_krw")
+        .eq("admin_rider_id", session.adminRiderId)
+        .gte("snapshot_date", BURNING_START_DATE)
+        .lte("snapshot_date", today),
+    ]);
+    const completedByDate = new Map<string, number>();
+    for (const r of snapRes.data ?? []) completedByDate.set(r.snapshot_date as string, (r.completed as number) ?? 0);
+    const feeByDate = new Map<string, number>();
+    for (const r of feeRes.data ?? []) feeByDate.set(r.snapshot_date as string, (r.fee_krw as number) ?? 0);
+
+    const weeks = buildBurningWeeks(today, curWeekStart, completedByDate, feeByDate);
+    const curStr = ymd(curWeekStart);
+    const current = weeks.find((w) => w.weekStart === curStr) ?? null;
+    const history = weeks.filter((w) => w.weekStart !== curStr).sort((a, b) => (a.weekStart < b.weekStart ? 1 : -1));
+    return { ratePct, minTierName: BURNING_MIN_TIER_NAME, current, history };
+  } catch (e) {
+    console.error("[burning] 예외:", e);
+    return { ratePct, minTierName: BURNING_MIN_TIER_NAME, current: null, history: [] };
+  }
+}
+
+function demoBurning(curWeekStart: Date): MyBurning {
+  const mk = (ws: Date, completed: number, feeKrw: number, daysWithData: number, inProgress: boolean): BurningWeek => ({
+    weekStart: ymd(ws),
+    weekEnd: ymd(addDays(ws, 6)),
+    completed,
+    tierName: computeGrade(completed).tier.name,
+    eligible: isBurningEligible(completed),
+    feeKrw,
+    daysWithData,
+    bonusKrw: computeBurningBonus(completed, feeKrw),
+    inProgress,
+  });
+  return {
+    ratePct: 5,
+    minTierName: BURNING_MIN_TIER_NAME,
+    current: mk(curWeekStart, 168, 724_000, 6, true), // 플래티넘, 6일치
+    history: [
+      mk(addDays(curWeekStart, -7), 205, 981_000, 7, false), // 다이아 — 지급
+      mk(addDays(curWeekStart, -14), 142, 612_000, 7, false), // 골드 — 미자격
+    ],
+  };
 }

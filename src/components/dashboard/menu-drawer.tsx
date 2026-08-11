@@ -113,12 +113,17 @@ export function MenuDrawer({ open, onClose, profile }: MenuDrawerProps) {
                     </span>
                     <span
                       className={cn(
-                        "flex-1 text-left text-sm",
+                        "flex flex-1 items-center gap-1.5 text-left text-sm",
                         active ? "font-black text-jb-ink" : "font-semibold text-[#3a3f4c]",
                         it.locked && "text-jb-ink-mute",
                       )}
                     >
                       {it.label}
+                      {it.badge ? (
+                        <span className="rounded-full bg-jb-red-tint px-1.5 py-0.5 text-[9px] font-black text-jb-red">
+                          {it.badge}
+                        </span>
+                      ) : null}
                     </span>
                     {it.locked ? (
                       <Lock size={14} strokeWidth={2} className="text-jb-ink-mute" />
