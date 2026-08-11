@@ -81,8 +81,15 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
     return NextResponse.redirect(url)
   }
 
-  // 사용 현황: 문서 요청(앱 오픈)만 기록 — RSC 새로고침(60s 폴링)·클라 내비·프리페치 제외.
-  if (!request.headers.get('rsc') && !request.headers.get('next-router-prefetch')) {
+  // 사용 현황: 실제 앱 오픈(전체 문서 로드)만 1건 기록. 브라우저가 최상위 내비게이션에만
+  // 붙이는 Sec-Fetch-Dest=document 로 판정 → RSC 클라 내비·자동 새로고침(60s 폴링)·프리페치는
+  // 모두 Sec-Fetch-Dest=empty 라 제외돼, 한 번 새로고침당 최대 1건만 카운트된다.
+  // (헤더 미지원 구형 브라우저는 기존 rsc/prefetch 헤더 부재로 폴백.)
+  const dest = request.headers.get('sec-fetch-dest')
+  const isAppOpen =
+    dest === 'document' ||
+    (dest === null && !request.headers.get('rsc') && !request.headers.get('next-router-prefetch'))
+  if (isAppOpen) {
     logVisit(session.adminRiderId, pathname, event)
   }
 
