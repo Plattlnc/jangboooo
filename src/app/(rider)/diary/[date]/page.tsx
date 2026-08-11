@@ -78,14 +78,15 @@ export default async function DiaryDayPage({ params }: { params: Promise<{ date:
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
-                  {/* 가게(픽업지) 이름 */}
+                  {/* 배달번호(더 굵게) + 가게(픽업지) 이름 */}
                   <div className="flex items-center gap-1.5">
                     {dv.isCanceled ? (
                       <span className="shrink-0 rounded-[6px] bg-jb-red-tint px-1.5 py-0.5 text-[10.5px] font-black text-jb-red">
                         취소
                       </span>
                     ) : null}
-                    <span className="truncate text-[13.5px] font-black text-jb-ink">
+                    <span className="tnum shrink-0 text-[14px] font-black text-jb-ink">{dv.deliveryNo}</span>
+                    <span className="truncate text-[12.5px] font-semibold text-jb-ink-soft">
                       {dv.storeName ?? "가게 정보 없음"}
                     </span>
                   </div>
