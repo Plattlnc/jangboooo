@@ -9,6 +9,7 @@ import { getPublishedNotice } from "@/lib/notices";
 import { noticePlainText } from "@/lib/sanitize-notice";
 import { getRiderSession } from "@/lib/auth/cookies";
 import { DEMO_MODE } from "@/lib/demo";
+import { BrandLogo } from "@/components/ui/brand-logo";
 import { NoticeShareButton } from "@/components/notice/notice-share-button";
 import { NoticeViewPing } from "@/components/notice/notice-view-ping";
 import type { NoticeRow } from "@/types/database";
@@ -56,8 +57,7 @@ export default async function PublicNoticePage({ params }: { params: Promise<{ i
 
       <header className="flex items-center gap-2 px-3.5 pb-2 pt-[calc(env(safe-area-inset-top)+14px)]">
         <Link href="/" className="flex items-center gap-2" aria-label="슬라이더 홈으로">
-          {/* eslint-disable-next-line @next/next/no-img-element -- 로컬 정적 아이콘 */}
-          <img src="/brand-icon.png" alt="" width={24} height={24} />
+          <BrandLogo size={22} />
           <span className="text-[15px] font-black tracking-[-0.03em]">슬라이더</span>
         </Link>
         <Link
