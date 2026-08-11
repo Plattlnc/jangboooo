@@ -1,5 +1,5 @@
-// 배달일지 — 내 일일 배달 완료 기록(월 단위, 최신일 우선). URL ?m=YYYY-MM 이 SSOT.
-// 데이터: get_rider_daily_for(month) — 영업일(-6h) 경계는 대시보드와 동일.
+// 배달일지 — 탭(배달일지/배달등급/프로모션). 배달일지 탭만 데이터 조회(공백 탭은 조회 없음).
+// URL ?m=YYYY-MM(월), ?tab=grade|promo. 데이터: get_rider_daily_for + rider_daily_fees + delivery_fee_details.
 
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -37,18 +37,59 @@ export default async function DiaryPage({
   const sp = await searchParams;
   const nowMonth = currentMonth();
   const month = parseMonth(sp.m, nowMonth);
-  const diary = await getDeliveryDiary(month);
 
+  const tabRaw = Array.isArray(sp.tab) ? sp.tab[0] : sp.tab;
+  const tab: "diary" | "grade" | "promo" = tabRaw === "grade" ? "grade" : tabRaw === "promo" ? "promo" : "diary";
+  const TABS = [
+    { key: "diary", label: "배달일지", href: `/diary?m=${month}` },
+    { key: "grade", label: "배달등급", href: "/diary?tab=grade" },
+    { key: "promo", label: "프로모션", href: "/diary?tab=promo" },
+  ] as const;
+
+  return (
+    <div className="px-3.5 pb-10 pt-3.5">
+      <h1 className="text-xl font-black tracking-[-0.03em]">배달일지</h1>
+
+      {/* 탭: 배달일지 / 배달등급 / 프로모션 */}
+      <div className="mb-3.5 mt-3 flex gap-1 rounded-[10px] bg-jb-tab-bg p-1">
+        {TABS.map((t) => (
+          <Link
+            key={t.key}
+            href={t.href}
+            className={
+              "flex-1 rounded-[7px] py-[7px] text-center text-[12.5px] font-bold transition-colors " +
+              (tab === t.key
+                ? "bg-white text-jb-ink shadow-[0_1px_2px_0_rgba(0,0,0,0.06)]"
+                : "text-jb-ink-mute active:text-jb-ink")
+            }
+          >
+            {t.label}
+          </Link>
+        ))}
+      </div>
+
+      {/* 배달일지 탭만 데이터 조회(공백 탭은 조회 없음 → egress 절감). */}
+      {tab === "diary" ? (
+        <DiaryTabContent month={month} nowMonth={nowMonth} />
+      ) : (
+        <div className="grid min-h-[50dvh] place-items-center">
+          <span className="text-[12.5px] text-jb-ink-mute">준비 중입니다</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// 배달일지 탭 본문 — 월 이동 + 월 수입 히어로 + 일별 카드. 렌더될 때만 조회된다.
+async function DiaryTabContent({ month, nowMonth }: { month: string; nowMonth: string }) {
+  const diary = await getDeliveryDiary(month);
   const [y, m] = month.split("-");
   const prev = addMonths(month, -1);
   const next = addMonths(month, 1);
   const hasNext = next <= nowMonth;
 
   return (
-    <div className="px-3.5 pb-10 pt-3.5">
-      <h1 className="text-xl font-black tracking-[-0.03em]">배달일지</h1>
-      <p className="mb-3.5 mt-1 text-[12.5px] text-jb-ink-mute">일별 완료·수입(세전) 기록</p>
-
+    <>
       {/* 월 이동 + 월 합계 */}
       <div className="rounded-2xl bg-[linear-gradient(135deg,#1E9E5A,#27b069)] px-[17px] py-[15px] text-white shadow-[0_8px_16px_-4px_rgba(0,0,0,0.14)]">
         <div className="flex items-center justify-between">
@@ -194,6 +235,6 @@ export default async function DiaryPage({
           ))}
         </div>
       )}
-    </div>
+    </>
   );
 }
