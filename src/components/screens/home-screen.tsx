@@ -208,16 +208,19 @@ export function HomeScreen({
         </TabButton>
       </div>
 
-      {/* 오늘 운행 요약 섹션 — 헤더 + 내부 카드(배달건수/수락률 통일 폰트) */}
-      <div className="mt-3">
-        <div className="mb-2 flex items-center gap-1.5 px-0.5">
-          <span className="text-[15px] font-extrabold text-jb-ink">{summaryLabel}</span>
+      {/* 오늘 운행 요약 — 히어로 대카테고리(요약·운행상태·시간대별 분포를 한 카드에) */}
+      <div className={cardCls + " mt-3 px-[18px] py-[17px]"}>
+        {/* 히어로 메인 타이틀 */}
+        <div className="flex items-center gap-1.5">
+          <span className="text-[17px] font-extrabold tracking-[-0.02em] text-jb-ink">{summaryLabel}</span>
           <span className="tnum text-[10px] font-semibold text-jb-ink-mute">{dateShort}</span>
         </div>
-        <div className={cardCls + " flex items-center justify-between px-[18px] py-4"}>
+
+        {/* 배달 N건 / 수락률 00% */}
+        <div className="mt-2.5 flex items-center justify-between">
           <div className="flex items-baseline gap-1.5">
             <span className="text-[15px] font-bold text-jb-ink-soft">배달</span>
-            <span className="tnum text-[22px] font-extrabold tracking-[-0.02em] text-jb-ink">
+            <span className="tnum text-[26px] font-extrabold tracking-[-0.02em] text-jb-ink">
               <CountUp value={m.count} />
             </span>
             <span className="text-[15px] font-bold text-jb-ink-soft">건</span>
@@ -226,7 +229,7 @@ export function HomeScreen({
             <span className="flex items-baseline gap-1">
               <span className="text-[15px] font-bold text-jb-ink-soft">수락률</span>
               <span className="flex items-baseline gap-px">
-                <span className="tnum text-[22px] font-extrabold tracking-[-0.02em]" style={{ color: v.acceptStatus.color }}>
+                <span className="tnum text-[26px] font-extrabold tracking-[-0.02em]" style={{ color: v.acceptStatus.color }}>
                   <CountUp value={m.accept} />
                 </span>
                 <span className="text-[15px] font-extrabold" style={{ color: v.acceptStatus.color }}>%</span>
@@ -240,17 +243,15 @@ export function HomeScreen({
             </span>
           </div>
         </div>
-      </div>
 
-      {/* 운행 상태 */}
-      <div className="mt-3">
-        <div className="mb-2 flex items-center justify-between px-0.5">
-          <span className="text-[15px] font-extrabold text-jb-ink">운행 상태</span>
-          {v.hasBmartSplit ? (
-            <span className="text-[11px] font-bold text-jb-ink-mute">일반 배달 기준 · B마트/스토어 별도</span>
-          ) : null}
-        </div>
-        <div className={cardCls + " p-[14px]"}>
+        {/* 운행 상태 (서브) */}
+        <div className="mt-4 border-t border-jb-line-soft pt-3.5">
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-[12.5px] font-bold text-jb-ink-soft">운행 상태</span>
+            {v.hasBmartSplit ? (
+              <span className="text-[10.5px] font-semibold text-jb-ink-mute">일반 기준 · B마트/스토어 별도</span>
+            ) : null}
+          </div>
           <div className="grid grid-cols-4 gap-2">
             {v.statusItems.map((it) => (
               <div key={it.label} className="rounded-[14px] px-1 py-[9px] text-center" style={{ background: it.tileBg }}>
@@ -259,22 +260,12 @@ export function HomeScreen({
                   {it.value}
                 </div>
                 {it.bmart != null ? (
-                  <div
-                    className={
-                      "tnum text-[10px] font-bold " +
-                      (it.bmart > 0 ? "text-jb-ink-soft" : "text-jb-ink-mute")
-                    }
-                  >
+                  <div className={"tnum text-[10px] font-bold " + (it.bmart > 0 ? "text-jb-ink-soft" : "text-jb-ink-mute")}>
                     B마트 {it.bmart}
                   </div>
                 ) : null}
                 {it.store != null ? (
-                  <div
-                    className={
-                      "tnum text-[10px] font-bold " +
-                      (it.store > 0 ? "text-jb-ink-soft" : "text-jb-ink-mute")
-                    }
-                  >
+                  <div className={"tnum text-[10px] font-bold " + (it.store > 0 ? "text-jb-ink-soft" : "text-jb-ink-mute")}>
                     스토어 {it.store}
                   </div>
                 ) : null}
@@ -282,22 +273,16 @@ export function HomeScreen({
             ))}
           </div>
         </div>
-      </div>
 
-      {/* 시간대별 분포 */}
-      <div className="mt-3">
-        <div className="mb-2 flex items-center justify-between px-0.5">
-          <span className="text-[15px] font-extrabold text-jb-ink">시간대별 분포</span>
-          <span className="text-[11px] font-bold text-jb-indigo">최다 시간대 강조</span>
-        </div>
-        <div className={cardCls + " p-[14px]"}>
+        {/* 시간대별 분포 (서브) */}
+        <div className="mt-4 border-t border-jb-line-soft pt-3.5">
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-[12.5px] font-bold text-jb-ink-soft">시간대별 분포</span>
+            <span className="text-[10.5px] font-semibold text-jb-indigo">최다 시간대 강조</span>
+          </div>
           <div className="grid grid-cols-4 gap-2">
             {v.peaks.map((p) => (
-              <div
-                key={p.label}
-                className="rounded-[14px] px-1 py-[9px] text-center"
-                style={{ background: p.tileBg }}
-              >
+              <div key={p.label} className="rounded-[14px] px-1 py-[9px] text-center" style={{ background: p.tileBg }}>
                 <div className="text-[11.5px] font-bold" style={{ color: p.labelColor }}>
                   {p.label}
                 </div>
@@ -315,16 +300,17 @@ export function HomeScreen({
         const promo = weeklyPromo(weekM.count);
         const barColor = promo.reached ? "var(--jb-green)" : "var(--jb-indigo)";
         return (
-          <div className="mt-3">
-            <div className="mb-2 px-0.5">
-              <span className="text-[15px] font-extrabold text-jb-ink">
+          <div className={cardCls + " mt-3 px-[18px] py-[15px]"}>
+            {/* 메인 타이틀 (카드 안) */}
+            <div>
+              <span className="text-[15px] font-extrabold tracking-[-0.02em] text-jb-ink">
                 자사 프로모션 <span className="text-jb-indigo">· 주간 보너스</span>
               </span>
-              <div className="mt-0.5 text-[11px] text-jb-ink-mute">
+              <div className="mt-0.5 text-[11px] font-medium text-jb-ink-mute">
                 주간 {PROMO_WEEKLY_THRESHOLD}건 초과분 1건당 +{PROMO_UNIT_KRW.toLocaleString("ko-KR")}원 · 매주 초기화
               </div>
             </div>
-            <div className={cardCls + " px-[18px] py-[15px]"}>
+            <div className="mt-3">
               <div className="flex items-center gap-1.5">
                 <span className="text-[14.5px] font-extrabold tracking-[-0.02em] text-jb-ink">
                   현재 보너스{" "}
@@ -362,14 +348,15 @@ export function HomeScreen({
       })()}
 
       {/* 구간별 달성률 */}
-      <div className="mt-3">
-        <div className="mb-2 px-0.5">
-          <span className="text-[15px] font-extrabold text-jb-ink">
+      <div className={cardCls + " mt-3 px-[18px] py-4"}>
+        {/* 메인 타이틀 (카드 안) */}
+        <div>
+          <span className="text-[15px] font-extrabold tracking-[-0.02em] text-jb-ink">
             구간별 달성률 <span className="text-jb-indigo">· 협력사 공동목표</span>
           </span>
-          <div className="mt-0.5 text-[11px] text-jb-ink-mute">구간 목표 대비 초과 달성 시 가점이 적립돼요</div>
+          <div className="mt-0.5 text-[11px] font-medium text-jb-ink-mute">구간 목표 대비 초과 달성 시 가점이 적립돼요</div>
         </div>
-        <div className={cardCls + " px-[18px] py-1.5"}>
+        <div className="mt-1.5">
           {!hasGoalData ? (
             <div className="flex flex-col items-center gap-1.5 py-5 text-center">
               <span className="text-[12.5px] font-bold text-jb-ink-soft">아직 집계된 공동목표가 없어요</span>
