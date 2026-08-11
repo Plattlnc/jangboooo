@@ -150,7 +150,9 @@ export function HomeScreen({
           </div>
         )}
         <div className="flex min-w-0 flex-1 items-center gap-2">
-          <span className="truncate text-[17px] font-extrabold tracking-[-0.02em] text-jb-ink">{profile.name}</span>
+          <span className="truncate text-[17px] font-extrabold tracking-[-0.02em] text-jb-ink">
+            {profile.name} <span className="font-bold text-jb-ink-soft">라이더</span>
+          </span>
           {profile.tier ? <TierBadge tier={profile.tier} size={36} /> : null}
         </div>
         {/* 상태 칩 = 탭하면 즉시 새로고침(수동). 자동은 60s 폴링. */}
