@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { Lock } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { signOutRider } from "@/actions/auth";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { NAV_GROUPS } from "@/lib/nav";
 import type { RiderProfile } from "@/app/(rider)/_lib/rider-profile";
 
@@ -70,7 +71,7 @@ export function MenuDrawer({ open, onClose, profile }: MenuDrawerProps) {
         <Link
           href="/myinfo"
           onClick={onClose}
-          className="block bg-gradient-to-br from-[#4F6AF5] to-[#5d77ff] px-[18px] pb-[18px] pt-[22px] text-white transition-opacity active:opacity-90"
+          className="block border-b border-jb-line bg-white px-[18px] pb-[18px] pt-[22px] transition-colors active:bg-jb-line-soft"
         >
           <div className="flex items-center gap-3">
             {profile.avatarUrl ? (
@@ -81,15 +82,15 @@ export function MenuDrawer({ open, onClose, profile }: MenuDrawerProps) {
                 className="size-12 shrink-0 rounded-[12px] object-cover"
               />
             ) : (
-              <div className="grid size-12 place-items-center rounded-[12px] bg-white/20 text-[18px] font-black">
+              <div className="grid size-12 place-items-center rounded-[12px] bg-jb-indigo-tint2 text-[18px] font-black text-jb-indigo">
                 {profile.initial}
               </div>
             )}
             <div className="flex-1">
-              <div className="text-[17px] font-black">{profile.name}</div>
-              <div className="tnum mt-0.5 text-xs opacity-90">UID {profile.uid}</div>
+              <div className="text-[17px] font-black text-jb-ink">{profile.name}</div>
+              <div className="tnum mt-0.5 text-xs text-jb-ink-mute">UID {profile.uid}</div>
             </div>
-            <span className="text-[11.5px] font-bold opacity-90">내 정보 ›</span>
+            <span className="text-[11.5px] font-bold text-jb-ink-mute">내 정보 ›</span>
           </div>
         </Link>
 
@@ -113,12 +114,17 @@ export function MenuDrawer({ open, onClose, profile }: MenuDrawerProps) {
                     </span>
                     <span
                       className={cn(
-                        "flex-1 text-left text-sm",
+                        "flex flex-1 items-center gap-1.5 text-left text-sm",
                         active ? "font-black text-jb-ink" : "font-semibold text-[#3a3f4c]",
                         it.locked && "text-jb-ink-mute",
                       )}
                     >
                       {it.label}
+                      {it.badge ? (
+                        <span className="rounded-full bg-jb-red-tint px-1.5 py-0.5 text-[9px] font-black text-jb-red">
+                          {it.badge}
+                        </span>
+                      ) : null}
                     </span>
                     {it.locked ? (
                       <Lock size={14} strokeWidth={2} className="text-jb-ink-mute" />
@@ -173,8 +179,13 @@ export function MenuDrawer({ open, onClose, profile }: MenuDrawerProps) {
           </span>
         </div>
 
-        {/* 로그아웃 */}
-        <div className="border-t border-jb-line-soft px-3.5 pb-[18px] pt-3">
+        {/* 하단 — 테마 토글 + 로그아웃 */}
+        <div className="border-t border-jb-line-soft px-3.5 pb-[18px] pt-2.5">
+          {/* 라이트/다크 모드 전환 */}
+          <div className="mb-2 flex items-center justify-between rounded-[8px] px-1.5 py-1">
+            <span className="text-[13px] font-semibold text-jb-ink">화면 테마</span>
+            <ThemeToggle className="size-9 rounded-full text-jb-ink" />
+          </div>
           <form action={signOutRider}>
             <button
               type="submit"

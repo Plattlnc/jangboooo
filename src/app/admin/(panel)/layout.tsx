@@ -9,7 +9,7 @@ import { AdminBottomNav } from "@/components/admin/admin-nav";
 import { AdminMenuButton } from "@/components/admin/admin-drawer";
 
 export const metadata: Metadata = {
-  title: "관리자 · 슬라이드",
+  title: "관리자 · 슬라이더",
   robots: { index: false, follow: false },
 };
 
@@ -26,7 +26,7 @@ export default async function AdminPanelLayout({ children }: { children: ReactNo
           <AdminMenuButton />
           <div className="flex items-baseline gap-2">
             <span className="text-[15px] font-black tracking-[-0.02em] text-jb-ink">
-              <span aria-hidden="true" className="emoji mr-1">🛵</span>슬라이드
+              <span aria-hidden="true" className="emoji mr-1">🛵</span>슬라이더
             </span>
             <span className="rounded-[6px] bg-jb-indigo-tint px-1.5 py-0.5 text-[10.5px] font-black text-jb-indigo">관리자</span>
           </div>

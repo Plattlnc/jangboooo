@@ -6,28 +6,28 @@ import { ThemeProvider } from "@/components/theme-provider";
 
 // 메타/SEO: 값 SSOT = docs/seo-checklist.md(cmo) + docs/design/04-brand-assets.md(uxui).
 // 사적 도구이므로 전역 noindex(검색 비노출), OG/PWA 는 공유·홈화면 경험용.
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://slider.kr";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  applicationName: "슬라이드",
-  title: "슬라이드 — 내 배달 실적 대시보드",
+  applicationName: "슬라이더",
+  title: "슬라이더 — 내 배달 실적 대시보드",
   description:
     "완료·수락률·취소까지 내 배달 실적을 오늘·주·월로 한눈에. 라이더 본인용 대시보드.",
   // 사적 데이터 보호 (seo-checklist §4) — 전 경로 검색 비노출.
   robots: { index: false, follow: false },
   openGraph: {
     type: "website",
-    siteName: "슬라이드",
-    title: "슬라이드 — 내 배달 성적표",
+    siteName: "슬라이더",
+    title: "슬라이더 — 내 배달 성적표",
     description:
       "완료·수락률·취소까지 내 배달 실적을 오늘·주·월로 한눈에. 라이더 본인용 대시보드.",
     locale: "ko_KR",
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "슬라이드 미리보기" }],
+    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "슬라이더 미리보기" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "슬라이드 — 내 배달 성적표",
+    title: "슬라이더 — 내 배달 성적표",
     description:
       "완료·수락률·취소까지 내 배달 실적을 오늘·주·월로 한눈에. 라이더 본인용 대시보드.",
     images: ["/og-image.png"],
@@ -44,7 +44,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "슬라이드",
+    title: "슬라이더",
   },
 };
 

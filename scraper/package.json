@@ -11,6 +11,7 @@
     "start": "tsx src/index.ts",
     "once": "tsx src/index.ts --once",
     "dev": "tsx watch src/index.ts",
+    "backfill:fees": "tsx scripts/backfill-fees.ts",
     "capture": "tsx scripts/capture-session.ts",
     "capture:google": "tsx scripts/capture-google-session.ts",
     "backfill": "tsx scripts/backfill.ts",
@@ -20,8 +21,10 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",
+    "officecrypto-tool": "^0.0.19",
     "playwright": "1.49.1",
     "tsx": "^4.19.2",
+    "xlsx": "^0.18.5",
     "zod": "^3.23.8"
   },
   "devDependencies": {

@@ -6,7 +6,7 @@ import { AdminLoginForm } from "@/components/admin/admin-login-form";
 import { isAdminSession } from "@/lib/auth/admin-cookies";
 
 export const metadata: Metadata = {
-  title: "관리자 로그인 · 슬라이드",
+  title: "관리자 로그인 · 슬라이더",
   robots: { index: false, follow: false },
 };
 

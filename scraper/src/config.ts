@@ -48,6 +48,13 @@ const EnvSchema = z.object({
   // 운영 금지. true 면 배민 미접속·mock 파서로 적재 파이프라인만 검증.
   SCRAPE_MOCK: boolish.default(false),
 
+  // ── 배달처리비(세전 수입) 수집 = 협력사관리 > 배달처리비 다운로드(암호 xlsx) ──
+  // 매일 지정 시각(KST)에 전일 1일치만 다운로드(파일 용량 최소화) → rider_daily_fees.
+  // 비밀번호(=계정 ID) 미설정이면 수집 스킵. reason 은 규제 다운로드 사유(전송됨).
+  DELIVERY_FEE_PASSWORD: optionalNonEmpty,
+  DELIVERY_FEE_REASON: z.string().min(1).default('라이더 배달일지 수입 반영용 배달처리비 집계'),
+  DELIVERY_FEE_HOUR: z.coerce.number().int().min(0).max(23).default(8), // KST 수집 시각(시)
+
   // ── 달성현황(beta) = 구글 Looker Studio 임베드 리포트 (best-effort) ──
   // 배민 세션과 별개의 "구글 로그인 세션"이 필요. storageState 패턴은 배민과 동일.
   // 셋 다(또는 B64) 없으면 공동목표 수집은 스킵(배달현황 수집엔 영향 없음).
@@ -93,6 +100,13 @@ export type Config = {
     reportUrl: string
     googleStorageStatePath: string
     googleStorageStateB64?: string
+  }
+  /** 배달처리비(세전 수입) 수집 설정. configured=false(비번 미설정) 면 스킵. */
+  fees: {
+    configured: boolean
+    password?: string
+    reason: string
+    hour: number // KST 수집 시각
   }
   logLevel: LogLevel
   runOnce: boolean
@@ -146,6 +160,12 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env, argv: readonly 
       reportUrl: e.GOAL_REPORT_URL ?? DEFAULT_GOAL_REPORT_URL,
       googleStorageStatePath: e.GOOGLE_STORAGE_STATE_PATH,
       googleStorageStateB64: e.GOOGLE_STORAGE_STATE_B64,
+    },
+    fees: {
+      configured: Boolean(e.DELIVERY_FEE_PASSWORD),
+      password: e.DELIVERY_FEE_PASSWORD,
+      reason: e.DELIVERY_FEE_REASON,
+      hour: e.DELIVERY_FEE_HOUR,
     },
     logLevel: e.LOG_LEVEL,
     runOnce: hasOnceFlag(argv),

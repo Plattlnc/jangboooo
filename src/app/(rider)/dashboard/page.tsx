@@ -4,6 +4,8 @@
 
 import { getDashboardData } from "@/app/(rider)/_lib/queries";
 import { getRiderProfile } from "@/app/(rider)/_lib/rider-profile";
+import { getMyGrade } from "@/app/(rider)/_lib/grade";
+import { getFeaturedNotice } from "@/lib/notices";
 import { HomeScreen } from "@/components/screens/home-screen";
 import { toHomeMetrics, toHomeProfile, homeDateShort } from "@/components/screens/home-view";
 
@@ -12,10 +14,12 @@ export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   // getRiderProfile 은 React cache — 레이아웃(드로어)과 같은 요청 내 재사용이라 추가 조회 없음.
-  const [today, week, riderProfile] = await Promise.all([
+  const [today, week, riderProfile, grade, featured] = await Promise.all([
     getDashboardData("today"),
     getDashboardData("week"),
     getRiderProfile(),
+    getMyGrade(),
+    getFeaturedNotice(),
   ]);
 
   return (
@@ -24,7 +28,8 @@ export default async function DashboardPage() {
       week={toHomeMetrics(week, "week")}
       todayDateShort={homeDateShort(today, "today")}
       weekDateShort={homeDateShort(week, "week")}
-      profile={toHomeProfile(today, riderProfile.avatarUrl)}
+      profile={toHomeProfile(today, riderProfile.avatarUrl, grade.tier)}
+      featured={featured ? { id: featured.id, title: featured.title, excerpt: featured.excerpt ?? "" } : null}
     />
   );
 }

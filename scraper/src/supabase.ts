@@ -4,7 +4,7 @@
  */
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import type { Config } from './config'
-import type { CenterCurrentUpsert, CenterGoalUpsert, HourlyStatUpsert, RiderUpsert, SlaSnapshotUpsert } from './types'
+import type { CenterCurrentUpsert, CenterGoalUpsert, DeliveryFeeDetail, HourlyStatUpsert, RiderDailyFee, RiderUpsert, SlaSnapshotUpsert } from './types'
 
 export type Db = SupabaseClient
 
@@ -39,6 +39,25 @@ export async function upsertSlaSnapshots(db: Db, rows: SlaSnapshotUpsert[]): Pro
   if (rows.length === 0) return 0
   const { error } = await db.from('sla_snapshots').upsert(rows, { onConflict: 'admin_rider_id,snapshot_date' })
   if (error) throw new SupabaseUpsertError('sla_snapshots', error)
+  return rows.length
+}
+
+/** rider_daily_fees 멱등 upsert (키: admin_rider_id, snapshot_date). 배달처리비(세전 수입). */
+export async function upsertRiderDailyFees(db: Db, rows: RiderDailyFee[]): Promise<number> {
+  if (rows.length === 0) return 0
+  const { error } = await db.from('rider_daily_fees').upsert(rows, { onConflict: 'admin_rider_id,snapshot_date' })
+  if (error) throw new SupabaseUpsertError('rider_daily_fees', error)
+  return rows.length
+}
+
+/** delivery_fee_details 멱등 upsert (키: delivery_no). 배달건별 상세(취소 포함). 청크 500. */
+export async function upsertDeliveryFeeDetails(db: Db, rows: DeliveryFeeDetail[]): Promise<number> {
+  if (rows.length === 0) return 0
+  for (let i = 0; i < rows.length; i += 500) {
+    const chunk = rows.slice(i, i + 500)
+    const { error } = await db.from('delivery_fee_details').upsert(chunk, { onConflict: 'delivery_no' })
+    if (error) throw new SupabaseUpsertError('delivery_fee_details', error)
+  }
   return rows.length
 }
 

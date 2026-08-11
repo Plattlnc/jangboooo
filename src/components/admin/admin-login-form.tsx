@@ -40,7 +40,7 @@ export function AdminLoginForm() {
     <div className="app-container flex min-h-dvh flex-col px-5 py-8">
       <div className="flex flex-col gap-3 pt-12">
         <span className="text-caption text-muted-foreground">
-          <span aria-hidden="true" className="emoji mr-1">🛵</span>슬라이드 관리자
+          <span aria-hidden="true" className="emoji mr-1">🛵</span>슬라이더 관리자
         </span>
         <h1 className="text-h1 text-foreground">협력사 운영 현황, 한 화면에.</h1>
         <p className="text-body text-muted-foreground">관리자 계정으로 로그인해 전체 라이더 실적을 확인해요.</p>

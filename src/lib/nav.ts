@@ -1,11 +1,16 @@
 import {
   User,
   CalendarCheck,
+  CalendarDays,
   TriangleAlert,
   ClipboardList,
   Bike,
   Wrench,
   Trophy,
+  Medal,
+  Gift,
+  Megaphone,
+  Flame,
   type LucideIcon,
 } from "lucide-react";
 
@@ -32,6 +37,8 @@ export interface NavItem {
   tileBg: string;
   /** 잠금 — 드로어에서 터치 시 이동 대신 "현재 잠겨있습니다" 안내. */
   locked?: boolean;
+  /** 라벨 옆 배지(예: '기간한정'). */
+  badge?: string;
 }
 
 export interface NavGroup {
@@ -48,8 +55,18 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
+    title: "프로모션",
+    items: [
+      { label: "라이더 등급", href: "/grade", icon: Medal, tileColor: "#B8860B", tileBg: "#fbf3dd" },
+      { label: "출석체크", href: "/attendance", icon: CalendarDays, tileColor: "#0EA5A5", tileBg: "#e3f6f6" },
+      { label: "버닝 이벤트", href: "/burning", icon: Flame, tileColor: "#F04452", tileBg: "#fdecee", badge: "기간한정" },
+      { label: "프로모션", href: "/promo", icon: Gift, tileColor: "#E8590C", tileBg: "#fdf0e6" },
+    ],
+  },
+  {
     title: "커뮤니티",
     items: [
+      { label: "공지사항", href: "/notice", icon: Megaphone, tileColor: "#4F6AF5", tileBg: "#eef1fe" },
       { label: "랭킹", href: "/ranking", icon: Trophy, tileColor: "#B8860B", tileBg: "#fbf3dd", locked: RANKING_LOCKED },
     ],
   },
