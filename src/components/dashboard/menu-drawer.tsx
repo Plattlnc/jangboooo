@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { Lock } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { signOutRider } from "@/actions/auth";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { NAV_GROUPS } from "@/lib/nav";
 import type { RiderProfile } from "@/app/(rider)/_lib/rider-profile";
 
@@ -178,8 +179,13 @@ export function MenuDrawer({ open, onClose, profile }: MenuDrawerProps) {
           </span>
         </div>
 
-        {/* 로그아웃 */}
-        <div className="border-t border-jb-line-soft px-3.5 pb-[18px] pt-3">
+        {/* 하단 — 테마 토글 + 로그아웃 */}
+        <div className="border-t border-jb-line-soft px-3.5 pb-[18px] pt-2.5">
+          {/* 라이트/다크 모드 전환 */}
+          <div className="mb-2 flex items-center justify-between rounded-[8px] px-1.5 py-1">
+            <span className="text-[13px] font-semibold text-jb-ink">화면 테마</span>
+            <ThemeToggle className="size-9 rounded-full text-jb-ink" />
+          </div>
           <form action={signOutRider}>
             <button
               type="submit"
