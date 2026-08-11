@@ -104,6 +104,10 @@ export type NoticeRow = {
   is_pinned: boolean
   is_important: boolean
   is_featured: boolean
+  /** 공유 링크(/n/[id]) 로그인 없이 열람 허용 (0022) */
+  is_public: boolean
+  /** 누적 고유 조회수 — notice_views 기반, record_notice_view 가 유지 (0022) */
+  view_count: number
   published_at: string | null
   created_at: string
   updated_at: string
@@ -336,6 +340,11 @@ export type Database = {
       get_rider_ranking: { Args: RpcArgs; Returns: RiderRankingRow[] }
       // 앱 사용 현황(0017): KST 일별 방문·활성 라이더. service_role 전용.
       get_app_usage: { Args: { p_days?: number }; Returns: AppUsageRow[] }
+      // 공지 고유 조회 기록(0022): 뷰어당 1회 dedupe + view_count 유지. service_role 전용.
+      record_notice_view: {
+        Args: { p_notice_id: string; p_viewer_id: string }
+        Returns: number | null
+      }
     }
     Enums: Empty
     CompositeTypes: Empty

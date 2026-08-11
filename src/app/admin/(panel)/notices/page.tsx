@@ -25,6 +25,7 @@ function Chips({ n }: { n: NoticeRow }) {
       {n.is_pinned ? <Pin size={14} className="shrink-0 text-jb-indigo" fill="currentColor" aria-label="고정" /> : null}
       {n.is_important ? <span className="rounded-full bg-jb-red-tint px-2 py-0.5 text-[10px] font-black text-jb-red">중요</span> : null}
       {n.is_featured ? <span className="rounded-full bg-jb-orange-tint px-2 py-0.5 text-[10px] font-black text-jb-orange">홈노출</span> : null}
+      {n.is_public ? <span className="rounded-full bg-jb-indigo-tint px-2 py-0.5 text-[10px] font-black text-jb-indigo">링크공개</span> : null}
     </div>
   );
 }
@@ -63,7 +64,9 @@ export default async function AdminNoticesPage() {
               <div className="mt-0.5 truncate text-[11.5px] text-jb-ink-mute">
                 {n.excerpt || noticePlainText(n.body).slice(0, 60) || "본문 없음"}
               </div>
-              <div className="mt-1 text-[10.5px] text-jb-ink-mute">수정 {fmt(n.updated_at)}</div>
+              <div className="mt-1 text-[10.5px] text-jb-ink-mute">
+                수정 {fmt(n.updated_at)} · 조회 {n.view_count.toLocaleString()}
+              </div>
             </Link>
           ))}
         </div>

@@ -77,10 +77,10 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
   if (pathname === '/' || pathname === '/login') {
     const session = await verifySessionToken(request.cookies.get(SESSION_COOKIE)?.value)
     if (session) {
-      const url = request.nextUrl.clone()
-      url.pathname = '/dashboard'
-      url.search = ''
-      return NextResponse.redirect(url)
+      // 이미 로그인 상태로 /login?next=… 진입(비공개 공지 공유 링크 등) → 목적지로 바로.
+      const next = pathname === '/login' ? request.nextUrl.searchParams.get('next') : null
+      const safeNext = next && next.startsWith('/') && !next.startsWith('//') ? next : '/dashboard'
+      return NextResponse.redirect(new URL(safeNext, request.url))
     }
     return NextResponse.next()
   }

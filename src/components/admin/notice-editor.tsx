@@ -40,24 +40,88 @@ function Btn({
   );
 }
 
+// 업로드 전 클라이언트 압축 — 폰 원본(수 MB·고해상도)을 최대 1920px JPEG 로 재인코딩해
+// 전송량을 줄인다. 디코드 실패(HEIC 미지원 브라우저 등)면 null → 원본 폴백.
+const MAX_EDGE = 1920;
+const SKIP_COMPRESS_BYTES = 1.5 * 1024 * 1024; // 이하면 원본 그대로(GIF 애니·PNG 투명 보존)
+const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
+
+async function compressImage(file: File): Promise<Blob | null> {
+  try {
+    const bmp = await createImageBitmap(file);
+    const scale = Math.min(1, MAX_EDGE / Math.max(bmp.width, bmp.height));
+    const w = Math.max(1, Math.round(bmp.width * scale));
+    const h = Math.max(1, Math.round(bmp.height * scale));
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+    ctx.drawImage(bmp, 0, 0, w, h);
+    bmp.close();
+    return await new Promise<Blob | null>((res) => canvas.toBlob(res, "image/jpeg", 0.85));
+  } catch {
+    return null;
+  }
+}
+
+/** 파일 1개 → 업로드 가능한 (blob, 파일명) 또는 실패 사유. */
+async function prepareUpload(file: File): Promise<{ blob: Blob; name: string } | { error: string }> {
+  if (!file.type.startsWith("image/")) return { error: "이미지 파일이 아니에요" };
+  if (file.size <= SKIP_COMPRESS_BYTES) return { blob: file, name: file.name };
+
+  const compressed = await compressImage(file);
+  if (compressed) return { blob: compressed, name: file.name.replace(/\.[^.]+$/, "") + ".jpg" };
+
+  // 압축 불가(브라우저가 못 여는 형식). HEIC 는 올려도 라이더 브라우저에서 안 보이므로 거부.
+  if (/\.hei[cf]$/i.test(file.name) || /hei[cf]/i.test(file.type)) {
+    return { error: "HEIC 형식은 지원되지 않아요. JPG/PNG 로 변환해 올려주세요" };
+  }
+  if (file.size > MAX_UPLOAD_BYTES) return { error: "8MB 이하로 줄여서 올려주세요" };
+  return { blob: file, name: file.name };
+}
+
 function Toolbar({ editor }: { editor: Editor }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [colorOpen, setColorOpen] = useState(false);
 
-  const pickImage = async (file: File | undefined) => {
-    if (!file) return;
+  // 여러 장 순차 업로드. 삽입은 insertContent([image, paragraph]) — setImage 는 방금 넣은
+  // 이미지가 NodeSelection 으로 남아 다음 삽입이 이전 장을 교체(연속 업로드 시 1장만 남던 버그).
+  const pickImages = async (list: FileList | null) => {
+    const files = Array.from(list ?? []);
+    if (files.length === 0) return;
     setUploading(true);
+    const failures: string[] = [];
     try {
-      const fd = new FormData();
-      fd.append("image", file);
-      const res = await uploadNoticeImage(fd);
-      if (res.ok && res.url) editor.chain().focus().setImage({ src: res.url }).run();
-      else alert(res.message);
+      for (const file of files) {
+        try {
+          const prep = await prepareUpload(file);
+          if ("error" in prep) {
+            failures.push(`${file.name}: ${prep.error}`);
+            continue;
+          }
+          const fd = new FormData();
+          fd.append("image", prep.blob, prep.name);
+          const res = await uploadNoticeImage(fd);
+          if (res.ok && res.url) {
+            editor
+              .chain()
+              .focus()
+              .insertContent([{ type: "image", attrs: { src: res.url } }, { type: "paragraph" }])
+              .run();
+          } else {
+            failures.push(`${file.name}: ${res.message}`);
+          }
+        } catch {
+          failures.push(`${file.name}: 업로드 실패(파일이 너무 크거나 네트워크 오류)`);
+        }
+      }
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";
     }
+    if (failures.length > 0) alert(`일부 이미지를 올리지 못했어요.\n\n${failures.join("\n")}`);
   };
 
   const setLink = () => {
@@ -149,8 +213,9 @@ function Toolbar({ editor }: { editor: Editor }) {
         ref={fileRef}
         type="file"
         accept="image/*"
+        multiple
         className="hidden"
-        onChange={(e) => pickImage(e.target.files?.[0])}
+        onChange={(e) => void pickImages(e.target.files)}
       />
       {uploading ? <span className="ml-1 text-[11px] text-jb-ink-mute">업로드 중…</span> : null}
     </div>

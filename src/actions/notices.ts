@@ -22,9 +22,10 @@ const noticeSchema = z.object({
   is_pinned: z.boolean().optional().default(false),
   is_important: z.boolean().optional().default(false),
   is_featured: z.boolean().optional().default(false),
+  is_public: z.boolean().optional().default(false),
 })
 
-const FLAGS = ['is_published', 'is_pinned', 'is_important', 'is_featured'] as const
+const FLAGS = ['is_published', 'is_pinned', 'is_important', 'is_featured', 'is_public'] as const
 type NoticeFlag = (typeof FLAGS)[number]
 
 export interface NoticeActionResult {
@@ -59,25 +60,39 @@ export async function saveNotice(input: unknown): Promise<NoticeActionResult> {
     is_important: d.is_important,
     is_featured: d.is_featured,
     is_published: d.is_published,
+    is_public: d.is_public,
     updated_at: nowIso,
   }
+  // PGRST204 = is_public 컬럼 미존재(0022 라이브 적용 전) → 그 필드만 빼고 재시도.
+  const legacyBase: Omit<typeof base, 'is_public'> & { is_public?: boolean } = { ...base }
+  delete legacyBase.is_public
 
   if (d.id) {
     // 게시 상태 전이에 맞춰 published_at 관리(최초 게시 시각 유지).
     const { data: cur } = await admin.from('notices').select('published_at').eq('id', d.id).maybeSingle()
     const published_at = d.is_published ? (cur?.published_at ?? nowIso) : null
-    const { error } = await admin.from('notices').update({ ...base, published_at }).eq('id', d.id)
+    let { error } = await admin.from('notices').update({ ...base, published_at }).eq('id', d.id)
+    if (error?.code === 'PGRST204') {
+      ;({ error } = await admin.from('notices').update({ ...legacyBase, published_at }).eq('id', d.id))
+    }
     if (error) return { ok: false, message: '수정에 실패했습니다. 잠시 후 다시 시도해주세요.' }
     revalidateNoticeViews()
     revalidatePath(`/notice/${d.id}`)
     return { ok: true, message: '공지가 수정되었습니다.', id: d.id }
   }
 
-  const { data, error } = await admin
+  let { data, error } = await admin
     .from('notices')
     .insert({ ...base, published_at: d.is_published ? nowIso : null })
     .select('id')
     .single()
+  if (error?.code === 'PGRST204') {
+    ;({ data, error } = await admin
+      .from('notices')
+      .insert({ ...legacyBase, published_at: d.is_published ? nowIso : null })
+      .select('id')
+      .single())
+  }
   if (error) return { ok: false, message: '등록에 실패했습니다. 잠시 후 다시 시도해주세요.' }
   revalidateNoticeViews()
   return { ok: true, message: '공지가 등록되었습니다.', id: data?.id }
@@ -95,7 +110,7 @@ export async function uploadNoticeImage(formData: FormData): Promise<NoticeImage
   const file = formData.get('image')
   if (!(file instanceof File)) return { ok: false, message: '이미지를 선택해주세요.' }
   if (!file.type.startsWith('image/')) return { ok: false, message: '이미지 파일만 업로드할 수 있어요.' }
-  if (file.size > 5 * 1024 * 1024) return { ok: false, message: '5MB 이하 이미지만 업로드할 수 있어요.' }
+  if (file.size > 8 * 1024 * 1024) return { ok: false, message: '8MB 이하 이미지만 업로드할 수 있어요.' }
 
   const admin = createAdminClient()
   const ext = (file.name.split('.').pop() ?? 'png').toLowerCase().replace(/[^a-z0-9]/g, '') || 'png'

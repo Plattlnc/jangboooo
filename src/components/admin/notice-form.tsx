@@ -11,7 +11,39 @@ const FLAGS = [
   { key: "pin", label: "상단 고정", hint: "목록 맨 위로" },
   { key: "imp", label: "중요 배지", hint: "빨간 '중요' 표시" },
   { key: "feat", label: "메인 홈 노출", hint: "홈 배너에 제목 강조" },
+  { key: "open", label: "링크 공개", hint: "공유 링크를 로그인 없이 열람" },
 ] as const;
+
+// 공유 링크(/n/[id]) 표시·복사 — 저장된 공지에만. '링크 공개' 꺼짐이면 로그인 후에만 열람됨.
+function ShareLinkRow({ id, isOpen }: { id: string; isOpen: boolean }) {
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(`${window.location.origin}/n/${id}`);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // 클립보드 불가(권한 등) — 무시
+    }
+  };
+  return (
+    <div>
+      <label className="mb-1 block text-[12px] font-bold text-jb-ink-mute">
+        공유 링크 <span className="font-medium text-jb-ink-mute/70">({isOpen ? "로그인 없이 열람 가능" : "로그인한 라이더만 열람"})</span>
+      </label>
+      <div className="flex items-center gap-2 rounded-[18px] border border-jb-line bg-jb-card px-3.5 py-2.5">
+        <span className="min-w-0 flex-1 truncate text-[12.5px] font-semibold text-jb-ink-mute">/n/{id}</span>
+        <button
+          type="button"
+          onClick={copy}
+          className="shrink-0 rounded-[10px] bg-jb-indigo-tint px-3 py-1.5 text-[11.5px] font-black text-jb-indigo transition-transform active:scale-[0.98]"
+        >
+          {copied ? "복사됨 ✓" : "링크 복사"}
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export function NoticeForm({ initial }: { initial: NoticeRow | null }) {
   const router = useRouter();
@@ -23,6 +55,7 @@ export function NoticeForm({ initial }: { initial: NoticeRow | null }) {
     pin: initial?.is_pinned ?? false,
     imp: initial?.is_important ?? false,
     feat: initial?.is_featured ?? false,
+    open: initial?.is_public ?? false,
   });
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -40,6 +73,7 @@ export function NoticeForm({ initial }: { initial: NoticeRow | null }) {
       is_pinned: flags.pin,
       is_important: flags.imp,
       is_featured: flags.feat,
+      is_public: flags.open,
     });
     setSaving(false);
     if (res.ok) router.push("/admin/notices");
@@ -116,6 +150,8 @@ export function NoticeForm({ initial }: { initial: NoticeRow | null }) {
           );
         })}
       </div>
+
+      {initial?.id ? <ShareLinkRow id={initial.id} isOpen={flags.open} /> : null}
 
       {err ? <p className="text-[12.5px] font-semibold text-jb-red">{err}</p> : null}
 

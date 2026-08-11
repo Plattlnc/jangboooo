@@ -77,6 +77,12 @@ async function getFromPasswordManager(): Promise<{ id: string; pw: string } | nu
   }
 }
 
+// 로그인 후 복귀 경로 — ?next= 가 안전한 내부 경로일 때만(외부/스킴 상대 URL 차단), 기본 대시보드.
+function postLoginPath(): string {
+  const raw = new URLSearchParams(window.location.search).get("next");
+  return raw && raw.startsWith("/") && !raw.startsWith("//") ? raw : "/dashboard";
+}
+
 export function RiderLoginForm() {
   const [riderId, setRiderId] = useState("");
   const [password, setPassword] = useState("");
@@ -148,7 +154,7 @@ export function RiderLoginForm() {
     // 데모 모드: 백엔드 없이 대시보드(목)로 진입.
     if (DEMO_MODE) {
       persistLocal(id, pw, opts);
-      window.location.assign("/dashboard");
+      window.location.assign(postLoginPath());
       return;
     }
 
@@ -164,7 +170,7 @@ export function RiderLoginForm() {
         if (opts.save) await storeInPasswordManager(id, pw);
         // 세션 쿠키는 액션이 설정함 → 하드 네비게이션으로 쿠키 확실히 실어 대시보드 진입
         // (client router.push 는 새 쿠키 인식 타이밍 문제로 무한로딩 가능 → window.location).
-        window.location.assign("/dashboard");
+        window.location.assign(postLoginPath());
         return;
       }
       setLoading(false);
