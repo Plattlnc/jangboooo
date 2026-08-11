@@ -345,6 +345,12 @@
   --font-mono: "Pretendard Variable", "Pretendard", ui-monospace, "SFMono-Regular", monospace;
   font-family: var(--font-sans);
 }
+/* @theme inline 이라 font-mono 유틸은 값이 인라인 → --font-mono 변수 오버라이드가 안 먹는다.
+   비레이어 규칙 + 하위선택자(높은 우선순위)로 스코프 내 숫자까지 Pretendard 강제(정렬은 tabular-nums 유지). */
+.font-pretendard .font-mono,
+.font-pretendard.font-mono {
+  font-family: var(--font-sans);
+}
 
 /* Geist 다크 (라이더 앱 다크 테마 — 관리자는 근접상속으로 라이트 유지). 값=~/.claude/geist tokens(dark). */
 .dark {
