@@ -5,7 +5,7 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { getMyGrade } from "@/app/(rider)/_lib/grade";
-import { TIERS, type Tier } from "@/lib/grade";
+import { seasonOf, TIERS, type Tier } from "@/lib/grade";
 
 export const dynamic = "force-dynamic";
 
@@ -29,9 +29,28 @@ function rangeLabel(t: Tier): string {
 export default async function GradePage() {
   const g = await getMyGrade();
 
+  const today = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+  const season = seasonOf(today);
+  const seasonOpen = season.number != null;
+
   return (
     <div className="px-3.5 pb-10 pt-3.5">
-      <h1 className="text-xl font-black tracking-[-0.03em]">배달등급</h1>
+      <div className="flex items-center gap-2">
+        <h1 className="text-xl font-black tracking-[-0.03em]">배달등급</h1>
+        <span
+          className={
+            "rounded-full px-2 py-0.5 text-[11px] font-black " +
+            (seasonOpen ? "bg-jb-indigo-tint text-jb-indigo" : "bg-jb-track text-jb-ink-mute")
+          }
+        >
+          {seasonOpen ? `시즌 ${season.number}` : "시즌 미오픈"}
+        </span>
+      </div>
       <p className="mb-3.5 mt-1 text-[12.5px] text-jb-ink-mute">주간(수~화) 누적 완료건 기준 · 구간별 누진 보상</p>
 
       {/* 최상위 카드 — 현재 등급 · 실시간 보상 · 승급 안내 */}
@@ -49,29 +68,39 @@ export default async function GradePage() {
           </div>
         </div>
 
-        <div className="mt-3.5 border-t border-white/25 pt-3">
-          <div className="text-[11.5px] font-semibold opacity-90">현재 예정 등급 보상</div>
-          <div className="tnum mt-0.5 text-[27px] font-black leading-none tracking-[-0.02em]">
-            {g.reward.toLocaleString("ko-KR")}
-            <span className="ml-1 text-[16px] font-bold opacity-90">원</span>
-            <span className="ml-2 text-[12.5px] font-bold opacity-80">총 {g.completed.toLocaleString("ko-KR")}건</span>
+        {seasonOpen ? (
+          <>
+            <div className="mt-3.5 border-t border-white/25 pt-3">
+              <div className="text-[11.5px] font-semibold opacity-90">현재 예정 등급 보상</div>
+              <div className="tnum mt-0.5 text-[27px] font-black leading-none tracking-[-0.02em]">
+                {g.reward.toLocaleString("ko-KR")}
+                <span className="ml-1 text-[16px] font-bold opacity-90">원</span>
+                <span className="ml-2 text-[12.5px] font-bold opacity-80">총 {g.completed.toLocaleString("ko-KR")}건</span>
+              </div>
+            </div>
+            <div className="mt-3 rounded-[10px] bg-white/15 px-3 py-2 text-[12px] font-bold">
+              {g.nextTier ? (
+                <>
+                  <span className="tnum">{g.toNext.toLocaleString("ko-KR")}</span>건 완료 시,{" "}
+                  <span className="font-black">{g.nextTier.name}</span>으로 승급합니다
+                </>
+              ) : (
+                <>최고 등급입니다 🎉</>
+              )}
+            </div>
+          </>
+        ) : (
+          <div className="mt-3.5 border-t border-white/25 pt-3">
+            <div className="tnum text-[13px] font-bold opacity-95">이번 주 완료 {g.completed.toLocaleString("ko-KR")}건</div>
+            <div className="mt-2.5 rounded-[10px] bg-white/15 px-3 py-2 text-[12px] font-bold opacity-95">
+              시즌이 열리면 등급 보상이 집계됩니다
+            </div>
           </div>
-        </div>
-
-        <div className="mt-3 rounded-[10px] bg-white/15 px-3 py-2 text-[12px] font-bold">
-          {g.nextTier ? (
-            <>
-              <span className="tnum">{g.toNext.toLocaleString("ko-KR")}</span>건 완료 시,{" "}
-              <span className="font-black">{g.nextTier.name}</span>으로 승급합니다
-            </>
-          ) : (
-            <>최고 등급입니다 🎉</>
-          )}
-        </div>
+        )}
       </div>
 
-      {/* 구간별 누진 보상 내역 */}
-      {g.breakdown.length > 0 ? (
+      {/* 구간별 누진 보상 내역 — 시즌 오픈 시에만 */}
+      {seasonOpen && g.breakdown.length > 0 ? (
         <div className="mt-3 rounded-[12px] border border-jb-line bg-white px-4 py-1 shadow-[0_1px_2px_0_rgba(0,0,0,0.04)]">
           {g.breakdown.map((b) => (
             <div

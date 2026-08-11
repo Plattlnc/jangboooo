@@ -51,6 +51,40 @@ export interface GradeResult {
   toNext: number;
 }
 
+function ymd(d: Date): string {
+  return d.toISOString().slice(0, 10);
+}
+
+export interface Season {
+  /** 시즌 번호. null = 아직 미오픈(시즌 시작 전). */
+  number: number | null;
+  /** 시즌 주 시작(수) YYYY-MM-DD. */
+  start: string;
+  /** 시즌 주 끝(화) YYYY-MM-DD. */
+  end: string;
+}
+
+/**
+ * 해당 날짜의 시즌 — 수~화 주 단위, GRADE_SEASON_START(수)를 1시즌 첫날로. 매주 수요일에 시즌이 갱신.
+ * 시작 전이면 number=null(미오픈).
+ */
+export function seasonOf(dateStr: string): Season {
+  const start = new Date(`${GRADE_SEASON_START}T00:00:00Z`);
+  const d = new Date(`${dateStr}T00:00:00Z`);
+  const week = 7 * 86_400_000;
+  if (d.getTime() < start.getTime()) {
+    const end = new Date(start);
+    end.setUTCDate(end.getUTCDate() + 6);
+    return { number: null, start: GRADE_SEASON_START, end: ymd(end) };
+  }
+  const n = Math.floor((d.getTime() - start.getTime()) / week) + 1;
+  const ws = new Date(start);
+  ws.setUTCDate(ws.getUTCDate() + (n - 1) * 7);
+  const we = new Date(ws);
+  we.setUTCDate(we.getUTCDate() + 6);
+  return { number: n, start: ymd(ws), end: ymd(we) };
+}
+
 /** 주간 누적 완료건 → 현재 등급 + 구간별 누진 보상. */
 export function computeGrade(completed: number): GradeResult {
   const c = Math.max(0, Math.floor(completed || 0));
