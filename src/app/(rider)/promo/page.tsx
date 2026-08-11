@@ -3,11 +3,12 @@
 // 데이터: getMyGrade / getMyAttendance(_lib) + weeklyPromo(순수 계산, 등급 완료건 재사용).
 
 import Link from "next/link";
-import { ChevronRight, CalendarDays, Gift } from "lucide-react";
-import { getMyGrade, getMyAttendance } from "@/app/(rider)/_lib/grade";
+import { ChevronRight, CalendarDays, Gift, Flame } from "lucide-react";
+import { getMyGrade, getMyAttendance, getMyBurning } from "@/app/(rider)/_lib/grade";
 import { seasonOf } from "@/lib/grade";
 import { weeklyPromo, PROMO_WEEKLY_THRESHOLD, PROMO_UNIT_KRW } from "@/lib/promo";
 import { ATTENDANCE_DAILY_TARGET, ATTENDANCE_DAYS_REQUIRED, ATTENDANCE_REWARD } from "@/lib/attendance";
+import { BURNING_MIN_TIER_NAME } from "@/lib/burning";
 import { TierBadge } from "@/components/ui/tier-badge";
 
 export const dynamic = "force-dynamic";
@@ -26,15 +27,17 @@ function krw(n: number): string {
 }
 
 export default async function PromoPage() {
-  const [grade, attendance] = await Promise.all([getMyGrade(), getMyAttendance()]);
+  const [grade, attendance, burning] = await Promise.all([getMyGrade(), getMyAttendance(), getMyBurning()]);
   const season = seasonOf(kstToday());
   const seasonOpen = season.number != null;
   const promo = weeklyPromo(grade.completed);
+  const burnCur = burning.current;
 
   // 진행 중(쌓이고 있는) 금액 — 등급·출석은 시즌(8/12) 시작 후부터 집계
   const gradeReward = seasonOpen ? grade.reward : 0;
   const attReward = seasonOpen && attendance.reached ? ATTENDANCE_REWARD : 0;
-  const total = gradeReward + attReward + promo.bonusKrw;
+  const burningReward = burnCur?.eligible ? burnCur.bonusKrw : 0;
+  const total = gradeReward + attReward + promo.bonusKrw + burningReward;
 
   const weekLabel = attendance.weekStart ? `${md(attendance.weekStart)} ~ ${md(attendance.weekEnd)}` : "이번 주";
 
@@ -125,7 +128,40 @@ export default async function PromoPage() {
           <ChevronRight size={16} strokeWidth={2.2} className="shrink-0 text-jb-ink-mute" />
         </Link>
 
-        {/* 3) 자사 주간 보너스 */}
+        {/* 3) 버닝 이벤트 (기간 한정) */}
+        <Link
+          href="/burning"
+          className="flex items-center gap-3 rounded-[14px] border border-jb-line bg-white px-4 py-3.5 shadow-[0_1px_2px_0_rgba(0,0,0,0.04)] transition-colors active:bg-jb-line-soft"
+        >
+          <span className="grid size-[38px] shrink-0 place-items-center rounded-full bg-jb-red-tint text-jb-red">
+            <Flame size={19} strokeWidth={2.2} />
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[13.5px] font-black text-jb-ink">버닝 이벤트</span>
+              <span className="rounded-full bg-jb-red-tint px-1.5 py-0.5 text-[9px] font-black text-jb-red">기간한정</span>
+            </div>
+            <div className="mt-0.5 text-[11.5px] font-semibold text-jb-ink-mute">
+              {BURNING_MIN_TIER_NAME}↑ 주 배달료 {burning.ratePct}%
+              {burnCur ? ` · ${burnCur.daysWithData}일치 반영` : " · 시작 전"}
+            </div>
+          </div>
+          <div className="shrink-0 text-right">
+            {burnCur?.eligible ? (
+              <>
+                <div className="tnum text-[15px] font-black text-jb-green">+{krw(burningReward)}원</div>
+                <div className="text-[10.5px] font-bold text-jb-ink-mute">예상</div>
+              </>
+            ) : burnCur ? (
+              <div className="text-[11px] font-bold text-jb-ink-mute">미자격</div>
+            ) : (
+              <div className="text-[11px] font-bold text-jb-ink-mute">시작 전</div>
+            )}
+          </div>
+          <ChevronRight size={16} strokeWidth={2.2} className="shrink-0 text-jb-ink-mute" />
+        </Link>
+
+        {/* 4) 자사 주간 보너스 */}
         <div className="flex items-center gap-3 rounded-[14px] border border-jb-line bg-white px-4 py-3.5 shadow-[0_1px_2px_0_rgba(0,0,0,0.04)]">
           <span className="grid size-[38px] shrink-0 place-items-center rounded-full bg-jb-orange-tint text-jb-orange">
             <Gift size={19} strokeWidth={2.2} />
