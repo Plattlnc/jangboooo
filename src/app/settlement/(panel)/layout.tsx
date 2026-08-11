@@ -18,7 +18,7 @@ export default async function SettlementPanelLayout({ children }: { children: Re
 
   return (
     <div
-      className={`geist-admin ${GeistSans.variable} ${GeistMono.variable} flex min-h-dvh bg-jb-surface text-jb-ink`}
+      className={`geist-admin font-pretendard ${GeistSans.variable} ${GeistMono.variable} flex min-h-dvh bg-jb-surface text-jb-ink`}
     >
       <SettlementSidebar />
       <main className="min-w-0 flex-1">

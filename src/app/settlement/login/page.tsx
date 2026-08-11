@@ -16,7 +16,7 @@ export const dynamic = "force-dynamic";
 export default async function SettlementLoginPage() {
   if (await isSettlementSession()) redirect("/settlement");
   return (
-    <div className={`geist-admin ${GeistSans.variable} ${GeistMono.variable} min-h-dvh bg-jb-surface`}>
+    <div className={`geist-admin font-pretendard ${GeistSans.variable} ${GeistMono.variable} min-h-dvh bg-jb-surface`}>
       <SettlementLoginForm />
     </div>
   );

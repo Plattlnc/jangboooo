@@ -336,6 +336,16 @@
   --shadow-lg: 0 12px 28px -8px rgba(25, 31, 40, 0.16);
 }
 
+/* 특정 화면 전체 폰트를 Pretendard 로 고정(2026-08-11 사용자 지시, 정산 영역).
+   --font-sans/--font-mono 를 Pretendard 선두로 덮어써 본문·숫자(font-mono utility) 모두 Pretendard.
+   컨테이너에 이 클래스만 추가하면 하위 전체 상속(커스텀 프로퍼티 캐스케이드). geist-admin 뒤라 승격. */
+.font-pretendard {
+  --font-sans: "Pretendard Variable", "Pretendard", -apple-system, BlinkMacSystemFont, system-ui,
+               "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
+  --font-mono: "Pretendard Variable", "Pretendard", ui-monospace, "SFMono-Regular", monospace;
+  font-family: var(--font-sans);
+}
+
 /* Geist 다크 (라이더 앱 다크 테마 — 관리자는 근접상속으로 라이트 유지). 값=~/.claude/geist tokens(dark). */
 .dark {
   --jb-ink: #ededed;        /* gray-1000 */
