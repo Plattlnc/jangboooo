@@ -2,10 +2,16 @@
 // 최상위 카드(현재 등급·실시간 보상·승급 안내) + 구간별 내역 + 등급 조건표.
 // ⚠️ 티어 아이콘은 임시(색상 타일+이니셜) — 사용자가 직접 디자인해 교체 예정.
 
+import type { CSSProperties } from "react";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { getMyGrade } from "@/app/(rider)/_lib/grade";
 import { seasonOf, TIERS, type Tier } from "@/lib/grade";
+
+/** 티어 컬러를 CSS 변수(--tier)로 — .tier-glow 아웃라인용. */
+function tierVar(color: string): CSSProperties {
+  return { "--tier": color } as CSSProperties;
+}
 
 export const dynamic = "force-dynamic";
 
@@ -53,36 +59,38 @@ export default async function GradePage() {
       </div>
       <p className="mb-3.5 mt-1 text-[12.5px] text-jb-ink-mute">주간(수~화) 누적 완료건 기준 · 구간별 누진 보상</p>
 
-      {/* 최상위 카드 — 현재 등급 · 실시간 보상 · 승급 안내 */}
-      <div
-        className="rounded-2xl px-[18px] py-[17px] text-white shadow-[0_8px_16px_-4px_rgba(0,0,0,0.16)]"
-        style={{ background: `linear-gradient(135deg, ${g.tier.color}, color-mix(in srgb, ${g.tier.color} 72%, #000))` }}
-      >
+      {/* 최상위 카드 — 티어 컬러 빛나는 아웃라인(배경색 없음) */}
+      <div className="tier-glow rounded-2xl bg-jb-card px-[18px] py-[17px]" style={tierVar(g.tier.color)}>
         <div className="flex items-center gap-3">
           <TierBadge tier={g.tier} size={48} />
           <div className="min-w-0">
-            <div className="text-[14px] font-bold opacity-95">
-              <span className="font-black">{g.name}</span>님, 현재
+            <div className="text-[13.5px] font-bold text-jb-ink-soft">
+              <span className="font-black text-jb-ink">{g.name}</span>님, 현재
             </div>
-            <div className="text-[22px] font-black leading-tight tracking-[-0.02em]">{g.tier.name}</div>
+            <div className="text-[22px] font-black leading-tight tracking-[-0.02em]" style={{ color: g.tier.color }}>
+              {g.tier.name}
+            </div>
           </div>
         </div>
 
         {seasonOpen ? (
           <>
-            <div className="mt-3.5 border-t border-white/25 pt-3">
-              <div className="text-[11.5px] font-semibold opacity-90">현재 예정 등급 보상</div>
-              <div className="tnum mt-0.5 text-[27px] font-black leading-none tracking-[-0.02em]">
+            <div className="mt-3.5 border-t border-jb-line pt-3">
+              <div className="text-[11.5px] font-semibold text-jb-ink-mute">현재 예정 등급 보상</div>
+              <div className="tnum mt-0.5 text-[27px] font-black leading-none tracking-[-0.02em] text-jb-green">
                 {g.reward.toLocaleString("ko-KR")}
-                <span className="ml-1 text-[16px] font-bold opacity-90">원</span>
-                <span className="ml-2 text-[12.5px] font-bold opacity-80">총 {g.completed.toLocaleString("ko-KR")}건</span>
+                <span className="ml-1 text-[16px] font-bold text-jb-ink-mute">원</span>
+                <span className="ml-2 text-[12.5px] font-bold text-jb-ink-mute">총 {g.completed.toLocaleString("ko-KR")}건</span>
               </div>
             </div>
-            <div className="mt-3 rounded-[10px] bg-white/15 px-3 py-2 text-[12px] font-bold">
+            <div className="mt-3 rounded-[10px] bg-jb-surface px-3 py-2 text-[12px] font-bold text-jb-ink">
               {g.nextTier ? (
                 <>
                   <span className="tnum">{g.toNext.toLocaleString("ko-KR")}</span>건 완료 시,{" "}
-                  <span className="font-black">{g.nextTier.name}</span>으로 승급합니다
+                  <span className="font-black" style={{ color: g.nextTier.color }}>
+                    {g.nextTier.name}
+                  </span>
+                  으로 승급합니다
                 </>
               ) : (
                 <>최고 등급입니다 🎉</>
@@ -90,9 +98,9 @@ export default async function GradePage() {
             </div>
           </>
         ) : (
-          <div className="mt-3.5 border-t border-white/25 pt-3">
-            <div className="tnum text-[13px] font-bold opacity-95">이번 주 완료 {g.completed.toLocaleString("ko-KR")}건</div>
-            <div className="mt-2.5 rounded-[10px] bg-white/15 px-3 py-2 text-[12px] font-bold opacity-95">
+          <div className="mt-3.5 border-t border-jb-line pt-3">
+            <div className="tnum text-[13px] font-bold text-jb-ink">이번 주 완료 {g.completed.toLocaleString("ko-KR")}건</div>
+            <div className="mt-2.5 rounded-[10px] bg-jb-surface px-3 py-2 text-[12px] font-bold text-jb-ink-soft">
               시즌이 열리면 등급 보상이 집계됩니다
             </div>
           </div>
@@ -142,9 +150,12 @@ export default async function GradePage() {
           return (
             <div
               key={t.key}
+              style={current ? tierVar(t.color) : undefined}
               className={
-                "flex items-center gap-3 rounded-[12px] border bg-white px-3.5 py-3 shadow-[0_1px_2px_0_rgba(0,0,0,0.04)] " +
-                (current ? "border-transparent ring-2 ring-jb-indigo" : "border-jb-line")
+                "flex items-center gap-3 rounded-[12px] px-3.5 py-3 " +
+                (current
+                  ? "tier-glow bg-jb-card"
+                  : "border border-jb-line bg-white shadow-[0_1px_2px_0_rgba(0,0,0,0.04)]")
               }
             >
               <TierBadge tier={t} size={40} />
@@ -152,7 +163,10 @@ export default async function GradePage() {
                 <div className="flex items-center gap-1.5">
                   <span className="text-[14px] font-black text-jb-ink">{t.name}</span>
                   {current ? (
-                    <span className="rounded-[6px] bg-jb-indigo-tint px-1.5 py-0.5 text-[10px] font-black text-jb-indigo">
+                    <span
+                      className="rounded-[6px] px-1.5 py-0.5 text-[10px] font-black text-white"
+                      style={{ background: t.color }}
+                    >
                       현재
                     </span>
                   ) : null}

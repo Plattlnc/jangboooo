@@ -127,4 +127,25 @@
     0% { background-position: 100% 50%; }
     100% { background-position: 0 50%; }
   }
+
+  /* 티어 컬러 빛나는 아웃라인(빛 번짐 펄스). 요소에 style={{'--tier': color}} 인라인 지정. */
+  .tier-glow {
+    border: 1.5px solid var(--tier, var(--jb-indigo));
+    box-shadow:
+      0 0 10px 0 color-mix(in srgb, var(--tier, var(--jb-indigo)) 45%, transparent),
+      0 0 24px 2px color-mix(in srgb, var(--tier, var(--jb-indigo)) 22%, transparent);
+    animation: tier-glow-pulse 2.6s ease-in-out infinite;
+  }
+  @keyframes tier-glow-pulse {
+    0%, 100% {
+      box-shadow:
+        0 0 8px 0 color-mix(in srgb, var(--tier, var(--jb-indigo)) 40%, transparent),
+        0 0 18px 1px color-mix(in srgb, var(--tier, var(--jb-indigo)) 20%, transparent);
+    }
+    50% {
+      box-shadow:
+        0 0 16px 0 color-mix(in srgb, var(--tier, var(--jb-indigo)) 64%, transparent),
+        0 0 36px 3px color-mix(in srgb, var(--tier, var(--jb-indigo)) 34%, transparent);
+    }
+  }
 }
