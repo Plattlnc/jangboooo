@@ -171,9 +171,19 @@ export default async function GradePage() {
       {/* 설명 */}
       <div className="mt-4 rounded-[12px] bg-jb-surface px-4 py-3 text-[11.5px] leading-relaxed text-jb-ink-soft">
         주간(수요일~화요일) 누적 완료건에 따라 등급이 정해집니다. 보상은 <b>각 구간의 초과분에만</b> 해당 단가가 가산되는{" "}
-        <b>누진 방식</b>이라, 등급이 올라가도 이전 구간의 단가는 그대로 유지됩니다. (예: 220건 → 101~150건 100원 + 151~200건
-        400원 + 201~220건 600원 합산)
+        <b>누진 방식</b>이라, 등급이 올라가도 이전 구간의 단가는 그대로 유지됩니다. (예: 220건 → 101~150건 150원 + 151~200건
+        600원 + 201~220건 900원 합산)
       </div>
+
+      {/* 출석체크 */}
+      <Link
+        href="/grade/attendance"
+        className="mt-3 flex items-center gap-2 rounded-[12px] border border-jb-line bg-white px-4 py-3.5 shadow-[0_1px_2px_0_rgba(0,0,0,0.04)] transition-colors active:bg-jb-line-soft"
+      >
+        <span className="flex-1 text-[13.5px] font-black text-jb-ink">출석체크</span>
+        <span className="text-[11.5px] font-semibold text-jb-ink-mute">주간 30건당 1회 · 5회 35,000원</span>
+        <ChevronRight size={17} strokeWidth={2.2} className="shrink-0 text-jb-ink-mute" />
+      </Link>
     </div>
   );
 }
