@@ -4,11 +4,10 @@ import { useState } from "react";
 import Link from "next/link";
 import { Menu, Siren } from "lucide-react";
 import { MenuDrawer } from "./menu-drawer";
+import { BrandLogo } from "@/components/ui/brand-logo";
 import type { RiderProfile } from "@/app/(rider)/_lib/rider-profile";
 
-// 시안 헤더 — 흰 배경 56px. 좌:햄버거 / 중:로고("배달장부2") / 우:사고접수(→/roading).
-// 로고 아이콘 = /brand-icon.png (사용자 제공 원본 ~/Documents/jangboooo2.png 트림·리사이즈,
-// PWA/파비콘 세트도 동일 원본 — public/icons/*).
+// 헤더 56px. 좌:햄버거 / 중:로고("슬라이드" S 마크·라이트다크 전환) / 우:사고접수(→/roading).
 // 햄버거 메뉴 2026-07-27 활성 복구(구 데모 잠금 해제) — 드로어 네비 오픈.
 //   사고접수는 2026-07-11 활성 복구 — ROADING 임베드(/roading) 연결.
 
@@ -17,7 +16,7 @@ export function AppBar({ profile }: { profile: RiderProfile }) {
 
   return (
     <>
-      <header className="sticky top-0 z-[200] flex h-14 items-center justify-between border-b border-jb-line-soft bg-white px-3.5">
+      <header className="sticky top-0 z-[200] flex h-14 items-center justify-between border-b border-jb-line-soft bg-jb-card px-3.5">
         <button
           type="button"
           onClick={() => setOpen(true)}
@@ -28,9 +27,8 @@ export function AppBar({ profile }: { profile: RiderProfile }) {
         </button>
 
         <Link href="/dashboard" className="flex items-center gap-1.5">
-          {/* eslint-disable-next-line @next/next/no-img-element -- 24px 고정 로컬 브랜드 아이콘 */}
-          <img src="/brand-icon.png" alt="" className="size-6 shrink-0 object-contain" />
-          <span className="text-base font-black tracking-[-0.03em] text-jb-ink">배달장부2</span>
+          <BrandLogo size={24} />
+          <span className="text-base font-black tracking-[-0.03em] text-jb-ink">슬라이드</span>
         </Link>
 
         <Link

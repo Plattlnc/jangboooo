@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { BrandLogo } from "@/components/ui/brand-logo";
 import { signInRider } from "@/actions/auth";
 import { DEMO_MODE } from "@/lib/demo";
 import { CREDS_COOKIE, decodeSavedLogin, type SavedLogin } from "@/lib/auth/session";
@@ -195,8 +196,9 @@ export function RiderLoginForm() {
       </div>
 
       <div className="flex flex-col gap-3 pt-8">
-        <span className="text-caption text-muted-foreground">
-          <span aria-hidden="true" className="emoji mr-1">🛵</span>배달장부2
+        <span className="flex items-center gap-1.5 text-caption text-muted-foreground">
+          <BrandLogo size={16} />
+          슬라이드
         </span>
         <h1 className="text-h1 text-foreground">내 배달 성적표, 내 손안에.</h1>
         <p className="text-body text-muted-foreground">라이더 ID로 로그인해 내 실적을 확인해요.</p>
