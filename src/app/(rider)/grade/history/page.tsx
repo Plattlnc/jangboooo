@@ -1,6 +1,7 @@
 // 내 등급 기록 — 시즌 시작(8/12 수) 이후 완료된 주(수~화)별 등급·보상.
 // 진행 중인 이번 주는 제외. 아직 완료 시즌이 없으면 빈 상태.
 
+import Image from "next/image";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { getMyGradeHistory } from "@/app/(rider)/_lib/grade";
@@ -8,16 +9,18 @@ import { GRADE_SEASON_START, type Tier } from "@/lib/grade";
 
 export const dynamic = "force-dynamic";
 
-/** 임시 티어 아이콘 — 색상 타일 + 이니셜(사용자 디자인 교체 예정). */
+/** 티어 아이콘 — 배경 채움 없이 아이콘만(투명 PNG, /public/tiers/{key}.png). */
 function TierBadge({ tier, size = 40 }: { tier: Tier; size?: number }) {
   return (
-    <span
+    <Image
+      src={`/tiers/${tier.key}.png`}
+      alt=""
       aria-hidden="true"
-      className="grid shrink-0 place-items-center rounded-[12px] font-black text-white shadow-[0_2px_6px_rgba(0,0,0,0.18)]"
-      style={{ width: size, height: size, background: tier.color, fontSize: Math.round(size * 0.4) }}
-    >
-      {tier.name.slice(0, 1)}
-    </span>
+      width={size}
+      height={size}
+      className="shrink-0 select-none object-contain"
+      style={{ width: size, height: size }}
+    />
   );
 }
 

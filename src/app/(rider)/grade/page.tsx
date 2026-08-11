@@ -1,8 +1,8 @@
 // 배달등급 — 주간(수~화) 누적 완료건 기준 7등급 + 구간별 누진 프로모션 보상.
 // 최상위 카드(현재 등급·실시간 보상·승급 안내) + 구간별 내역 + 등급 조건표.
-// ⚠️ 티어 아이콘은 임시(색상 타일+이니셜) — 사용자가 직접 디자인해 교체 예정.
 
 import type { CSSProperties } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { getMyGrade } from "@/app/(rider)/_lib/grade";
@@ -15,16 +15,18 @@ function tierVar(color: string): CSSProperties {
 
 export const dynamic = "force-dynamic";
 
-/** 임시 티어 아이콘 — 색상 타일 + 등급 이니셜. 사용자 디자인으로 교체 예정. */
+/** 티어 아이콘 — 배경 채움 없이 아이콘만(투명 PNG, /public/tiers/{key}.png). */
 function TierBadge({ tier, size = 44 }: { tier: Tier; size?: number }) {
   return (
-    <span
+    <Image
+      src={`/tiers/${tier.key}.png`}
+      alt=""
       aria-hidden="true"
-      className="grid shrink-0 place-items-center rounded-[12px] font-black text-white shadow-[0_2px_6px_rgba(0,0,0,0.18)]"
-      style={{ width: size, height: size, background: tier.color, fontSize: Math.round(size * 0.4) }}
-    >
-      {tier.name.slice(0, 1)}
-    </span>
+      width={size}
+      height={size}
+      className="shrink-0 select-none object-contain"
+      style={{ width: size, height: size }}
+    />
   );
 }
 
