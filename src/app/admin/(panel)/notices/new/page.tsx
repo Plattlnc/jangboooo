@@ -12,7 +12,7 @@ export default function NewNoticePage() {
         <Link
           href="/admin/notices"
           aria-label="공지 목록으로"
-          className="grid size-8 shrink-0 place-items-center rounded-[8px] border border-jb-line bg-white active:bg-jb-line-soft"
+          className="grid size-8 shrink-0 place-items-center rounded-[12px] border border-jb-line bg-jb-card active:bg-jb-line-soft"
         >
           <ChevronLeft size={18} strokeWidth={2.4} className="text-jb-ink" />
         </Link>

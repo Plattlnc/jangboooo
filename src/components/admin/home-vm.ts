@@ -25,10 +25,10 @@ export interface AdminHomeVM {
 }
 
 const STATUS_META = [
-  { key: "completed", catKey: "complete", label: "완료", color: "#1E9E5A", tint: "#e7f5ee" },
-  { key: "rejected", catKey: "reject", label: "거절", color: "#D9342B", tint: "#fbe9e8" },
-  { key: "dispatchCanceled", catKey: "cancel", label: "배차취소", color: "#E8590C", tint: "#fdf0e6" },
-  { key: "deliveryCanceled", catKey: "riderFault", label: "배달취소", color: "#9b9588", tint: "#f4f5f7" },
+  { key: "completed", catKey: "complete", label: "완료", color: "#0bb25f", tint: "#e5f6ed" },
+  { key: "rejected", catKey: "reject", label: "거절", color: "#f04452", tint: "#fdecee" },
+  { key: "dispatchCanceled", catKey: "cancel", label: "배차취소", color: "#f28a00", tint: "#fdf1e1" },
+  { key: "deliveryCanceled", catKey: "riderFault", label: "배달취소", color: "#8b95a1", tint: "#eef1f4" },
 ] as const;
 
 const PEAK_META = [
@@ -62,8 +62,8 @@ export function toAdminHomeVM(
       value: fmtCount(hasBreakdown ? Math.max(0, total - bmart - store) : total),
       bmart: hasBreakdown ? fmtCount(bmart) : null,
       store: hasBreakdown ? fmtCount(store) : null,
-      color: total > 0 ? meta.color : "#b9bdc7",
-      tileBg: total > 0 ? meta.tint : "#f5f6f8",
+      color: total > 0 ? meta.color : "#b0b8c1",
+      tileBg: total > 0 ? meta.tint : "#eef1f4",
     };
   });
 

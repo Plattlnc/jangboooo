@@ -22,7 +22,7 @@ export function PeriodTabs({
   extraQuery?: Record<string, string>;
 }) {
   return (
-    <div className="flex gap-1 rounded-[12px] bg-jb-tab-bg p-1">
+    <div className="flex gap-1 rounded-[18px] bg-jb-tab-bg p-1">
       {PERIODS.map((p) => {
         const params = new URLSearchParams({ ...extraQuery, period: p.key });
         const active = period === p.key;
@@ -31,9 +31,9 @@ export function PeriodTabs({
             key={p.key}
             href={`${basePath}?${params.toString()}`}
             className={
-              "flex-1 rounded-[8px] py-[9px] text-center text-[13.5px] transition-all " +
+              "flex-1 rounded-[12px] py-[9px] text-center text-[13.5px] transition-all " +
               (active
-                ? "bg-white font-black text-jb-ink shadow-[0_1px_2px_0_rgba(0,0,0,0.06)]"
+                ? "bg-jb-card font-black text-jb-ink shadow-[var(--toss-shadow)]"
                 : "bg-transparent font-bold text-jb-ink-mute")
             }
           >
@@ -42,7 +42,7 @@ export function PeriodTabs({
         );
       })}
       {period === "custom" ? (
-        <span className="flex-1 rounded-[8px] bg-white py-[9px] text-center text-[13.5px] font-black text-jb-indigo shadow-[0_1px_2px_0_rgba(0,0,0,0.06)]">
+        <span className="flex-1 rounded-[12px] bg-jb-card py-[9px] text-center text-[13.5px] font-black text-jb-indigo shadow-[var(--toss-shadow)]">
           기간
         </span>
       ) : null}

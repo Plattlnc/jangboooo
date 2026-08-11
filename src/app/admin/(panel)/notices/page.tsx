@@ -46,7 +46,7 @@ export default async function AdminNoticesPage() {
       <p className="mb-3.5 mt-1 text-[12.5px] text-jb-ink-mute">라이더에게 노출할 공지를 작성·관리해요.</p>
 
       {notices.length === 0 ? (
-        <div className="mt-2 rounded-[12px] border border-jb-line bg-white px-4 py-12 text-center shadow-[0_1px_2px_0_rgba(0,0,0,0.04)]">
+        <div className="mt-2 rounded-[18px] border border-jb-line bg-jb-card px-4 py-12 text-center shadow-[var(--toss-shadow)]">
           <div className="text-[13.5px] font-bold text-jb-ink">아직 작성한 공지가 없어요</div>
           <p className="mt-1.5 text-[12px] text-jb-ink-mute">‘새 공지’로 첫 공지를 작성해보세요.</p>
         </div>
@@ -56,7 +56,7 @@ export default async function AdminNoticesPage() {
             <Link
               key={n.id}
               href={`/admin/notices/${n.id}`}
-              className="block rounded-[12px] border border-jb-line bg-white px-4 py-3 shadow-[0_1px_2px_0_rgba(0,0,0,0.04)] transition-colors active:bg-jb-line-soft"
+              className="block rounded-[18px] border border-jb-line bg-jb-card px-4 py-3 shadow-[var(--toss-shadow)] transition-colors active:bg-jb-line-soft"
             >
               <Chips n={n} />
               <div className="mt-1.5 truncate text-[14px] font-black text-jb-ink">{n.title}</div>

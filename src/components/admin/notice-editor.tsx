@@ -31,7 +31,7 @@ function Btn({
       aria-label={title}
       aria-pressed={active}
       className={
-        "grid size-8 place-items-center rounded-[8px] text-jb-ink transition-colors disabled:opacity-40 " +
+        "grid size-8 place-items-center rounded-[12px] text-jb-ink transition-colors disabled:opacity-40 " +
         (active ? "bg-jb-indigo-tint text-jb-indigo" : "hover:bg-jb-line-soft")
       }
     >
@@ -110,7 +110,7 @@ function Toolbar({ editor }: { editor: Editor }) {
           <Baseline size={16} strokeWidth={2.4} />
         </Btn>
         {colorOpen ? (
-          <div className="absolute left-0 top-9 z-10 flex gap-1 rounded-[10px] border border-jb-line bg-white p-1.5 shadow-[0_4px_12px_rgba(0,0,0,0.1)]">
+          <div className="absolute left-0 top-9 z-10 flex gap-1 rounded-[10px] border border-jb-line bg-jb-card p-1.5 shadow-[0_4px_12px_rgba(0,0,0,0.1)]">
             {COLORS.map((c) => (
               <button
                 key={c}
@@ -174,7 +174,7 @@ export function NoticeEditor({ value, onChange }: { value: string; onChange: (ht
   });
 
   return (
-    <div className="overflow-hidden rounded-[12px] border border-jb-line bg-white">
+    <div className="overflow-hidden rounded-[18px] border border-jb-line bg-jb-card">
       {editor ? <Toolbar editor={editor} /> : null}
       <EditorContent editor={editor} />
     </div>

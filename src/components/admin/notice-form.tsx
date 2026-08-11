@@ -65,7 +65,7 @@ export function NoticeForm({ initial }: { initial: NoticeRow | null }) {
           onChange={(e) => setTitle(e.target.value)}
           placeholder="공지 제목"
           maxLength={120}
-          className="w-full rounded-[12px] border border-jb-line bg-white px-3.5 py-2.5 text-[14px] font-bold text-jb-ink outline-none focus:border-jb-indigo"
+          className="w-full rounded-[18px] border border-jb-line bg-jb-card px-3.5 py-2.5 text-[14px] font-bold text-jb-ink outline-none focus:border-jb-indigo"
         />
       </div>
 
@@ -78,7 +78,7 @@ export function NoticeForm({ initial }: { initial: NoticeRow | null }) {
           onChange={(e) => setExcerpt(e.target.value)}
           placeholder="한 줄 요약"
           maxLength={200}
-          className="w-full rounded-[12px] border border-jb-line bg-white px-3.5 py-2.5 text-[13px] text-jb-ink outline-none focus:border-jb-indigo"
+          className="w-full rounded-[18px] border border-jb-line bg-jb-card px-3.5 py-2.5 text-[13px] text-jb-ink outline-none focus:border-jb-indigo"
         />
       </div>
 
@@ -96,13 +96,13 @@ export function NoticeForm({ initial }: { initial: NoticeRow | null }) {
               type="button"
               onClick={() => setFlags((s) => ({ ...s, [f.key]: !s[f.key] }))}
               className={
-                "flex items-center gap-2.5 rounded-[12px] border px-3 py-2.5 text-left transition-colors " +
-                (on ? "border-jb-indigo bg-jb-indigo-tint" : "border-jb-line bg-white")
+                "flex items-center gap-2.5 rounded-[18px] border px-3 py-2.5 text-left transition-colors " +
+                (on ? "border-jb-indigo bg-jb-indigo-tint" : "border-jb-line bg-jb-card")
               }
             >
               <span
                 className={
-                  "grid size-5 shrink-0 place-items-center rounded-[6px] text-[11px] font-black text-white " +
+                  "grid size-5 shrink-0 place-items-center rounded-[8px] text-[11px] font-black text-white " +
                   (on ? "bg-jb-indigo" : "bg-jb-track")
                 }
               >
@@ -125,7 +125,7 @@ export function NoticeForm({ initial }: { initial: NoticeRow | null }) {
             type="button"
             onClick={remove}
             disabled={saving}
-            className="rounded-[12px] border border-jb-line bg-white px-4 py-2.5 text-[13px] font-bold text-jb-red disabled:opacity-50"
+            className="rounded-[18px] border border-jb-line bg-jb-card px-4 py-2.5 text-[13px] font-bold text-jb-red disabled:opacity-50"
           >
             삭제
           </button>
@@ -134,7 +134,7 @@ export function NoticeForm({ initial }: { initial: NoticeRow | null }) {
           type="button"
           onClick={() => router.push("/admin/notices")}
           disabled={saving}
-          className="ml-auto rounded-[12px] border border-jb-line bg-white px-4 py-2.5 text-[13px] font-bold text-jb-ink-mute disabled:opacity-50"
+          className="ml-auto rounded-[18px] border border-jb-line bg-jb-card px-4 py-2.5 text-[13px] font-bold text-jb-ink-mute disabled:opacity-50"
         >
           취소
         </button>
@@ -142,7 +142,7 @@ export function NoticeForm({ initial }: { initial: NoticeRow | null }) {
           type="button"
           onClick={submit}
           disabled={saving}
-          className="rounded-[12px] bg-jb-indigo px-5 py-2.5 text-[13px] font-black text-white transition-transform active:scale-[0.98] disabled:opacity-60"
+          className="rounded-[18px] bg-jb-indigo px-5 py-2.5 text-[13px] font-black text-white transition-transform active:scale-[0.98] disabled:opacity-60"
         >
           {saving ? "저장 중…" : initial?.id ? "수정" : "등록"}
         </button>

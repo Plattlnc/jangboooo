@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
@@ -21,27 +22,30 @@ export default async function AdminPanelLayout({ children }: { children: ReactNo
   if (!(await isAdminSession())) redirect("/admin/login");
 
   return (
-    <div className={`geist-admin ${GeistSans.variable} ${GeistMono.variable} app-container flex min-h-dvh flex-col bg-white`}>
-      <header className="flex items-center justify-between border-b border-jb-line bg-white px-3.5 py-2.5">
-        <div className="flex items-center gap-1.5">
-          <AdminMenuButton />
-          <div className="flex items-center gap-2">
-            <span className="flex items-center gap-1.5 text-[15px] font-black tracking-[-0.02em] text-jb-ink">
-              <BrandLogo size={19} />슬라이더
-            </span>
-            <span className="rounded-[6px] bg-jb-indigo-tint px-1.5 py-0.5 text-[10.5px] font-black text-jb-indigo">관리자</span>
-          </div>
-        </div>
-        <form action={signOutAdmin}>
+    <div className={`geist-admin ${GeistSans.variable} ${GeistMono.variable} app-container flex min-h-dvh flex-col bg-jb-surface`}>
+      {/* 라이더 앱과 동일 — 분리된 바 아님, 배경 위 플로팅 요소(햄버거·중앙 브랜드·로그아웃 카드). */}
+      <header className="relative flex items-center px-3.5 pt-3 pb-1">
+        <AdminMenuButton />
+        <Link
+          href="/admin"
+          className="absolute left-1/2 top-3 flex h-10 -translate-x-1/2 items-center gap-1.5"
+        >
+          <BrandLogo size={21} />
+          <span className="text-[16px] font-black tracking-[-0.03em] text-jb-ink">슬라이더</span>
+          <span className="rounded-[7px] bg-jb-indigo-tint px-1.5 py-[3px] text-[10px] font-black leading-none text-jb-indigo">
+            관리자
+          </span>
+        </Link>
+        <form action={signOutAdmin} className="ml-auto">
           <button
             type="submit"
-            className="rounded-[8px] bg-jb-track px-2.5 py-1 text-[11.5px] font-bold text-jb-ink-soft"
+            className="flex h-10 items-center rounded-[13px] bg-jb-card px-3 text-[11.5px] font-bold text-jb-ink-soft shadow-[var(--toss-shadow)] transition-transform active:scale-95"
           >
             로그아웃
           </button>
         </form>
       </header>
-      <main className="flex-1 bg-jb-surface pb-28 text-jb-ink">{children}</main>
+      <main className="flex-1 pb-28 text-jb-ink">{children}</main>
       <AdminBottomNav />
     </div>
   );

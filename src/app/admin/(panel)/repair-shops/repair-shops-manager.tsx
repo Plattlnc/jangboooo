@@ -49,14 +49,14 @@ export function RepairShopsManager({ shops }: Props) {
   };
 
   const inputCls =
-    "w-full rounded-[8px] border border-jb-line bg-[#f8f9fb] px-3 py-[9px] text-[13.5px] font-semibold text-jb-ink outline-none transition-colors placeholder:font-normal placeholder:text-[#b0b6c3] focus:border-jb-indigo focus:bg-white";
+    "w-full rounded-[12px] border border-jb-line bg-[#f2f4f6] px-3 py-[9px] text-[13.5px] font-semibold text-jb-ink outline-none transition-colors placeholder:font-normal placeholder:text-[#b0b6c3] focus:border-jb-indigo focus:bg-jb-card";
 
   return (
     <>
       {/* 등록 폼 */}
       <form
         onSubmit={onAdd}
-        className="mt-1.5 rounded-[12px] border border-jb-line bg-white px-[13px] py-[11px] shadow-[0_1px_2px_0_rgba(0,0,0,0.04)]"
+        className="mt-1.5 rounded-[18px] border border-jb-line bg-jb-card px-[13px] py-[11px] shadow-[var(--toss-shadow)]"
       >
         <div className="mb-2 text-[12.5px] font-black text-jb-ink">정비소 등록</div>
         <div className="space-y-2">
@@ -99,7 +99,7 @@ export function RepairShopsManager({ shops }: Props) {
         <button
           type="submit"
           disabled={pending || !form.name.trim()}
-          className="mt-2.5 flex w-full items-center justify-center gap-1.5 rounded-[8px] bg-jb-indigo py-[11px] text-[13px] font-bold text-white transition-transform active:scale-[.98] disabled:opacity-50"
+          className="mt-2.5 flex w-full items-center justify-center gap-1.5 rounded-[12px] bg-jb-indigo py-[11px] text-[13px] font-bold text-white transition-transform active:scale-[.98] disabled:opacity-50"
         >
           <Plus size={15} strokeWidth={2.5} />
           {pending ? "처리 중..." : "정비소 추가"}
@@ -109,7 +109,7 @@ export function RepairShopsManager({ shops }: Props) {
       {/* 목록 */}
       <div className="mt-3 space-y-2">
         {shops.length === 0 ? (
-          <div className="rounded-[12px] border border-jb-line bg-white px-[13px] py-7 text-center shadow-[0_1px_2px_0_rgba(0,0,0,0.04)]">
+          <div className="rounded-[18px] border border-jb-line bg-jb-card px-[13px] py-7 text-center shadow-[var(--toss-shadow)]">
             <div className="text-[12.5px] font-bold text-jb-ink-soft">등록된 정비소가 없어요</div>
             <div className="mt-1 text-[11px] text-jb-ink-mute">
               위 폼으로 등록하면 라이더 화면에 바로 노출돼요
@@ -119,7 +119,7 @@ export function RepairShopsManager({ shops }: Props) {
           shops.map((s) => (
             <div
               key={s.id}
-              className="rounded-[12px] border border-jb-line bg-white px-[13px] py-[11px] shadow-[0_1px_2px_0_rgba(0,0,0,0.04)]"
+              className="rounded-[18px] border border-jb-line bg-jb-card px-[13px] py-[11px] shadow-[var(--toss-shadow)]"
             >
               <div className="flex items-center gap-2">
                 <span className="min-w-0 flex-1 truncate text-[13.5px] font-black text-jb-ink">
@@ -128,7 +128,7 @@ export function RepairShopsManager({ shops }: Props) {
                 <span
                   className={
                     s.is_active
-                      ? "rounded-md bg-[#e7f5ee] px-1.5 py-0.5 text-[10.5px] font-bold text-[#1E9E5A]"
+                      ? "rounded-md bg-[#e5f6ed] px-1.5 py-0.5 text-[10.5px] font-bold text-[#0bb25f]"
                       : "rounded-md bg-jb-track px-1.5 py-0.5 text-[10.5px] font-bold text-jb-ink-mute"
                   }
                 >
@@ -155,7 +155,7 @@ export function RepairShopsManager({ shops }: Props) {
                   type="button"
                   disabled={pending}
                   onClick={() => onToggle(s)}
-                  className="flex-1 rounded-[8px] border border-jb-line bg-white py-[7px] text-[11.5px] font-bold text-jb-ink-soft transition-transform active:scale-[.98] disabled:opacity-50"
+                  className="flex-1 rounded-[12px] border border-jb-line bg-jb-card py-[7px] text-[11.5px] font-bold text-jb-ink-soft transition-transform active:scale-[.98] disabled:opacity-50"
                 >
                   {s.is_active ? "숨기기" : "노출하기"}
                 </button>
@@ -163,7 +163,7 @@ export function RepairShopsManager({ shops }: Props) {
                   type="button"
                   disabled={pending}
                   onClick={() => onDelete(s)}
-                  className="flex-1 rounded-[8px] border border-[#f5d2cf] bg-jb-red-tint py-[7px] text-[11.5px] font-bold text-jb-red transition-transform active:scale-[.98] disabled:opacity-50"
+                  className="flex-1 rounded-[12px] border border-[#f5d2cf] bg-jb-red-tint py-[7px] text-[11.5px] font-bold text-jb-red transition-transform active:scale-[.98] disabled:opacity-50"
                 >
                   삭제
                 </button>

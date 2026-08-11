@@ -79,14 +79,14 @@ export default async function AdminRidersPage({
           name="q"
           defaultValue={q}
           placeholder="이름 또는 라이더 ID 검색"
-          className="min-w-0 flex-1 rounded-[8px] border border-jb-line bg-white px-3 py-2 text-[13px] font-bold text-jb-ink placeholder:font-semibold placeholder:text-jb-ink-mute focus:outline-none"
+          className="min-w-0 flex-1 rounded-[12px] border border-jb-line bg-jb-card px-3 py-2 text-[13px] font-bold text-jb-ink placeholder:font-semibold placeholder:text-jb-ink-mute focus:outline-none"
         />
-        <button type="submit" className="shrink-0 rounded-[8px] bg-jb-indigo px-3.5 text-[12.5px] font-black text-white">
+        <button type="submit" className="shrink-0 rounded-[12px] bg-jb-indigo px-3.5 text-[12.5px] font-black text-white">
           검색
         </button>
       </form>
 
-      <div className="mt-2 rounded-[12px] border border-jb-line bg-white shadow-[0_1px_2px_0_rgba(0,0,0,0.04)]">
+      <div className="mt-2 rounded-[18px] border border-jb-line bg-jb-card shadow-[var(--toss-shadow)]">
         <div className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-x-2.5 border-b border-jb-line-soft px-3 py-1.5 text-[10.5px] font-bold text-jb-ink-mute">
           <span>라이더</span>
           <span className="w-[52px] text-right">완료</span>
@@ -150,7 +150,7 @@ export default async function AdminRidersPage({
       </div>
 
       {idle.length > 0 ? (
-        <details className="mt-2 rounded-[12px] border border-jb-line bg-white shadow-[0_1px_2px_0_rgba(0,0,0,0.04)]">
+        <details className="mt-2 rounded-[18px] border border-jb-line bg-jb-card shadow-[var(--toss-shadow)]">
           <summary className="cursor-pointer px-3.5 py-2.5 text-[12px] font-bold text-jb-ink-soft">
             기간 실적 없는 라이더 <span className="tnum text-jb-ink-mute">{fmtCount(idle.length)}명</span>
           </summary>

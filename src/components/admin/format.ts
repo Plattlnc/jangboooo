@@ -56,8 +56,8 @@ export function fmtCapturedAt(ts: string | null): string {
 
 /** 수락률 상태 밴드(라이더 홈과 동일 경계: ≥85 양호 / ≥70 주의 / 미만 위험). */
 export function acceptBand(v: number | null | undefined): { label: string; color: string; tint: string } {
-  if (v == null) return { label: "—", color: "#9b9588", tint: "#f4f5f7" };
-  if (v >= 85) return { label: "양호", color: "#1E9E5A", tint: "#e7f5ee" };
-  if (v >= 70) return { label: "주의", color: "#E8590C", tint: "#fdf0e6" };
-  return { label: "위험", color: "#D9342B", tint: "#fbe9e8" };
+  if (v == null) return { label: "—", color: "#8b95a1", tint: "#eef1f4" };
+  if (v >= 85) return { label: "양호", color: "#0bb25f", tint: "#e5f6ed" };
+  if (v >= 70) return { label: "주의", color: "#f28a00", tint: "#fdf1e1" };
+  return { label: "위험", color: "#f04452", tint: "#fdecee" };
 }

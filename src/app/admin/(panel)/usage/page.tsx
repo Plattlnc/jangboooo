@@ -52,7 +52,7 @@ export default async function UsagePage() {
       </div>
 
       {/* 오늘 히어로 */}
-      <div className="rounded-2xl bg-[linear-gradient(135deg,#4F6AF5,#5d77ff)] px-[17px] py-[15px] text-white shadow-[0_8px_16px_-4px_rgba(0,112,243,0.30)]">
+      <div className="rounded-2xl bg-[linear-gradient(135deg,#3182f6,#4593fc)] px-[17px] py-[15px] text-white shadow-[0_8px_16px_-4px_rgba(49,130,246,0.26)]">
         <div className="text-[12.5px] font-semibold opacity-90">오늘</div>
         <div className="mt-2 flex items-end justify-between">
           <div>
@@ -78,7 +78,7 @@ export default async function UsagePage() {
           <span className="text-[15px] font-black text-jb-ink">일별 추이</span>
           <span className="ml-1.5 text-[11px] font-bold text-jb-ink-mute">최근 14일</span>
         </div>
-        <div className="rounded-[12px] border border-jb-line bg-white shadow-[0_1px_2px_0_rgba(0,0,0,0.04)]">
+        <div className="rounded-[18px] border border-jb-line bg-jb-card shadow-[var(--toss-shadow)]">
           {rows.length === 0 ? (
             <div className="px-4 py-8 text-center text-[12px] font-bold text-jb-ink-mute">
               아직 집계된 방문이 없어요

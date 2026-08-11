@@ -64,16 +64,16 @@ export function AdminHome({
   return (
     <div className="px-3.5 py-3">
       {/* 기간 토글 */}
-      <div className="flex gap-1 rounded-[12px] bg-jb-tab-bg p-1">
+      <div className="flex gap-1 rounded-[18px] bg-jb-tab-bg p-1">
         {PERIODS.map((p) => (
           <button
             key={p.key}
             type="button"
             onClick={() => setTab(p.key)}
             className={
-              "flex-1 rounded-[8px] py-[9px] text-[13.5px] transition-all " +
+              "flex-1 rounded-[12px] py-[9px] text-[13.5px] transition-all " +
               (tab === p.key
-                ? "bg-white font-black text-jb-ink shadow-[0_1px_2px_0_rgba(0,0,0,0.06)]"
+                ? "bg-jb-card font-black text-jb-ink shadow-[var(--toss-shadow)]"
                 : "bg-transparent font-bold text-jb-ink-mute")
             }
           >
@@ -85,9 +85,9 @@ export function AdminHome({
             type="button"
             onClick={() => setTab("custom")}
             className={
-              "flex-1 rounded-[8px] py-[9px] text-[13.5px] transition-all " +
+              "flex-1 rounded-[12px] py-[9px] text-[13.5px] transition-all " +
               (tab === "custom"
-                ? "bg-white font-black text-jb-indigo shadow-[0_1px_2px_0_rgba(0,0,0,0.06)]"
+                ? "bg-jb-card font-black text-jb-indigo shadow-[var(--toss-shadow)]"
                 : "bg-transparent font-bold text-jb-ink-mute")
             }
           >
@@ -111,7 +111,7 @@ export function AdminHome({
           <span className="text-[15px] font-black text-jb-ink">통합 운행 요약</span>
           <span className="tnum text-[10px] font-semibold text-jb-ink-mute">{v.rangeLabel}</span>
         </div>
-        <div className="rounded-[12px] border border-jb-line bg-white px-4 py-3 shadow-[0_1px_2px_0_rgba(0,0,0,0.04)]">
+        <div className="rounded-[18px] border border-jb-line bg-jb-card px-4 py-3 shadow-[var(--toss-shadow)]">
           <div className="flex items-center justify-between">
             <div className="flex items-baseline gap-1.5">
               <span className="text-[18px] font-bold text-jb-ink-soft">배달</span>
@@ -126,7 +126,7 @@ export function AdminHome({
                 </span>
               </span>
               <span
-                className="rounded-[6px] px-2.5 py-[3px] text-[10.5px] font-black text-white"
+                className="rounded-[8px] px-2.5 py-[3px] text-[10.5px] font-black text-white"
                 style={{ background: v.hero.bandColor }}
               >
                 {v.hero.bandLabel}
@@ -152,10 +152,10 @@ export function AdminHome({
             <span className="text-[11px] font-bold text-jb-ink-mute">일반 배달 기준 · B마트/스토어 별도</span>
           ) : null}
         </div>
-        <div className="rounded-[12px] border border-jb-line bg-white p-3 shadow-[0_1px_2px_0_rgba(0,0,0,0.04)]">
+        <div className="rounded-[18px] border border-jb-line bg-jb-card p-3 shadow-[var(--toss-shadow)]">
           <div className="grid grid-cols-4 gap-[7px]">
             {v.status.map((it) => (
-              <div key={it.label} className="rounded-[8px] px-1 py-[7px] text-center" style={{ background: it.tileBg }}>
+              <div key={it.label} className="rounded-[12px] px-1 py-[7px] text-center" style={{ background: it.tileBg }}>
                 <div className="text-[11.5px] font-bold text-jb-ink-soft">{it.label}</div>
                 <div className="tnum mt-0.5 text-xl font-black tracking-[-0.02em]" style={{ color: it.color }}>
                   {it.value}
@@ -190,23 +190,23 @@ export function AdminHome({
           <span className="text-[15px] font-black text-jb-ink">시간대별 분포</span>
           <span className="text-[11px] font-bold text-jb-indigo">최다 시간대 강조</span>
         </div>
-        <div className="rounded-[12px] border border-jb-line bg-white p-3 shadow-[0_1px_2px_0_rgba(0,0,0,0.04)]">
+        <div className="rounded-[18px] border border-jb-line bg-jb-card p-3 shadow-[var(--toss-shadow)]">
           <div className="grid grid-cols-4 gap-[7px]">
             {v.peaks.map((p) => (
               <div
                 key={p.label}
-                className="rounded-[8px] px-1 py-[7px] text-center"
+                className="rounded-[12px] px-1 py-[7px] text-center"
                 style={{
-                  background: p.isMax ? "#eef1fe" : "#f8f9fb",
+                  background: p.isMax ? "#e8f1fe" : "#f2f4f6",
                   border: p.isMax ? "1px solid #c7d2fe" : "1px solid transparent",
                 }}
               >
-                <div className="text-[11.5px] font-bold" style={{ color: p.isMax ? "#4F6AF5" : "#9b9588" }}>
+                <div className="text-[11.5px] font-bold" style={{ color: p.isMax ? "#3182f6" : "#8b95a1" }}>
                   {p.label}
                 </div>
                 <div
                   className="tnum mt-0.5 text-xl font-black tracking-[-0.02em]"
-                  style={{ color: p.isMax ? "#4F6AF5" : "#1a1d2e" }}
+                  style={{ color: p.isMax ? "#3182f6" : "#191f28" }}
                 >
                   {p.value}
                 </div>
@@ -224,7 +224,7 @@ export function AdminHome({
             전체 보기
           </Link>
         </div>
-        <div className="rounded-[12px] border border-jb-line bg-white shadow-[0_1px_2px_0_rgba(0,0,0,0.04)]">
+        <div className="rounded-[18px] border border-jb-line bg-jb-card shadow-[var(--toss-shadow)]">
           {v.atRisk.length === 0 ? (
             <div className="px-4 py-5 text-center text-[12px] font-bold text-jb-ink-mute">
               집계된 실적이 없어요
@@ -247,7 +247,7 @@ export function AdminHome({
                   {r.rate}
                 </span>
                 <span
-                  className="rounded-[6px] px-1.5 py-0.5 text-[9.5px] font-black text-white"
+                  className="rounded-[8px] px-1.5 py-0.5 text-[9.5px] font-black text-white"
                   style={{ background: r.bandColor }}
                 >
                   {r.bandLabel}
@@ -266,7 +266,7 @@ export function AdminHome({
             전체 보기
           </Link>
         </div>
-        <div className="rounded-[12px] border border-jb-line bg-white shadow-[0_1px_2px_0_rgba(0,0,0,0.04)]">
+        <div className="rounded-[18px] border border-jb-line bg-jb-card shadow-[var(--toss-shadow)]">
           {v.top.length === 0 ? (
             <div className="px-4 py-5 text-center text-[12px] font-bold text-jb-ink-mute">
               집계된 실적이 없어요
@@ -305,7 +305,7 @@ export function AdminHome({
             <span className="text-[15px] font-black text-jb-ink">일별 추이</span>
             <span className="ml-1.5 text-[11px] font-bold text-jb-ink-mute">최근 {v.daily.length}일</span>
           </div>
-          <div className="rounded-[12px] border border-jb-line bg-white shadow-[0_1px_2px_0_rgba(0,0,0,0.04)]">
+          <div className="rounded-[18px] border border-jb-line bg-jb-card shadow-[var(--toss-shadow)]">
             <div className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-x-3 border-b border-jb-line-soft px-3.5 py-1.5 text-[10.5px] font-bold text-jb-ink-mute">
               <span>날짜</span>
               <span className="text-right">완료</span>
