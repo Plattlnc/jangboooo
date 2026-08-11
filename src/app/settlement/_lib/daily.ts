@@ -1,8 +1,10 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { applyDeductions } from "@/app/settlement/_lib/rates";
 
-// 일일 정산 데이터 — 선택 영업일의 라이더별 배달처리비(세전) + 미션 + 완료건수.
-// 원천: rider_daily_fees(0018). 라이더명/연락처는 riders 조인. 정산팀 송금 목록의 기반.
+// 일일 정산 데이터 — 선택 영업일의 라이더별 배달처리비(세전)·미션비(세전)에서
+// 원천세(3.3%)·고용산재(1.8%)를 각각 공제한 지급액 산출. 원천: rider_daily_fees(0018).
+// 정산팀 송금 목록의 기반. 세율/공제식 SSOT = rates.ts.
 
 export interface DailySettlementRow {
   riderId: string;
@@ -11,17 +13,52 @@ export interface DailySettlementRow {
   completed: number;
   /** 배달처리비(세전, 전달완료 + 무귀책 배달취소) */
   fee: number;
-  /** 본사 미션 지급액 */
+  feeWht: number;
+  feeIns: number;
+  /** 배달처리비 지급액 = 세전 − 원천세 − 고용산재 */
+  feePayout: number;
+  /** 미션비(세전) */
   mission: number;
-  /** 당일 총 지급(배달처리비 + 미션) */
+  missionWht: number;
+  missionIns: number;
+  /** 미션비 지급액 = 세전 − 원천세 − 고용산재 */
+  missionPayout: number;
+  /** 총 지급액 = 배달처리비 지급액 + 미션비 지급액 */
+  total: number;
+}
+
+export interface DailyTotals {
+  riders: number;
+  completed: number;
+  fee: number;
+  feeWht: number;
+  feeIns: number;
+  feePayout: number;
+  mission: number;
+  missionWht: number;
+  missionIns: number;
+  missionPayout: number;
   total: number;
 }
 
 export interface DailySettlement {
   date: string;
   rows: DailySettlementRow[];
-  totals: { riders: number; completed: number; fee: number; mission: number; total: number };
+  totals: DailyTotals;
 }
+
+const NUMERIC_KEYS: (keyof DailyTotals & keyof DailySettlementRow)[] = [
+  "completed",
+  "fee",
+  "feeWht",
+  "feeIns",
+  "feePayout",
+  "mission",
+  "missionWht",
+  "missionIns",
+  "missionPayout",
+  "total",
+];
 
 /** 선택 영업일(YYYY-MM-DD)의 라이더별 일일 정산 내역. 데이터 없으면 rows 빈 배열. */
 export async function fetchDailySettlement(date: string): Promise<DailySettlement> {
@@ -47,28 +84,30 @@ export async function fetchDailySettlement(date: string): Promise<DailySettlemen
 
   const rows: DailySettlementRow[] = feeRows.map((f) => {
     const meta = info.get(f.admin_rider_id);
+    const feeD = applyDeductions(f.fee_krw);
+    const missionD = applyDeductions(f.mission_krw);
     return {
       riderId: f.admin_rider_id,
       name: meta?.name ?? f.admin_rider_id,
       phone: meta?.phone ?? null,
       completed: f.completed_cnt,
       fee: f.fee_krw,
+      feeWht: feeD.wht,
+      feeIns: feeD.ins,
+      feePayout: feeD.payout,
       mission: f.mission_krw,
-      total: f.fee_krw + f.mission_krw,
+      missionWht: missionD.wht,
+      missionIns: missionD.ins,
+      missionPayout: missionD.payout,
+      total: feeD.payout + missionD.payout,
     };
   });
   rows.sort((a, b) => b.total - a.total || a.name.localeCompare(b.name, "ko"));
 
-  const totals = rows.reduce(
-    (acc, r) => {
-      acc.completed += r.completed;
-      acc.fee += r.fee;
-      acc.mission += r.mission;
-      acc.total += r.total;
-      return acc;
-    },
-    { riders: rows.length, completed: 0, fee: 0, mission: 0, total: 0 },
-  );
+  const totals: DailyTotals = { riders: rows.length, completed: 0, fee: 0, feeWht: 0, feeIns: 0, feePayout: 0, mission: 0, missionWht: 0, missionIns: 0, missionPayout: 0, total: 0 };
+  for (const r of rows) {
+    for (const k of NUMERIC_KEYS) totals[k] += r[k];
+  }
 
   return { date, rows, totals };
 }

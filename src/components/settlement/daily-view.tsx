@@ -1,18 +1,21 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, Download, Search, ArrowUp, ArrowDown } from "lucide-react";
-import type { DailySettlement, DailySettlementRow } from "@/app/settlement/_lib/daily";
+import type { DailySettlement, DailySettlementRow, DailyTotals } from "@/app/settlement/_lib/daily";
+import { WITHHOLDING_RATE, INSURANCE_RATE } from "@/app/settlement/_lib/rates";
 import { ymdAdd, formatKoreanDate } from "@/app/settlement/_lib/dates";
 
-// 일일 정산 뷰 — 선택일 라이더별 배달처리비(세전) 목록. 정산팀 송금 기반.
-// 데스크톱 퍼스트: 넓은 데이터 테이블 + 검색/정렬/날짜이동/CSV 내보내기.
+// 일일 정산 뷰 — 선택일 라이더별 배달처리비/미션비 세전 → 원천세(3.3%)·고용산재(1.8%) 공제 → 지급액.
+// 데스크톱 퍼스트: 그룹 헤더 13컬럼 데이터 테이블 + 검색/정렬/날짜이동/CSV.
 
-type SortKey = "name" | "completed" | "fee" | "mission" | "total";
+type SortKey = "name" | "completed" | "fee" | "total";
 type SortDir = "asc" | "desc";
 
 const won = (n: number) => n.toLocaleString("ko-KR");
+const WHT_PCT = `${(WITHHOLDING_RATE * 100).toFixed(1)}%`; // 3.3%
+const INS_PCT = `${(INSURANCE_RATE * 100).toFixed(1)}%`; // 1.8%
 
 export function DailySettlementView({ data, today }: { data: DailySettlement; today: string }) {
   const router = useRouter();
@@ -39,6 +42,9 @@ export function DailySettlementView({ data, today }: { data: DailySettlement; to
     });
   }, [rows, q, sortKey, sortDir]);
 
+  // 화면에 표시 중인(검색 필터 반영) 합계.
+  const vTotals = useMemo(() => sumRows(view), [view]);
+
   function toggleSort(key: SortKey) {
     if (key === sortKey) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
     else {
@@ -48,9 +54,24 @@ export function DailySettlementView({ data, today }: { data: DailySettlement; to
   }
 
   function exportCsv() {
-    const head = ["라이더명", "라이더ID", "연락처", "완료건수", "배달처리비(세전)", "미션", "총지급"];
-    const body = view.map((r) => [r.name, r.riderId, r.phone ?? "", r.completed, r.fee, r.mission, r.total]);
-    const foot = ["합계", "", "", totals.completed, totals.fee, totals.mission, totals.total];
+    const head = [
+      "번호", "라이더", "라이더ID", "완료건수",
+      "배달처리비(세전)", `원천세(${WHT_PCT})`, `고용산재(${INS_PCT})`, "배달처리비 지급액",
+      "미션비(세전)", `원천세(${WHT_PCT})`, `고용산재(${INS_PCT})`, "미션비 지급액",
+      "총지급액",
+    ];
+    const body = view.map((r, i) => [
+      i + 1, r.name, r.riderId, r.completed,
+      r.fee, r.feeWht, r.feeIns, r.feePayout,
+      r.mission, r.missionWht, r.missionIns, r.missionPayout,
+      r.total,
+    ]);
+    const foot = [
+      "합계", "", "", vTotals.completed,
+      vTotals.fee, vTotals.feeWht, vTotals.feeIns, vTotals.feePayout,
+      vTotals.mission, vTotals.missionWht, vTotals.missionIns, vTotals.missionPayout,
+      vTotals.total,
+    ];
     const csv = [head, ...body, foot]
       .map((row) => row.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","))
       .join("\r\n");
@@ -65,55 +86,52 @@ export function DailySettlementView({ data, today }: { data: DailySettlement; to
 
   return (
     <div className="flex flex-col gap-5">
-      {/* 헤더 */}
+      {/* 헤더 + 날짜 이동 */}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-jb-ink">일일 정산</h1>
           <p className="mt-1 text-[13px] text-jb-ink-mute">
-            선택일의 라이더별 배달처리비(세전) — 송금 대상 목록. 배달처리비는 익일 오전에 반영됩니다.
+            라이더별 배달처리비·미션비(세전)에서 원천세 {WHT_PCT} · 고용산재 {INS_PCT} 공제 후 지급액. 배달처리비는 익일 오전 반영.
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center rounded-[10px] border border-jb-line bg-jb-card shadow-[var(--toss-shadow)]">
-            <button
-              type="button"
-              onClick={() => goDate(ymdAdd(date, -1))}
-              aria-label="이전 날짜"
-              className="grid size-9 place-items-center rounded-l-[10px] text-jb-ink-soft hover:bg-jb-surface"
-            >
-              <ChevronLeft size={18} />
-            </button>
-            <input
-              type="date"
-              value={date}
-              max={today}
-              onChange={(e) => e.target.value && goDate(e.target.value)}
-              className="border-x border-jb-line bg-transparent px-3 py-2 text-[13.5px] font-medium text-jb-ink outline-none"
-            />
-            <button
-              type="button"
-              onClick={() => canNext && goDate(ymdAdd(date, 1))}
-              disabled={!canNext}
-              aria-label="다음 날짜"
-              className="grid size-9 place-items-center rounded-r-[10px] text-jb-ink-soft hover:bg-jb-surface disabled:opacity-30"
-            >
-              <ChevronRight size={18} />
-            </button>
-          </div>
+        <div className="flex items-center rounded-[10px] border border-jb-line bg-jb-card shadow-[var(--toss-shadow)]">
+          <button
+            type="button"
+            onClick={() => goDate(ymdAdd(date, -1))}
+            aria-label="이전 날짜"
+            className="grid size-9 place-items-center rounded-l-[10px] text-jb-ink-soft hover:bg-jb-surface"
+          >
+            <ChevronLeft size={18} />
+          </button>
+          <input
+            type="date"
+            value={date}
+            max={today}
+            onChange={(e) => e.target.value && goDate(e.target.value)}
+            className="border-x border-jb-line bg-transparent px-3 py-2 text-[13.5px] font-medium text-jb-ink outline-none"
+          />
+          <button
+            type="button"
+            onClick={() => canNext && goDate(ymdAdd(date, 1))}
+            disabled={!canNext}
+            aria-label="다음 날짜"
+            className="grid size-9 place-items-center rounded-r-[10px] text-jb-ink-soft hover:bg-jb-surface disabled:opacity-30"
+          >
+            <ChevronRight size={18} />
+          </button>
         </div>
       </div>
 
-      {/* 요약 카드 */}
+      {/* 최상위 요약 카드 — 표시 중 데이터 기준 */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <SummaryCard label="지급 대상" value={`${won(totals.riders)}명`} />
-        <SummaryCard label="총 완료건수" value={`${won(totals.completed)}건`} />
-        <SummaryCard label="총 배달처리비" value={`${won(totals.fee)}원`} />
-        <SummaryCard label="총 지급액" value={`${won(totals.total)}원`} accent />
+        <SummaryCard label="지급 대상" value={`${won(view.length)}명`} />
+        <SummaryCard label="총 완료건수" value={`${won(vTotals.completed)}건`} />
+        <SummaryCard label="총 배달처리비" value={`${won(vTotals.fee)}원`} sub="세전" />
+        <SummaryCard label="총 지급액" value={`${won(vTotals.total)}원`} sub="공제 후" accent />
       </div>
 
       {/* 테이블 카드 */}
       <div className="overflow-hidden rounded-[12px] border border-jb-line bg-jb-card shadow-[var(--toss-shadow)]">
-        {/* 툴바 */}
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-jb-line px-4 py-3">
           <div className="flex items-center gap-2">
             <span className="text-[14px] font-semibold text-jb-ink">{formatKoreanDate(date)}</span>
@@ -150,26 +168,26 @@ export function DailySettlementView({ data, today }: { data: DailySettlement; to
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[720px] border-collapse text-[13.5px]">
-              <thead>
-                <tr className="bg-jb-surface text-[12px] font-medium text-jb-ink-mute">
-                  <Th className="w-12 text-right">#</Th>
-                  <Th onClick={() => toggleSort("name")} active={sortKey === "name"} dir={sortDir}>
-                    라이더
-                  </Th>
-                  <Th className="text-left">라이더 ID</Th>
-                  <Th onClick={() => toggleSort("completed")} active={sortKey === "completed"} dir={sortDir} align="right">
-                    완료
-                  </Th>
-                  <Th onClick={() => toggleSort("fee")} active={sortKey === "fee"} dir={sortDir} align="right">
-                    배달처리비(세전)
-                  </Th>
-                  <Th onClick={() => toggleSort("mission")} active={sortKey === "mission"} dir={sortDir} align="right">
-                    미션
-                  </Th>
-                  <Th onClick={() => toggleSort("total")} active={sortKey === "total"} dir={sortDir} align="right">
-                    총 지급
-                  </Th>
+            <table className="w-full min-w-[1180px] border-collapse text-[13px]">
+              <thead className="text-jb-ink-mute">
+                <tr className="bg-jb-surface text-[12px] font-medium">
+                  <th rowSpan={2} className="border-b border-jb-line px-3 py-2.5 text-right">#</th>
+                  <SortableTh rowSpan={2} label="라이더" onClick={() => toggleSort("name")} active={sortKey === "name"} dir={sortDir} align="left" />
+                  <th rowSpan={2} className="border-b border-jb-line px-3 py-2.5 text-left">라이더 ID</th>
+                  <SortableTh rowSpan={2} label="완료" onClick={() => toggleSort("completed")} active={sortKey === "completed"} dir={sortDir} align="right" />
+                  <th colSpan={4} className="border-b border-l border-jb-line px-3 py-2 text-center font-semibold text-jb-ink">배달처리비</th>
+                  <th colSpan={4} className="border-b border-l border-jb-line px-3 py-2 text-center font-semibold text-jb-ink">미션비</th>
+                  <SortableTh rowSpan={2} label="총 지급액" onClick={() => toggleSort("total")} active={sortKey === "total"} dir={sortDir} align="right" className="border-l border-jb-line" />
+                </tr>
+                <tr className="bg-jb-surface text-[11.5px] font-medium">
+                  <SortableTh label="세전" onClick={() => toggleSort("fee")} active={sortKey === "fee"} dir={sortDir} align="right" className="border-l border-jb-line" />
+                  <th className="border-b border-jb-line px-3 py-2 text-right">원천세 {WHT_PCT}</th>
+                  <th className="border-b border-jb-line px-3 py-2 text-right">고용산재 {INS_PCT}</th>
+                  <th className="border-b border-jb-line px-3 py-2 text-right text-jb-ink-soft">지급액</th>
+                  <th className="border-b border-l border-jb-line px-3 py-2 text-right">세전</th>
+                  <th className="border-b border-jb-line px-3 py-2 text-right">원천세 {WHT_PCT}</th>
+                  <th className="border-b border-jb-line px-3 py-2 text-right">고용산재 {INS_PCT}</th>
+                  <th className="border-b border-jb-line px-3 py-2 text-right text-jb-ink-soft">지급액</th>
                 </tr>
               </thead>
               <tbody>
@@ -178,16 +196,18 @@ export function DailySettlementView({ data, today }: { data: DailySettlement; to
                 ))}
               </tbody>
               <tfoot>
-                <tr className="border-t-2 border-jb-line bg-jb-surface font-semibold text-jb-ink">
-                  <td className="px-3.5 py-3 text-right text-jb-ink-mute" colSpan={3}>
-                    합계 · {won(view.length)}명
-                  </td>
-                  <td className="px-3.5 py-3 text-right font-mono tabular-nums">{won(sumOf(view, "completed"))}</td>
-                  <td className="px-3.5 py-3 text-right font-mono tabular-nums">{won(sumOf(view, "fee"))}</td>
-                  <td className="px-3.5 py-3 text-right font-mono tabular-nums">{won(sumOf(view, "mission"))}</td>
-                  <td className="px-3.5 py-3 text-right font-mono tabular-nums text-jb-indigo">
-                    {won(sumOf(view, "total"))}
-                  </td>
+                <tr className="border-t-2 border-jb-line bg-jb-surface text-[13px] font-semibold text-jb-ink">
+                  <td className="px-3 py-3 text-right text-jb-ink-mute" colSpan={3}>합계 · {won(view.length)}명</td>
+                  <Num v={vTotals.completed} />
+                  <Num v={vTotals.fee} className="border-l border-jb-line" />
+                  <Num v={vTotals.feeWht} deduct />
+                  <Num v={vTotals.feeIns} deduct />
+                  <Num v={vTotals.feePayout} />
+                  <Num v={vTotals.mission} className="border-l border-jb-line" />
+                  <Num v={vTotals.missionWht} deduct />
+                  <Num v={vTotals.missionIns} deduct />
+                  <Num v={vTotals.missionPayout} />
+                  <Num v={vTotals.total} className="border-l border-jb-line text-jb-indigo" />
                 </tr>
               </tfoot>
             </table>
@@ -198,67 +218,83 @@ export function DailySettlementView({ data, today }: { data: DailySettlement; to
   );
 }
 
-function sumOf(rows: DailySettlementRow[], key: "completed" | "fee" | "mission" | "total"): number {
-  return rows.reduce((a, r) => a + r[key], 0);
+function sumRows(rows: DailySettlementRow[]): DailyTotals {
+  const t: DailyTotals = { riders: rows.length, completed: 0, fee: 0, feeWht: 0, feeIns: 0, feePayout: 0, mission: 0, missionWht: 0, missionIns: 0, missionPayout: 0, total: 0 };
+  for (const r of rows) {
+    t.completed += r.completed;
+    t.fee += r.fee; t.feeWht += r.feeWht; t.feeIns += r.feeIns; t.feePayout += r.feePayout;
+    t.mission += r.mission; t.missionWht += r.missionWht; t.missionIns += r.missionIns; t.missionPayout += r.missionPayout;
+    t.total += r.total;
+  }
+  return t;
 }
 
-function SummaryCard({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
+function SummaryCard({ label, value, sub, accent }: { label: string; value: string; sub?: string; accent?: boolean }) {
   return (
     <div className="rounded-[12px] border border-jb-line bg-jb-card px-4 py-3.5 shadow-[var(--toss-shadow)]">
-      <div className="text-[12.5px] text-jb-ink-mute">{label}</div>
-      <div
-        className={`mt-1 font-mono text-[20px] font-semibold tabular-nums tracking-[-0.01em] ${accent ? "text-jb-indigo" : "text-jb-ink"}`}
-      >
+      <div className="flex items-center gap-1.5">
+        <span className="text-[12.5px] text-jb-ink-mute">{label}</span>
+        {sub ? <span className="rounded-[5px] bg-jb-surface px-1 py-0.5 text-[10px] font-medium text-jb-ink-mute">{sub}</span> : null}
+      </div>
+      <div className={`mt-1 font-mono text-[20px] font-semibold tabular-nums tracking-[-0.01em] ${accent ? "text-jb-indigo" : "text-jb-ink"}`}>
         {value}
       </div>
     </div>
   );
 }
 
-function Th({
-  children,
-  onClick,
-  active,
-  dir,
-  align = "left",
-  className = "",
+function SortableTh({
+  label, onClick, active, dir, align, rowSpan, className = "",
 }: {
-  children: ReactNode;
-  onClick?: () => void;
-  active?: boolean;
-  dir?: SortDir;
-  align?: "left" | "right";
+  label: string;
+  onClick: () => void;
+  active: boolean;
+  dir: SortDir;
+  align: "left" | "right";
+  rowSpan?: number;
   className?: string;
 }) {
-  const alignCls = align === "right" ? "text-right" : "text-left";
   return (
-    <th className={`border-b border-jb-line px-3.5 py-2.5 ${alignCls} ${className}`}>
-      {onClick ? (
-        <button
-          type="button"
-          onClick={onClick}
-          className={`inline-flex items-center gap-1 ${align === "right" ? "flex-row-reverse" : ""} ${active ? "text-jb-ink" : "hover:text-jb-ink-soft"}`}
-        >
-          {children}
-          {active ? dir === "asc" ? <ArrowUp size={12} /> : <ArrowDown size={12} /> : null}
-        </button>
-      ) : (
-        children
-      )}
+    <th rowSpan={rowSpan} className={`border-b border-jb-line px-3 py-2.5 ${align === "right" ? "text-right" : "text-left"} ${className}`}>
+      <button
+        type="button"
+        onClick={onClick}
+        className={`inline-flex items-center gap-1 ${align === "right" ? "flex-row-reverse" : ""} ${active ? "text-jb-ink" : "hover:text-jb-ink-soft"}`}
+      >
+        {label}
+        {active ? dir === "asc" ? <ArrowUp size={12} /> : <ArrowDown size={12} /> : null}
+      </button>
     </th>
+  );
+}
+
+function Num({ v, deduct, className = "" }: { v: number; deduct?: boolean; className?: string }) {
+  return (
+    <td className={`px-3 py-3 text-right font-mono tabular-nums ${deduct ? "text-jb-red" : ""} ${className}`}>
+      {deduct ? "−" : ""}{won(v)}
+    </td>
   );
 }
 
 function Row({ row, index }: { row: DailySettlementRow; index: number }) {
   return (
     <tr className="border-b border-jb-line-soft transition-colors hover:bg-jb-surface/60">
-      <td className="px-3.5 py-2.5 text-right font-mono text-[12px] tabular-nums text-jb-ink-mute">{index}</td>
-      <td className="px-3.5 py-2.5 font-medium text-jb-ink">{row.name}</td>
-      <td className="px-3.5 py-2.5 font-mono text-[12.5px] text-jb-ink-mute">{row.riderId}</td>
-      <td className="px-3.5 py-2.5 text-right font-mono tabular-nums text-jb-ink-soft">{won(row.completed)}</td>
-      <td className="px-3.5 py-2.5 text-right font-mono tabular-nums text-jb-ink">{won(row.fee)}</td>
-      <td className="px-3.5 py-2.5 text-right font-mono tabular-nums text-jb-ink-soft">{won(row.mission)}</td>
-      <td className="px-3.5 py-2.5 text-right font-mono font-semibold tabular-nums text-jb-ink">{won(row.total)}</td>
+      <td className="px-3 py-2.5 text-right font-mono text-[12px] tabular-nums text-jb-ink-mute">{index}</td>
+      <td className="px-3 py-2.5 font-medium text-jb-ink">{row.name}</td>
+      <td className="px-3 py-2.5 font-mono text-[12px] text-jb-ink-mute">{row.riderId}</td>
+      <td className="px-3 py-2.5 text-right font-mono tabular-nums text-jb-ink-soft">{won(row.completed)}</td>
+      {/* 배달처리비 그룹 */}
+      <td className="border-l border-jb-line-soft px-3 py-2.5 text-right font-mono tabular-nums text-jb-ink">{won(row.fee)}</td>
+      <td className="px-3 py-2.5 text-right font-mono tabular-nums text-jb-red">−{won(row.feeWht)}</td>
+      <td className="px-3 py-2.5 text-right font-mono tabular-nums text-jb-red">−{won(row.feeIns)}</td>
+      <td className="px-3 py-2.5 text-right font-mono font-medium tabular-nums text-jb-ink">{won(row.feePayout)}</td>
+      {/* 미션비 그룹 */}
+      <td className="border-l border-jb-line-soft px-3 py-2.5 text-right font-mono tabular-nums text-jb-ink">{won(row.mission)}</td>
+      <td className="px-3 py-2.5 text-right font-mono tabular-nums text-jb-red">−{won(row.missionWht)}</td>
+      <td className="px-3 py-2.5 text-right font-mono tabular-nums text-jb-red">−{won(row.missionIns)}</td>
+      <td className="px-3 py-2.5 text-right font-mono font-medium tabular-nums text-jb-ink">{won(row.missionPayout)}</td>
+      {/* 총 지급액 */}
+      <td className="border-l border-jb-line-soft px-3 py-2.5 text-right font-mono font-semibold tabular-nums text-jb-indigo">{won(row.total)}</td>
     </tr>
   );
 }
