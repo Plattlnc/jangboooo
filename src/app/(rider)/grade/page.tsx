@@ -2,6 +2,8 @@
 // 최상위 카드(현재 등급·실시간 보상·승급 안내) + 구간별 내역 + 등급 조건표.
 // ⚠️ 티어 아이콘은 임시(색상 타일+이니셜) — 사용자가 직접 디자인해 교체 예정.
 
+import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 import { getMyGrade } from "@/app/(rider)/_lib/grade";
 import { TIERS, type Tier } from "@/lib/grade";
 
@@ -92,6 +94,16 @@ export default async function GradePage() {
           </div>
         </div>
       ) : null}
+
+      {/* 내 등급 기록 */}
+      <Link
+        href="/grade/history"
+        className="mt-3 flex items-center gap-2 rounded-[12px] border border-jb-line bg-white px-4 py-3.5 shadow-[0_1px_2px_0_rgba(0,0,0,0.04)] transition-colors active:bg-jb-line-soft"
+      >
+        <span className="flex-1 text-[13.5px] font-black text-jb-ink">내 등급 기록</span>
+        <span className="text-[11.5px] font-semibold text-jb-ink-mute">주차별 등급·보상</span>
+        <ChevronRight size={17} strokeWidth={2.2} className="shrink-0 text-jb-ink-mute" />
+      </Link>
 
       {/* 등급 조건 */}
       <div className="mb-2 mt-5 text-[15px] font-black text-jb-ink">등급 조건</div>

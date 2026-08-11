@@ -15,6 +15,9 @@ export interface Tier {
   color: string;
 }
 
+/** 배달등급 제도 시행 시작일(첫 시즌 첫 주의 수요일). 이 날짜 이전 주는 기록에 포함하지 않는다. */
+export const GRADE_SEASON_START = "2026-08-12"; // 2026-08-12(수) ~ 첫 시즌
+
 // 낮은 등급 → 높은 등급 순.
 export const TIERS: Tier[] = [
   { key: "bronze", name: "브론즈", min: 0, max: 50, rate: 0, color: "#a9754e" },
