@@ -43,8 +43,51 @@ export default async function AttendancePage() {
         {ATTENDANCE_DAYS_REQUIRED}일 달성 시 {ATTENDANCE_REWARD.toLocaleString("ko-KR")}원
       </p>
 
+      {/* 보상 카드 (상단) */}
+      <div className="rounded-2xl border border-jb-line bg-white px-[18px] py-4 shadow-[0_1px_2px_0_rgba(0,0,0,0.04)]">
+        <div className="flex items-center gap-3">
+          <div
+            className={
+              "grid size-11 shrink-0 place-items-center rounded-full " +
+              (att.reached ? "bg-jb-green-tint text-jb-green" : "bg-jb-track text-jb-ink-mute")
+            }
+          >
+            <Gift size={22} strokeWidth={2.2} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="text-[12px] font-semibold text-jb-ink-mute">{ATTENDANCE_DAYS_REQUIRED}일 달성 보상</div>
+            <div
+              className={
+                "tnum text-[22px] font-black leading-tight tracking-[-0.02em] " +
+                (att.reached ? "text-jb-green" : "text-jb-ink")
+              }
+            >
+              {ATTENDANCE_REWARD.toLocaleString("ko-KR")}
+              <span className="ml-1 text-[14px] font-bold text-jb-ink-mute">원</span>
+            </div>
+          </div>
+        </div>
+        <div
+          className={
+            "mt-3 rounded-[10px] px-3 py-2 text-[12px] font-bold " +
+            (att.reached ? "bg-jb-green-tint text-jb-green" : "bg-jb-surface text-jb-ink")
+          }
+        >
+          {att.reached ? (
+            <>이번 주 {att.required}일 달성! {ATTENDANCE_REWARD.toLocaleString("ko-KR")}원이 적립돼요 🎉</>
+          ) : (
+            <>
+              보상까지 <span className="tnum">{att.remainingDays}</span>일 더 달성하면 돼요 (하루 {ATTENDANCE_DAILY_TARGET}건)
+            </>
+          )}
+        </div>
+        {!seasonOpen ? (
+          <div className="mt-2 text-[11px] text-jb-ink-mute">시즌이 열리면 출석 보상이 지급돼요.</div>
+        ) : null}
+      </div>
+
       {/* 메인 카드 — 주차·달성일 + 7일 일별 진행 */}
-      <div className="rounded-2xl border border-jb-line bg-white px-[18px] py-[17px] shadow-[0_1px_2px_0_rgba(0,0,0,0.04)]">
+      <div className="mt-3 rounded-2xl border border-jb-line bg-white px-[18px] py-[17px] shadow-[0_1px_2px_0_rgba(0,0,0,0.04)]">
         <div className="flex items-center justify-between">
           <div className="tnum text-[13px] font-black text-jb-ink">
             {md(att.weekStart)} ~ {md(att.weekEnd)}
@@ -112,49 +155,6 @@ export default async function AttendancePage() {
             );
           })}
         </div>
-      </div>
-
-      {/* 보상 카드 */}
-      <div className="mt-3 rounded-2xl border border-jb-line bg-white px-[18px] py-4 shadow-[0_1px_2px_0_rgba(0,0,0,0.04)]">
-        <div className="flex items-center gap-3">
-          <div
-            className={
-              "grid size-11 shrink-0 place-items-center rounded-full " +
-              (att.reached ? "bg-jb-green-tint text-jb-green" : "bg-jb-track text-jb-ink-mute")
-            }
-          >
-            <Gift size={22} strokeWidth={2.2} />
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="text-[12px] font-semibold text-jb-ink-mute">{ATTENDANCE_DAYS_REQUIRED}일 달성 보상</div>
-            <div
-              className={
-                "tnum text-[22px] font-black leading-tight tracking-[-0.02em] " +
-                (att.reached ? "text-jb-green" : "text-jb-ink")
-              }
-            >
-              {ATTENDANCE_REWARD.toLocaleString("ko-KR")}
-              <span className="ml-1 text-[14px] font-bold text-jb-ink-mute">원</span>
-            </div>
-          </div>
-        </div>
-        <div
-          className={
-            "mt-3 rounded-[10px] px-3 py-2 text-[12px] font-bold " +
-            (att.reached ? "bg-jb-green-tint text-jb-green" : "bg-jb-surface text-jb-ink")
-          }
-        >
-          {att.reached ? (
-            <>이번 주 {att.required}일 달성! {ATTENDANCE_REWARD.toLocaleString("ko-KR")}원이 적립돼요 🎉</>
-          ) : (
-            <>
-              보상까지 <span className="tnum">{att.remainingDays}</span>일 더 달성하면 돼요 (하루 {ATTENDANCE_DAILY_TARGET}건)
-            </>
-          )}
-        </div>
-        {!seasonOpen ? (
-          <div className="mt-2 text-[11px] text-jb-ink-mute">시즌이 열리면 출석 보상이 지급돼요.</div>
-        ) : null}
       </div>
 
       {/* 설명 */}
