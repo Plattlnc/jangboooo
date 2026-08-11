@@ -1,11 +1,136 @@
-// 배달등급 — 준비 중(공백). 추후 등급 산정/노출 구현.
+// 배달등급 — 주간(수~화) 누적 완료건 기준 7등급 + 구간별 누진 프로모션 보상.
+// 최상위 카드(현재 등급·실시간 보상·승급 안내) + 구간별 내역 + 등급 조건표.
+// ⚠️ 티어 아이콘은 임시(색상 타일+이니셜) — 사용자가 직접 디자인해 교체 예정.
 
-export default function GradePage() {
+import { getMyGrade } from "@/app/(rider)/_lib/grade";
+import { TIERS, type Tier } from "@/lib/grade";
+
+export const dynamic = "force-dynamic";
+
+/** 임시 티어 아이콘 — 색상 타일 + 등급 이니셜. 사용자 디자인으로 교체 예정. */
+function TierBadge({ tier, size = 44 }: { tier: Tier; size?: number }) {
+  return (
+    <span
+      aria-hidden="true"
+      className="grid shrink-0 place-items-center rounded-[12px] font-black text-white shadow-[0_2px_6px_rgba(0,0,0,0.18)]"
+      style={{ width: size, height: size, background: tier.color, fontSize: Math.round(size * 0.4) }}
+    >
+      {tier.name.slice(0, 1)}
+    </span>
+  );
+}
+
+function rangeLabel(t: Tier): string {
+  return t.max === Infinity ? `${t.min}건 이상` : `${t.min}~${t.max}건`;
+}
+
+export default async function GradePage() {
+  const g = await getMyGrade();
+
   return (
     <div className="px-3.5 pb-10 pt-3.5">
       <h1 className="text-xl font-black tracking-[-0.03em]">배달등급</h1>
-      <div className="grid min-h-[60dvh] place-items-center">
-        <span className="text-[12.5px] text-jb-ink-mute">준비 중입니다</span>
+      <p className="mb-3.5 mt-1 text-[12.5px] text-jb-ink-mute">주간(수~화) 누적 완료건 기준 · 구간별 누진 보상</p>
+
+      {/* 최상위 카드 — 현재 등급 · 실시간 보상 · 승급 안내 */}
+      <div
+        className="rounded-2xl px-[18px] py-[17px] text-white shadow-[0_8px_16px_-4px_rgba(0,0,0,0.16)]"
+        style={{ background: `linear-gradient(135deg, ${g.tier.color}, color-mix(in srgb, ${g.tier.color} 72%, #000))` }}
+      >
+        <div className="flex items-center gap-3">
+          <TierBadge tier={g.tier} size={48} />
+          <div className="min-w-0">
+            <div className="text-[14px] font-bold opacity-95">
+              <span className="font-black">{g.name}</span>님, 현재
+            </div>
+            <div className="text-[22px] font-black leading-tight tracking-[-0.02em]">{g.tier.name}</div>
+          </div>
+        </div>
+
+        <div className="mt-3.5 border-t border-white/25 pt-3">
+          <div className="text-[11.5px] font-semibold opacity-90">현재 예정 등급 보상</div>
+          <div className="tnum mt-0.5 text-[27px] font-black leading-none tracking-[-0.02em]">
+            {g.reward.toLocaleString("ko-KR")}
+            <span className="ml-1 text-[16px] font-bold opacity-90">원</span>
+            <span className="ml-2 text-[12.5px] font-bold opacity-80">총 {g.completed.toLocaleString("ko-KR")}건</span>
+          </div>
+        </div>
+
+        <div className="mt-3 rounded-[10px] bg-white/15 px-3 py-2 text-[12px] font-bold">
+          {g.nextTier ? (
+            <>
+              <span className="tnum">{g.toNext.toLocaleString("ko-KR")}</span>건 완료 시,{" "}
+              <span className="font-black">{g.nextTier.name}</span>으로 승급합니다
+            </>
+          ) : (
+            <>최고 등급입니다 🎉</>
+          )}
+        </div>
+      </div>
+
+      {/* 구간별 누진 보상 내역 */}
+      {g.breakdown.length > 0 ? (
+        <div className="mt-3 rounded-[12px] border border-jb-line bg-white px-4 py-1 shadow-[0_1px_2px_0_rgba(0,0,0,0.04)]">
+          {g.breakdown.map((b) => (
+            <div
+              key={b.tier.key}
+              className="flex items-center justify-between border-t border-jb-line-soft py-2.5 text-[12.5px] first:border-t-0"
+            >
+              <span className="flex items-center gap-2 font-bold text-jb-ink">
+                <span className="size-2 rounded-full" style={{ background: b.tier.color }} />
+                {b.tier.name}
+                <span className="tnum font-semibold text-jb-ink-mute">
+                  {b.count.toLocaleString("ko-KR")}건 × {b.tier.rate.toLocaleString("ko-KR")}원
+                </span>
+              </span>
+              <span className="tnum font-black text-jb-green">{b.amount.toLocaleString("ko-KR")}원</span>
+            </div>
+          ))}
+          <div className="flex items-center justify-between border-t border-jb-line py-2.5 text-[13px] font-black">
+            <span className="text-jb-ink">합계</span>
+            <span className="tnum text-jb-green">{g.reward.toLocaleString("ko-KR")}원</span>
+          </div>
+        </div>
+      ) : null}
+
+      {/* 등급 조건 */}
+      <div className="mb-2 mt-5 text-[15px] font-black text-jb-ink">등급 조건</div>
+      <div className="space-y-2">
+        {[...TIERS].reverse().map((t) => {
+          const current = t.key === g.tier.key;
+          return (
+            <div
+              key={t.key}
+              className={
+                "flex items-center gap-3 rounded-[12px] border bg-white px-3.5 py-3 shadow-[0_1px_2px_0_rgba(0,0,0,0.04)] " +
+                (current ? "border-transparent ring-2 ring-jb-indigo" : "border-jb-line")
+              }
+            >
+              <TierBadge tier={t} size={40} />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[14px] font-black text-jb-ink">{t.name}</span>
+                  {current ? (
+                    <span className="rounded-[6px] bg-jb-indigo-tint px-1.5 py-0.5 text-[10px] font-black text-jb-indigo">
+                      현재
+                    </span>
+                  ) : null}
+                </div>
+                <div className="tnum mt-0.5 text-[11.5px] font-semibold text-jb-ink-mute">{rangeLabel(t)}</div>
+              </div>
+              <span className={"tnum shrink-0 text-[13px] font-black " + (t.rate > 0 ? "text-jb-ink" : "text-jb-ink-mute")}>
+                {t.rate > 0 ? `건당 ${t.rate.toLocaleString("ko-KR")}원` : "보상 없음"}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* 설명 */}
+      <div className="mt-4 rounded-[12px] bg-jb-surface px-4 py-3 text-[11.5px] leading-relaxed text-jb-ink-soft">
+        주간(수요일~화요일) 누적 완료건에 따라 등급이 정해집니다. 보상은 <b>각 구간의 초과분에만</b> 해당 단가가 가산되는{" "}
+        <b>누진 방식</b>이라, 등급이 올라가도 이전 구간의 단가는 그대로 유지됩니다. (예: 220건 → 101~150건 100원 + 151~200건
+        400원 + 201~220건 600원 합산)
       </div>
     </div>
   );
