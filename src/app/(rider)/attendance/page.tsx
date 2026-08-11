@@ -1,7 +1,7 @@
 // 출석체크 — 주간(수~화) 일별 30건 달성. 7일 중 5일 30건 이상이면 35,000원 지급.
 // 데이터: getMyAttendance() (get_rider_daily_for('week') 일별 완료건). 드로어 최상위 진입.
 
-import { Check, Gift } from "lucide-react";
+import { Gift } from "lucide-react";
 import { getMyAttendance } from "@/app/(rider)/_lib/grade";
 import { seasonOf } from "@/lib/grade";
 import {
@@ -27,17 +27,7 @@ export default async function AttendancePage() {
   return (
     <div className="px-3.5 pb-10 pt-3.5">
       {/* 헤더 */}
-      <div className="flex items-center gap-2">
-        <h1 className="text-xl font-black tracking-[-0.03em]">출석체크</h1>
-        <span
-          className={
-            "rounded-full px-2 py-0.5 text-[11px] font-black " +
-            (seasonOpen ? "bg-jb-indigo-tint text-jb-indigo" : "bg-jb-track text-jb-ink-mute")
-          }
-        >
-          {seasonOpen ? `시즌 ${season.number}` : "시즌 미오픈"}
-        </span>
-      </div>
+      <h1 className="text-xl font-black tracking-[-0.03em]">출석체크</h1>
       <p className="mb-3.5 mt-1 text-[12.5px] text-jb-ink-mute">
         하루 {ATTENDANCE_DAILY_TARGET}건 완료 시 출석 · 주간(수~화) {ATTENDANCE_WEEK_DAYS}일 중{" "}
         {ATTENDANCE_DAYS_REQUIRED}일 달성 시 {ATTENDANCE_REWARD.toLocaleString("ko-KR")}원
@@ -59,7 +49,7 @@ export default async function AttendancePage() {
             <Gift size={22} strokeWidth={2.2} />
           </div>
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center justify-between gap-1.5">
               <span className="text-[12px] font-semibold text-jb-ink-mute">{ATTENDANCE_DAYS_REQUIRED}일 달성 보상</span>
               <span
                 className={
@@ -140,14 +130,6 @@ export default async function AttendancePage() {
           {att.days.map((d) => {
             const isToday = d.date === att.today;
             const pct = Math.min(100, Math.round((d.completed / ATTENDANCE_DAILY_TARGET) * 100));
-            const rowBg =
-              d.status === "done"
-                ? "bg-jb-green-tint"
-                : d.status === "missed"
-                  ? "bg-jb-red-tint"
-                  : isToday
-                    ? "bg-jb-surface"
-                    : "bg-jb-surface/60";
             const wdColor =
               d.status === "done" ? "text-jb-green" : d.status === "missed" ? "text-jb-red" : "text-jb-ink-soft";
             const cntColor =
@@ -155,25 +137,13 @@ export default async function AttendancePage() {
             const barColor =
               d.status === "done" ? "var(--jb-green)" : d.status === "missed" ? "var(--jb-red)" : "var(--jb-indigo)";
             return (
-              <div key={d.date} className={"flex items-center gap-2.5 rounded-[12px] px-2.5 py-2 " + rowBg}>
+              <div key={d.date} className="flex items-center gap-2.5 rounded-[12px] bg-jb-surface px-2.5 py-2">
                 <span className={"w-7 shrink-0 text-center text-[14px] font-black " + wdColor}>{d.weekday}</span>
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-baseline justify-between">
-                    <span className="tnum text-[12px] font-bold text-jb-ink-soft">
-                      <span className={"font-black " + cntColor}>{d.completed}</span>
-                      <span className="text-jb-ink-mute"> / {ATTENDANCE_DAILY_TARGET}건</span>
-                      {isToday ? <span className="ml-1.5 text-[10.5px] font-black text-jb-indigo">오늘</span> : null}
-                    </span>
-                    {d.status === "done" ? (
-                      <span className="inline-flex items-center gap-0.5 text-[11px] font-black text-jb-green">
-                        <Check size={13} strokeWidth={3} />
-                        달성
-                      </span>
-                    ) : d.status === "missed" ? (
-                      <span className="text-[11px] font-black text-jb-red">미달성</span>
-                    ) : (
-                      <span className="text-[11px] font-bold text-jb-ink-mute">{isToday ? "진행중" : "예정"}</span>
-                    )}
+                  <div className="tnum text-[12px] font-bold text-jb-ink-soft">
+                    <span className={"font-black " + cntColor}>{d.completed}</span>
+                    <span className="text-jb-ink-mute"> / {ATTENDANCE_DAILY_TARGET}건</span>
+                    {isToday ? <span className="ml-1.5 text-[10.5px] font-black text-jb-indigo">오늘</span> : null}
                   </div>
                   <div className="mt-1 h-[6px] overflow-hidden rounded-full bg-jb-track">
                     <div className="h-full rounded-full" style={{ width: `${pct}%`, background: barColor }} />
