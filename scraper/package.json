@@ -11,6 +11,7 @@
     "start": "tsx src/index.ts",
     "once": "tsx src/index.ts --once",
     "dev": "tsx watch src/index.ts",
+    "backfill:fees": "tsx scripts/backfill-fees.ts",
     "capture": "tsx scripts/capture-session.ts",
     "capture:google": "tsx scripts/capture-google-session.ts",
     "backfill": "tsx scripts/backfill.ts",
