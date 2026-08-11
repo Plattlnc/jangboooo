@@ -1,4 +1,4 @@
-// 출석체크 — 주간(수~화) 일별 30건 달성. 7일 중 5일 30건 이상이면 35,000원 지급.
+// 출석체크 — 주간(수~화) 일별 목표 달성. 7일 중 5일 달성이면 보상 지급(상수=@/lib/attendance).
 // 데이터: getMyAttendance() (get_rider_daily_for('week') 일별 완료건). 드로어 최상위 진입.
 
 import { Gift } from "lucide-react";
@@ -122,7 +122,7 @@ export default async function AttendancePage() {
 
         <div className="mt-1 text-[13px] font-bold text-jb-ink-soft">
           달성 <span className="font-black text-jb-green">{att.achievedDays}</span> / {att.required}일
-          <span className="ml-1 text-jb-ink-mute">(30건 이상인 날)</span>
+          <span className="ml-1 text-jb-ink-mute">({ATTENDANCE_DAILY_TARGET}건 이상인 날)</span>
         </div>
 
         {/* 7일 일별 진행 — 수~화 */}
