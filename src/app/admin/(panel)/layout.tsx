@@ -7,6 +7,7 @@ import { isAdminSession } from "@/lib/auth/admin-cookies";
 import { signOutAdmin } from "@/actions/admin-auth";
 import { AdminBottomNav } from "@/components/admin/admin-nav";
 import { AdminMenuButton } from "@/components/admin/admin-drawer";
+import { BrandLogo } from "@/components/ui/brand-logo";
 
 export const metadata: Metadata = {
   title: "관리자 · 슬라이더",
@@ -24,9 +25,9 @@ export default async function AdminPanelLayout({ children }: { children: ReactNo
       <header className="flex items-center justify-between border-b border-jb-line bg-white px-3.5 py-2.5">
         <div className="flex items-center gap-1.5">
           <AdminMenuButton />
-          <div className="flex items-baseline gap-2">
-            <span className="text-[15px] font-black tracking-[-0.02em] text-jb-ink">
-              <span aria-hidden="true" className="emoji mr-1">🛵</span>슬라이더
+          <div className="flex items-center gap-2">
+            <span className="flex items-center gap-1.5 text-[15px] font-black tracking-[-0.02em] text-jb-ink">
+              <BrandLogo size={19} />슬라이더
             </span>
             <span className="rounded-[6px] bg-jb-indigo-tint px-1.5 py-0.5 text-[10.5px] font-black text-jb-indigo">관리자</span>
           </div>

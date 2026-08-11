@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
+import { BrandLogo } from "@/components/ui/brand-logo";
 import { signInAdmin } from "@/actions/admin-auth";
 
 // 관리자 로그인 — 단일 계정. 성공 시 하드 네비게이션(쿠키 반영, 라이더 폼과 동일 이유).
@@ -39,8 +40,8 @@ export function AdminLoginForm() {
   return (
     <div className="app-container flex min-h-dvh flex-col px-5 py-8">
       <div className="flex flex-col gap-3 pt-12">
-        <span className="text-caption text-muted-foreground">
-          <span aria-hidden="true" className="emoji mr-1">🛵</span>슬라이더 관리자
+        <span className="flex items-center gap-1.5 text-caption text-muted-foreground">
+          <BrandLogo size={17} />슬라이더 관리자
         </span>
         <h1 className="text-h1 text-foreground">협력사 운영 현황, 한 화면에.</h1>
         <p className="text-body text-muted-foreground">관리자 계정으로 로그인해 전체 라이더 실적을 확인해요.</p>
