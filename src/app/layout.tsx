@@ -6,7 +6,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 
 // 메타/SEO: 값 SSOT = docs/seo-checklist.md(cmo) + docs/design/04-brand-assets.md(uxui).
 // 사적 도구이므로 전역 noindex(검색 비노출), OG/PWA 는 공유·홈화면 경험용.
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://slider.kr";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
