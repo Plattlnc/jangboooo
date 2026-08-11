@@ -49,17 +49,35 @@ export default async function AttendancePage() {
           <div
             className={
               "grid size-11 shrink-0 place-items-center rounded-full " +
-              (att.reached ? "bg-jb-green-tint text-jb-green" : "bg-jb-track text-jb-ink-mute")
+              (att.reached
+                ? "bg-jb-green-tint text-jb-green"
+                : att.failed
+                  ? "bg-jb-red-tint text-jb-red"
+                  : "bg-jb-track text-jb-ink-mute")
             }
           >
             <Gift size={22} strokeWidth={2.2} />
           </div>
           <div className="min-w-0 flex-1">
-            <div className="text-[12px] font-semibold text-jb-ink-mute">{ATTENDANCE_DAYS_REQUIRED}일 달성 보상</div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[12px] font-semibold text-jb-ink-mute">{ATTENDANCE_DAYS_REQUIRED}일 달성 보상</span>
+              <span
+                className={
+                  "rounded-full px-2 py-0.5 text-[10.5px] font-black " +
+                  (att.reached
+                    ? "bg-jb-green-tint text-jb-green"
+                    : att.failed
+                      ? "bg-jb-red-tint text-jb-red"
+                      : "bg-jb-indigo-tint text-jb-indigo")
+                }
+              >
+                {att.reached ? "달성" : att.failed ? "미달성" : "진행중"}
+              </span>
+            </div>
             <div
               className={
                 "tnum text-[22px] font-black leading-tight tracking-[-0.02em] " +
-                (att.reached ? "text-jb-green" : "text-jb-ink")
+                (att.reached ? "text-jb-green" : att.failed ? "text-jb-red" : "text-jb-ink")
               }
             >
               {ATTENDANCE_REWARD.toLocaleString("ko-KR")}
@@ -70,11 +88,17 @@ export default async function AttendancePage() {
         <div
           className={
             "mt-3 rounded-[10px] px-3 py-2 text-[12px] font-bold " +
-            (att.reached ? "bg-jb-green-tint text-jb-green" : "bg-jb-surface text-jb-ink")
+            (att.reached
+              ? "bg-jb-green-tint text-jb-green"
+              : att.failed
+                ? "bg-jb-red-tint text-jb-red"
+                : "bg-jb-surface text-jb-ink")
           }
         >
           {att.reached ? (
             <>이번 주 {att.required}일 달성! {ATTENDANCE_REWARD.toLocaleString("ko-KR")}원이 적립돼요 🎉</>
+          ) : att.failed ? (
+            <>남은 일수로는 {att.required}일 달성이 어려워 이번 주는 미달성이에요</>
           ) : (
             <>
               보상까지 <span className="tnum">{att.remainingDays}</span>일 더 달성하면 돼요 (하루 {ATTENDANCE_DAILY_TARGET}건)
@@ -95,10 +119,14 @@ export default async function AttendancePage() {
           <span
             className={
               "rounded-full px-2.5 py-[3px] text-[11px] font-black " +
-              (att.reached ? "bg-jb-green-tint text-jb-green" : "bg-jb-track text-jb-ink-mute")
+              (att.reached
+                ? "bg-jb-green-tint text-jb-green"
+                : att.failed
+                  ? "bg-jb-red-tint text-jb-red"
+                  : "bg-jb-indigo-tint text-jb-indigo")
             }
           >
-            {att.reached ? "달성" : "미달성"}
+            {att.reached ? "달성" : att.failed ? "미달성" : "진행중"}
           </span>
         </div>
 
@@ -112,43 +140,43 @@ export default async function AttendancePage() {
           {att.days.map((d) => {
             const isToday = d.date === att.today;
             const pct = Math.min(100, Math.round((d.completed / ATTENDANCE_DAILY_TARGET) * 100));
+            const rowBg =
+              d.status === "done"
+                ? "bg-jb-green-tint"
+                : d.status === "missed"
+                  ? "bg-jb-red-tint"
+                  : isToday
+                    ? "bg-jb-surface"
+                    : "bg-jb-surface/60";
+            const wdColor =
+              d.status === "done" ? "text-jb-green" : d.status === "missed" ? "text-jb-red" : "text-jb-ink-soft";
+            const cntColor =
+              d.status === "done" ? "text-jb-green" : d.status === "missed" ? "text-jb-red" : "text-jb-ink";
+            const barColor =
+              d.status === "done" ? "var(--jb-green)" : d.status === "missed" ? "var(--jb-red)" : "var(--jb-indigo)";
             return (
-              <div
-                key={d.date}
-                className={
-                  "flex items-center gap-2.5 rounded-[12px] px-2.5 py-2 " +
-                  (d.done ? "bg-jb-green-tint" : isToday ? "bg-jb-surface" : "bg-jb-surface/60")
-                }
-              >
-                <span
-                  className={
-                    "grid size-8 shrink-0 place-items-center rounded-full text-[13px] font-black " +
-                    (d.done ? "bg-jb-green text-white" : "bg-white text-jb-ink-mute ring-1 ring-jb-line")
-                  }
-                >
-                  {d.weekday}
-                </span>
+              <div key={d.date} className={"flex items-center gap-2.5 rounded-[12px] px-2.5 py-2 " + rowBg}>
+                <span className={"w-7 shrink-0 text-center text-[14px] font-black " + wdColor}>{d.weekday}</span>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-baseline justify-between">
                     <span className="tnum text-[12px] font-bold text-jb-ink-soft">
-                      <span className={"font-black " + (d.done ? "text-jb-green" : "text-jb-ink")}>{d.completed}</span>
+                      <span className={"font-black " + cntColor}>{d.completed}</span>
                       <span className="text-jb-ink-mute"> / {ATTENDANCE_DAILY_TARGET}건</span>
                       {isToday ? <span className="ml-1.5 text-[10.5px] font-black text-jb-indigo">오늘</span> : null}
                     </span>
-                    {d.done ? (
+                    {d.status === "done" ? (
                       <span className="inline-flex items-center gap-0.5 text-[11px] font-black text-jb-green">
                         <Check size={13} strokeWidth={3} />
                         달성
                       </span>
+                    ) : d.status === "missed" ? (
+                      <span className="text-[11px] font-black text-jb-red">미달성</span>
                     ) : (
-                      <span className="text-[11px] font-bold text-jb-ink-mute">미달성</span>
+                      <span className="text-[11px] font-bold text-jb-ink-mute">{isToday ? "진행중" : "예정"}</span>
                     )}
                   </div>
                   <div className="mt-1 h-[6px] overflow-hidden rounded-full bg-jb-track">
-                    <div
-                      className="h-full rounded-full"
-                      style={{ width: `${pct}%`, background: d.done ? "var(--jb-green)" : "var(--jb-indigo)" }}
-                    />
+                    <div className="h-full rounded-full" style={{ width: `${pct}%`, background: barColor }} />
                   </div>
                 </div>
               </div>

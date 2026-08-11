@@ -146,6 +146,7 @@ export async function getMyAttendance(): Promise<MyAttendance> {
     today,
     ...computeAttendance(
       dayDates.map((date) => ({ date, weekday: weekdayKo(date), completed: byDate.get(date) ?? 0 })),
+      today,
     ),
   });
 
