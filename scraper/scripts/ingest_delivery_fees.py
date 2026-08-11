@@ -55,6 +55,7 @@ def parse(path, password):
         sys.exit(f"[배달 내역 상세] 필수 컬럼 누락: {dict(User_ID=ui, 운행일=di, 배달상태=si, 배달처리비=fi, 귀책=gi)}")
     # 상세 컬럼(없으면 -1 → None 저장)
     no_i = col_index(hdr, "배달번호")
+    sn_i = col_index(hdr, "가맹점명", "가게명")
     pu_i = col_index(hdr, "픽업완료")
     dl_i = col_index(hdr, "전달완료")
     ds_i = col_index(hdr, "거리")
@@ -90,6 +91,7 @@ def parse(path, password):
                 "admin_rider_id": uid,
                 "snapshot_date": date,
                 "status": st,
+                "store_name": str(cell(r, sn_i)).strip() if cell(r, sn_i) is not None else None,
                 "pickup_at": str(cell(r, pu_i)) if cell(r, pu_i) is not None else None,
                 "delivered_at": str(cell(r, dl_i)) if cell(r, dl_i) is not None else None,
                 "distance_m": int(round(cell(r, ds_i))) if isinstance(cell(r, ds_i), (int, float)) else None,

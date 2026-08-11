@@ -78,13 +78,19 @@ export default async function DiaryDayPage({ params }: { params: Promise<{ date:
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
-                  {/* 시간·거리 */}
-                  <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[12px] font-semibold text-jb-ink">
+                  {/* 가게(픽업지) 이름 */}
+                  <div className="flex items-center gap-1.5">
                     {dv.isCanceled ? (
-                      <span className="rounded-[6px] bg-jb-red-tint px-1.5 py-0.5 text-[10.5px] font-black text-jb-red">
+                      <span className="shrink-0 rounded-[6px] bg-jb-red-tint px-1.5 py-0.5 text-[10.5px] font-black text-jb-red">
                         취소
                       </span>
                     ) : null}
+                    <span className="truncate text-[13.5px] font-black text-jb-ink">
+                      {dv.storeName ?? "가게 정보 없음"}
+                    </span>
+                  </div>
+                  {/* 시간·거리 */}
+                  <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[12px] font-semibold text-jb-ink-soft">
                     {dv.pickupTime ? <span className="tnum">픽업 {dv.pickupTime}</span> : null}
                     {dv.deliveredTime ? (
                       <>

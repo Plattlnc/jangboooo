@@ -130,6 +130,7 @@ export interface DeliveryDetail {
   deliveryNo: string;
   status: string; // 배달상태(전달완료/배달취소 등)
   isCanceled: boolean;
+  storeName: string | null; // 가맹점명(픽업지·가게 이름)
   pickupTime: string | null; // HH:MM
   deliveredTime: string | null; // HH:MM
   distanceKm: number | null; // floor(m/100)/10 (예 2492→2.4)
@@ -170,7 +171,7 @@ export async function getDayDeliveryDetails(date: string): Promise<DayDetail | n
     const admin = createAdminClient();
     const { data, error } = await admin
       .from("delivery_fee_details")
-      .select("delivery_no, status, pickup_at, delivered_at, distance_m, base_fee, weather_fee, extra_fee, peak_fee, region_fee, bulk_fee, fee_krw")
+      .select("delivery_no, status, store_name, pickup_at, delivered_at, distance_m, base_fee, weather_fee, extra_fee, peak_fee, region_fee, bulk_fee, fee_krw")
       .eq("admin_rider_id", session.adminRiderId)
       .eq("snapshot_date", date);
     if (error) {
@@ -184,6 +185,7 @@ export async function getDayDeliveryDetails(date: string): Promise<DayDetail | n
           deliveryNo: r.delivery_no as string,
           status,
           isCanceled: status !== "전달완료",
+          storeName: (r.store_name as string | null) ?? null,
           pickupTime: hhmm(r.pickup_at as string | null),
           deliveredTime: hhmm(r.delivered_at as string | null),
           distanceKm: r.distance_m != null ? Math.floor((r.distance_m as number) / 100) / 10 : null,
@@ -211,6 +213,23 @@ export async function getDayDeliveryDetails(date: string): Promise<DayDetail | n
   }
 }
 
+const DEMO_STORES = [
+  "맘스터치 간석점",
+  "BBQ 구월점",
+  "교촌치킨 만수점",
+  "노브랜드버거 인천논현점",
+  "김밥천국 구월중앙점",
+  "롯데리아 간석오거리점",
+  "배스킨라빈스 모래내점",
+  "써브웨이 인천시청역점",
+  "맥도날드 인천구월DT",
+  "빽다방 간석역점",
+  "엽기떡볶이 만수점",
+  "한솥도시락 구월점",
+  "컴포즈커피 인천논현점",
+  "명륜진사갈비 간석점",
+];
+
 function demoDayDetail(date: string): DayDetail {
   const deliveries: DeliveryDetail[] = [];
   const n = 8 + (Number(date.slice(8, 10)) % 6);
@@ -225,6 +244,7 @@ function demoDayDetail(date: string): DayDetail {
       deliveryNo: `DEMO${date.replaceAll("-", "")}${i}`,
       status: canceled ? "배달취소" : "전달완료",
       isCanceled: canceled,
+      storeName: DEMO_STORES[(Number(date.slice(8, 10)) + i) % DEMO_STORES.length]!,
       pickupTime: `${hh}:${String((i * 7) % 60).padStart(2, "0")}`,
       deliveredTime: canceled ? null : `${hh}:${String((i * 7 + 15) % 60).padStart(2, "0")}`,
       distanceKm: Math.floor((900 + i * 240) / 100) / 10,

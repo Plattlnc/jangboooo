@@ -80,6 +80,7 @@ export type DeliveryFeeDetailRow = {
   admin_rider_id: string
   snapshot_date: string
   status: string
+  store_name: string | null
   pickup_at: string | null
   delivered_at: string | null
   distance_m: number | null
