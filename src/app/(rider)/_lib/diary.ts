@@ -22,8 +22,6 @@ export interface DiaryDay {
   missionKrw: number;
   /** 총 이동거리(km, 소수1). 상세 없으면 null. */
   distanceKm: number | null;
-  /** KM당 단가(원/km). 거리 있을 때만. */
-  perKmKrw: number | null;
   /** 시급(원/시간) = 수입 / (첫픽업~마지막전달). 근무시간 있을 때만. */
   hourlyKrw: number | null;
 }
@@ -40,8 +38,6 @@ export interface DiaryMonth {
   totalMissionKrw: number;
   /** 이 달 총 이동거리(km, 소수1). 상세 없으면 null. */
   totalDistanceKm: number | null;
-  /** 이 달 KM당 단가(원/km). */
-  perKmKrw: number | null;
   /** 이 달 시급(원/시간) = 총수입 / 총근무시간. */
   hourlyKrw: number | null;
 }
@@ -58,11 +54,6 @@ function weekdayOf(date: string): string {
   return WEEKDAY[new Date(`${date}T12:00:00Z`).getUTCDay()];
 }
 
-/** 수입/거리(m) → KM당 단가(원/km). 거리 0이면 null. */
-function perKm(fee: number | null, distanceM: number): number | null {
-  if (fee == null || distanceM <= 0) return null;
-  return Math.round(fee / (distanceM / 1000));
-}
 /** 수입/근무(분) → 시급(원/시간). 근무 0이면 null. */
 function hourly(fee: number | null, workMin: number | null): number | null {
   if (fee == null || workMin == null || workMin <= 0) return null;
@@ -87,7 +78,6 @@ function toDiary(month: string, rows: RiderDailyRow[], fees?: FeeMap, metrics?: 
         feeKrw: fee,
         missionKrw: f ? f.mission : 0,
         distanceKm: distanceM > 0 ? Math.floor(distanceM / 100) / 10 : null,
-        perKmKrw: perKm(fee, distanceM),
         hourlyKrw: hourly(fee, met?.workMin ?? null),
       };
     })
@@ -104,7 +94,6 @@ function toDiary(month: string, rows: RiderDailyRow[], fees?: FeeMap, metrics?: 
     totalFeeKrw: totalFee,
     totalMissionKrw: days.reduce((sum, d) => sum + d.missionKrw, 0),
     totalDistanceKm: totalDistM > 0 ? Math.floor(totalDistM / 100) / 10 : null,
-    perKmKrw: perKm(totalFee, totalDistM),
     hourlyKrw: hourly(totalFee, totalWorkMin > 0 ? totalWorkMin : null),
   };
 }
@@ -299,7 +288,7 @@ export async function getDeliveryDiary(month: string): Promise<DiaryMonth> {
         });
       }
     }
-    // KM당 단가·시급용 — delivery_fee_details 에서 일자별 총이동거리(전달완료)·근무시간(첫픽업~마지막전달) 집계.
+    // 총 이동거리·시급용 — delivery_fee_details 에서 일자별 총이동거리(전달완료)·근무시간(첫픽업~마지막전달) 집계.
     const metrics: MetricMap = new Map();
     const { data: detRows, error: detErr } = await admin
       .from("delivery_fee_details")
