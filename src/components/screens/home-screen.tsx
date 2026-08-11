@@ -138,7 +138,7 @@ export function HomeScreen({
   const cardCls = "rounded-[20px] bg-jb-card shadow-[var(--toss-shadow)]";
 
   return (
-    <div className="toss-home px-4 pb-6 pt-2.5">
+    <div className="toss-home px-4 pb-6 pt-[14px]">
       {/* 프로필 — 아바타(내정보 등록 사진, 없으면 이니셜). UID 미표기(2026-07-31 사용자 확정). */}
       <div className="flex items-center gap-[11px] px-0.5 pb-1 pt-0.5">
         {profile.avatarUrl ? (
@@ -149,9 +149,9 @@ export function HomeScreen({
             {profile.initial}
           </div>
         )}
-        <div className="flex min-w-0 flex-1 items-center gap-1.5">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
           <span className="truncate text-[17px] font-extrabold tracking-[-0.02em] text-jb-ink">{profile.name}</span>
-          {profile.tier ? <TierBadge tier={profile.tier} size={22} /> : null}
+          {profile.tier ? <TierBadge tier={profile.tier} size={36} /> : null}
         </div>
         {/* 상태 칩 = 탭하면 즉시 새로고침(수동). 자동은 60s 폴링. */}
         {profile.isLive ? (

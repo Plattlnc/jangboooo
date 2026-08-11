@@ -161,8 +161,7 @@
     /* Toss 단일 소프트 그림자(다크에서는 제거) */
     --toss-shadow: 0 1px 3px rgba(25, 31, 40, 0.06);
 
-    min-height: 100%;
-    background: var(--jb-surface);
+    /* 배경은 레이아웃(main)과 공유 — 헤더와 콘텐츠가 하나의 흐름. 자체 배경 미지정. */
     animation: toss-enter 260ms cubic-bezier(0, 0, 0.2, 1) both;
   }
   @keyframes toss-enter {

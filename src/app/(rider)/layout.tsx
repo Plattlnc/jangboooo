@@ -9,9 +9,9 @@ export default async function RiderLayout({ children }: { children: ReactNode })
   const profile = await getRiderProfile();
 
   return (
-    <div className="app-container flex min-h-dvh flex-col bg-white">
+    <div className="app-container flex min-h-dvh flex-col bg-jb-surface text-jb-ink">
       <AppBar profile={profile} />
-      <main className="flex-1 bg-jb-surface text-jb-ink">{children}</main>
+      <main className="flex-1">{children}</main>
     </div>
   );
 }
