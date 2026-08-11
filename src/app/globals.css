@@ -128,6 +128,73 @@
     100% { background-position: 0 50%; }
   }
 
+  /* ---------------------------------------------------------------------------
+   * 메인홈 — 토스 스타일 라이트 핀테크 스코프(.toss-home).
+   * 기능/레이아웃/컴포넌트 역할·구조는 유지하고, jb-* 디자인 토큰 "값"만 Toss 팔레트로
+   * 로컬 오버라이드한다(커스텀 프로퍼티 상속). 다른 화면·Geist 컴포넌트에는 영향 없음.
+   * 색: 배경 #F2F4F6 / 카드 #FFF / 구분선 #E5E8EB / 트랙 #EDF0F3, 메인 블루 #3182F6 +
+   *     의미색(그린 #0BB25F · 오렌지 #F28A00 · 레드 #F04452)과 각 틴트만 사용.
+   * ------------------------------------------------------------------------ */
+  .toss-home {
+    --jb-surface: #f2f4f6;
+    --jb-card: #ffffff;
+    --jb-line: #e5e8eb;
+    --jb-line-soft: #eef1f4;
+    --jb-track: #edf0f3;
+    --jb-tab-bg: #edf0f3;
+
+    --jb-ink: #191f28;
+    --jb-ink-soft: #4e5968;
+    --jb-ink-mute: #8b95a1;
+
+    --jb-indigo: #3182f6;
+    --jb-indigo-tint: #e8f1fe;
+    --jb-indigo-tint2: #e8f1fe;
+
+    --jb-green: #0bb25f;
+    --jb-green-tint: #e5f6ed;
+    --jb-orange: #f28a00;
+    --jb-orange-tint: #fdf1e1;
+    --jb-red: #f04452;
+    --jb-red-tint: #fdecee;
+
+    /* Toss 단일 소프트 그림자(다크에서는 제거) */
+    --toss-shadow: 0 1px 3px rgba(25, 31, 40, 0.06);
+
+    min-height: 100%;
+    background: var(--jb-surface);
+    animation: toss-enter 260ms cubic-bezier(0, 0, 0.2, 1) both;
+  }
+  @keyframes toss-enter {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .dark .toss-home {
+    --jb-surface: #101014;
+    --jb-card: #1b1d22;
+    --jb-line: rgba(255, 255, 255, 0.07);
+    --jb-line-soft: rgba(255, 255, 255, 0.06);
+    --jb-track: rgba(255, 255, 255, 0.08);
+    --jb-tab-bg: rgba(255, 255, 255, 0.06);
+
+    --jb-ink: #ededed;
+    --jb-ink-soft: #a1a1a1;
+    --jb-ink-mute: #8b95a1;
+
+    --jb-indigo: #4593fc;
+    --jb-indigo-tint: rgba(69, 147, 252, 0.16);
+    --jb-indigo-tint2: rgba(69, 147, 252, 0.16);
+
+    --jb-green: #2ac77d;
+    --jb-green-tint: rgba(42, 199, 125, 0.16);
+    --jb-orange: #ffa53a;
+    --jb-orange-tint: rgba(255, 165, 58, 0.16);
+    --jb-red: #ff5a66;
+    --jb-red-tint: rgba(255, 90, 102, 0.16);
+
+    --toss-shadow: none;
+  }
+
   /* 티어 컬러 빛나는 아웃라인(빛 번짐 펄스). 요소에 style={{'--tier': color}} 인라인 지정. */
   .tier-glow {
     border: 1.5px solid var(--tier, var(--jb-indigo));
