@@ -16,6 +16,10 @@ export const SESSION_RENEW_AFTER_SECONDS = 60 * 60 * 24 // 1일
 export const ADMIN_SESSION_COOKIE = 'admin_session'
 export const ADMIN_SESSION_TTL_SECONDS = 60 * 60 * 12 // 12시간
 
+// 정산팀 세션 — 관리자/라이더와 완전 분리(같은 서명 비밀, 별도 쿠키/플래그). 데스크톱 업무용, TTL 짧게.
+export const SETTLEMENT_SESSION_COOKIE = 'settlement_session'
+export const SETTLEMENT_SESSION_TTL_SECONDS = 60 * 60 * 12 // 12시간
+
 export interface RiderSession {
   adminRiderId: string
   /** 토큰 발급 시각(epoch 초) — 미들웨어 슬라이딩 갱신 판단용. 페이로드에 없으면 0(즉시 갱신 대상). */
@@ -81,6 +85,13 @@ interface TokenPayload {
 /** 관리자 토큰 페이로드 — rid 대신 adm 플래그(라이더 토큰과 상호 오인 불가). */
 interface AdminTokenPayload {
   adm: true
+  iat: number
+  exp: number
+}
+
+/** 정산팀 토큰 페이로드 — stl 플래그(라이더/관리자 토큰과 상호 오인 불가). */
+interface SettlementTokenPayload {
+  stl: true
   iat: number
   exp: number
 }
@@ -163,6 +174,33 @@ export async function verifyAdminSessionToken(token: string | undefined | null):
   try {
     const payload = JSON.parse(new TextDecoder().decode(b64urlToBytes(body))) as Partial<AdminTokenPayload>
     if (payload.adm !== true || typeof payload.exp !== 'number') return false
+    return Math.floor(Date.now() / 1000) < payload.exp
+  } catch {
+    return false
+  }
+}
+
+/** 정산팀 서명 토큰 생성. */
+export async function createSettlementSessionToken(): Promise<string> {
+  const now = Math.floor(Date.now() / 1000)
+  const payload: SettlementTokenPayload = { stl: true, iat: now, exp: now + SETTLEMENT_SESSION_TTL_SECONDS }
+  const body = bytesToB64url(enc.encode(JSON.stringify(payload)))
+  const sig = bytesToB64url(await hmac(body))
+  return `${body}.${sig}`
+}
+
+/** 정산팀 토큰 검증 — 유효하면 true(서명불일치/만료/형식오류/라이더·관리자 토큰이면 false). */
+export async function verifySettlementSessionToken(token: string | undefined | null): Promise<boolean> {
+  if (!token) return false
+  const dot = token.indexOf('.')
+  if (dot <= 0) return false
+  const body = token.slice(0, dot)
+  const sig = token.slice(dot + 1)
+  const expected = bytesToB64url(await hmac(body))
+  if (!constantTimeEqual(sig, expected)) return false
+  try {
+    const payload = JSON.parse(new TextDecoder().decode(b64urlToBytes(body))) as Partial<SettlementTokenPayload>
+    if (payload.stl !== true || typeof payload.exp !== 'number') return false
     return Math.floor(Date.now() / 1000) < payload.exp
   } catch {
     return false

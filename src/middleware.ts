@@ -5,10 +5,12 @@ import {
   CREDS_COOKIE,
   SESSION_COOKIE,
   SESSION_RENEW_AFTER_SECONDS,
+  SETTLEMENT_SESSION_COOKIE,
   createSessionToken,
   credsCookieOptions,
   riderSessionCookieOptions,
   verifyAdminSessionToken,
+  verifySettlementSessionToken,
   verifySessionToken,
 } from '@/lib/auth/session'
 
@@ -51,6 +53,19 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
     if (!ok) {
       const url = request.nextUrl.clone()
       url.pathname = '/admin/login'
+      url.searchParams.set('next', pathname)
+      return NextResponse.redirect(url)
+    }
+    return NextResponse.next()
+  }
+
+  // 정산팀 영역: /settlement/* 전부 보호(로그인 페이지 제외). 관리자·라이더 세션과 상호 인정 없음.
+  if (pathname === '/settlement' || pathname.startsWith('/settlement/')) {
+    if (pathname === '/settlement/login') return NextResponse.next()
+    const ok = await verifySettlementSessionToken(request.cookies.get(SETTLEMENT_SESSION_COOKIE)?.value)
+    if (!ok) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/settlement/login'
       url.searchParams.set('next', pathname)
       return NextResponse.redirect(url)
     }
