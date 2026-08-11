@@ -9,6 +9,7 @@ import {
   Trophy,
   Medal,
   Gift,
+  Megaphone,
   type LucideIcon,
 } from "lucide-react";
 
@@ -61,6 +62,7 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     title: "커뮤니티",
     items: [
+      { label: "공지사항", href: "/notice", icon: Megaphone, tileColor: "#4F6AF5", tileBg: "#eef1fe" },
       { label: "랭킹", href: "/ranking", icon: Trophy, tileColor: "#B8860B", tileBg: "#fbf3dd", locked: RANKING_LOCKED },
     ],
   },
