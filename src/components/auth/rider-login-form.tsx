@@ -198,7 +198,7 @@ export function RiderLoginForm() {
       <div className="flex flex-col gap-3 pt-8">
         <span className="flex items-center gap-1.5 text-caption text-muted-foreground">
           <BrandLogo size={16} />
-          슬라이드
+          슬라이더
         </span>
         <h1 className="text-h1 text-foreground">내 배달 성적표, 내 손안에.</h1>
         <p className="text-body text-muted-foreground">라이더 ID로 로그인해 내 실적을 확인해요.</p>

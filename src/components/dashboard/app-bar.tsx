@@ -7,7 +7,7 @@ import { MenuDrawer } from "./menu-drawer";
 import { BrandLogo } from "@/components/ui/brand-logo";
 import type { RiderProfile } from "@/app/(rider)/_lib/rider-profile";
 
-// 헤더 56px. 좌:햄버거 / 중:로고("슬라이드" S 마크·라이트다크 전환) / 우:사고접수(→/roading).
+// 헤더 56px. 좌:햄버거 / 중:로고("슬라이더" S 마크·라이트다크 전환) / 우:사고접수(→/roading).
 // 햄버거 메뉴 2026-07-27 활성 복구(구 데모 잠금 해제) — 드로어 네비 오픈.
 //   사고접수는 2026-07-11 활성 복구 — ROADING 임베드(/roading) 연결.
 
@@ -34,7 +34,7 @@ export function AppBar({ profile }: { profile: RiderProfile }) {
           className="absolute left-1/2 top-3 flex h-10 -translate-x-1/2 items-center gap-1.5"
         >
           <BrandLogo size={22} />
-          <span className="text-[16px] font-black tracking-[-0.03em] text-jb-ink">슬라이드</span>
+          <span className="text-[16px] font-black tracking-[-0.03em] text-jb-ink">슬라이더</span>
         </Link>
 
         {/* 사고접수 — 배경 위 카드 */}

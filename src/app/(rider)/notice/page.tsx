@@ -18,7 +18,7 @@ export default async function NoticePage() {
   return (
     <div className="px-3.5 pb-10 pt-3.5">
       <h1 className="text-xl font-black tracking-[-0.03em]">공지사항</h1>
-      <p className="mb-3.5 mt-1 text-[12.5px] text-jb-ink-mute">슬라이드 운영·정산 관련 안내</p>
+      <p className="mb-3.5 mt-1 text-[12.5px] text-jb-ink-mute">슬라이더 운영·정산 관련 안내</p>
 
       {notices.length === 0 ? (
         <div className="mt-2 rounded-[12px] border border-jb-line bg-white px-4 py-12 text-center shadow-[0_1px_2px_0_rgba(0,0,0,0.04)]">

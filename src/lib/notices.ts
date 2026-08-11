@@ -11,9 +11,9 @@ function hasEnv(): boolean {
 const DEMO_NOTICES: NoticeRow[] = [
   {
     id: "demo-1",
-    title: "🎉 슬라이드 정식 오픈 안내",
-    body: "<p>안녕하세요, <strong>슬라이드</strong>가 정식 오픈했습니다. 배달일지·등급·출석체크를 한 곳에서 확인해보세요!</p>",
-    excerpt: "슬라이드가 정식 오픈했습니다. 배달일지·등급·출석체크를 한 곳에서.",
+    title: "🎉 슬라이더 정식 오픈 안내",
+    body: "<p>안녕하세요, <strong>슬라이더</strong>가 정식 오픈했습니다. 배달일지·등급·출석체크를 한 곳에서 확인해보세요!</p>",
+    excerpt: "슬라이더가 정식 오픈했습니다. 배달일지·등급·출석체크를 한 곳에서.",
     is_published: true,
     is_pinned: true,
     is_important: true,

@@ -3,8 +3,8 @@ import type { MetadataRoute } from "next";
 // PWA manifest. 값/색 SSOT: docs/design/04-brand-assets.md §1·3 (dark 고정).
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "슬라이드",
-    short_name: "슬라이드",
+    name: "슬라이더",
+    short_name: "슬라이더",
     description:
       "완료·수락률·취소까지 내 배달 실적을 오늘·주·월로 한눈에. 라이더 본인용 대시보드.",
     lang: "ko",
