@@ -22,11 +22,11 @@ export const GRADE_SEASON_START = "2026-08-12"; // 2026-08-12(수) ~ 첫 시즌
 export const TIERS: Tier[] = [
   { key: "bronze", name: "브론즈", min: 0, max: 50, rate: 0, color: "#a9754e" },
   { key: "silver", name: "실버", min: 51, max: 100, rate: 0, color: "#98a2ad" },
-  { key: "gold", name: "골드", min: 101, max: 150, rate: 100, color: "#d9a520" },
-  { key: "platinum", name: "플래티넘", min: 151, max: 200, rate: 400, color: "#3fb7ab" },
-  { key: "diamond", name: "다이아", min: 201, max: 250, rate: 600, color: "#45b6e8" },
-  { key: "master", name: "마스터", min: 251, max: 400, rate: 800, color: "#7c5cff" },
-  { key: "challenger", name: "챌린저", min: 401, max: Infinity, rate: 1000, color: "#e0323c" },
+  { key: "gold", name: "골드", min: 101, max: 150, rate: 150, color: "#d9a520" },
+  { key: "platinum", name: "플래티넘", min: 151, max: 200, rate: 600, color: "#3fb7ab" },
+  { key: "diamond", name: "다이아", min: 201, max: 250, rate: 900, color: "#45b6e8" },
+  { key: "master", name: "마스터", min: 251, max: 400, rate: 1200, color: "#7c5cff" },
+  { key: "challenger", name: "챌린저", min: 401, max: Infinity, rate: 1500, color: "#e0323c" },
 ];
 
 export interface GradeBreakdown {
