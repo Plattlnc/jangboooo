@@ -6,6 +6,8 @@ import {
   Bike,
   Wrench,
   Trophy,
+  Medal,
+  Gift,
   type LucideIcon,
 } from "lucide-react";
 
@@ -45,6 +47,8 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: "내 정보", href: "/myinfo", icon: User, tileColor: "#4F6AF5", tileBg: "#eef1fe" },
       { label: "배달일지", href: "/diary", icon: CalendarCheck, tileColor: "#1E9E5A", tileBg: "#e7f5ee" },
+      { label: "배달등급", href: "/grade", icon: Medal, tileColor: "#B8860B", tileBg: "#fbf3dd" },
+      { label: "프로모션", href: "/promo", icon: Gift, tileColor: "#E8590C", tileBg: "#fdf0e6" },
     ],
   },
   {
