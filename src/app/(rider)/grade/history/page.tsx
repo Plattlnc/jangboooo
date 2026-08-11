@@ -29,7 +29,7 @@ export default async function GradeHistoryPage() {
       <div className="flex items-center gap-2">
         <Link
           href="/grade"
-          aria-label="배달등급으로"
+          aria-label="라이더 등급으로"
           className="grid size-8 shrink-0 place-items-center rounded-[8px] border border-jb-line bg-white active:bg-jb-line-soft"
         >
           <ChevronLeft size={18} strokeWidth={2.4} className="text-jb-ink" />

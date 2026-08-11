@@ -34,7 +34,7 @@ export default async function GradePage() {
   return (
     <div className="px-3.5 pb-10 pt-3.5">
       <div className="flex items-center gap-2">
-        <h1 className="text-xl font-black tracking-[-0.03em]">배달등급</h1>
+        <h1 className="text-xl font-black tracking-[-0.03em]">라이더 등급</h1>
         <span
           className={
             "rounded-full px-2 py-0.5 text-[11px] font-black " +
@@ -52,10 +52,11 @@ export default async function GradePage() {
           <TierBadge tier={g.tier} size={48} />
           <div className="min-w-0">
             <div className="text-[13.5px] font-bold text-jb-ink-soft">
-              <span className="font-black text-jb-ink">{g.name}</span>님, 현재
+              <span className="font-black text-jb-ink">{g.name}</span>님 현재
             </div>
-            <div className="text-[22px] font-black leading-tight tracking-[-0.02em]" style={{ color: g.tier.color }}>
-              {g.tier.name}
+            <div className="text-[22px] font-black leading-tight tracking-[-0.02em]">
+              <span style={{ color: g.tier.color }}>{g.tier.name}</span>
+              <span className="text-jb-ink"> 입니다</span>
             </div>
           </div>
         </div>

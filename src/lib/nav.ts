@@ -54,7 +54,7 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     title: "프로모션",
     items: [
-      { label: "배달등급", href: "/grade", icon: Medal, tileColor: "#B8860B", tileBg: "#fbf3dd" },
+      { label: "라이더 등급", href: "/grade", icon: Medal, tileColor: "#B8860B", tileBg: "#fbf3dd" },
       { label: "출석체크", href: "/attendance", icon: CalendarDays, tileColor: "#0EA5A5", tileBg: "#e3f6f6" },
       { label: "프로모션", href: "/promo", icon: Gift, tileColor: "#E8590C", tileBg: "#fdf0e6" },
     ],
