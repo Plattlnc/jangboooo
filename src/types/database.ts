@@ -63,38 +63,6 @@ export type RiderAccountRow = {
   created_at: string
 }
 
-// 0018: 라이더 일별 배달처리비(세전 수입) — 배민 배달처리비 엑셀 적재분.
-export type RiderDailyFeeRow = {
-  admin_rider_id: string
-  snapshot_date: string
-  fee_krw: number
-  mission_krw: number
-  completed_cnt: number
-  source: string | null
-  captured_at: string
-}
-
-// 0019: 배달건별 상세(배달처리비 내역) — 배달일지 일자 상세 노출용.
-export type DeliveryFeeDetailRow = {
-  delivery_no: string
-  admin_rider_id: string
-  snapshot_date: string
-  status: string
-  store_name: string | null
-  pickup_at: string | null
-  delivered_at: string | null
-  distance_m: number | null
-  base_fee: number
-  weather_fee: number
-  extra_fee: number
-  peak_fee: number
-  region_fee: number
-  bulk_fee: number
-  fee_krw: number
-  rider_fault: boolean
-  captured_at: string
-}
-
 export type SlaSnapshotRow = {
   id: number
   admin_rider_id: string
@@ -273,20 +241,6 @@ export type Database = {
         Insert: Pick<CenterPeakGoalRow, 'center_id' | 'snapshot_date' | 'peak_key'> &
           Partial<Omit<CenterPeakGoalRow, 'id' | 'center_id' | 'snapshot_date' | 'peak_key'>>
         Update: Partial<Omit<CenterPeakGoalRow, 'id'>>
-        Relationships: []
-      }
-      rider_daily_fees: {
-        Row: RiderDailyFeeRow
-        Insert: Pick<RiderDailyFeeRow, 'admin_rider_id' | 'snapshot_date'> &
-          Partial<Omit<RiderDailyFeeRow, 'admin_rider_id' | 'snapshot_date'>>
-        Update: Partial<RiderDailyFeeRow>
-        Relationships: []
-      }
-      delivery_fee_details: {
-        Row: DeliveryFeeDetailRow
-        Insert: Pick<DeliveryFeeDetailRow, 'delivery_no' | 'admin_rider_id' | 'snapshot_date' | 'status'> &
-          Partial<Omit<DeliveryFeeDetailRow, 'delivery_no' | 'admin_rider_id' | 'snapshot_date' | 'status'>>
-        Update: Partial<DeliveryFeeDetailRow>
         Relationships: []
       }
     }

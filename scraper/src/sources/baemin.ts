@@ -179,57 +179,6 @@ async function apiGet(
   return body as DeliveryStatusResponse
 }
 
-export const API_BASE_URL = API_BASE
-
-/**
- * 캡처한 세션 헤더로 바이너리 응답(암호 xlsx 등)을 받아 Buffer 로 반환.
- * apiGet 과 동일한 iframe native fetch 기법(WAF/monkey-patch 우회)이되 res.arrayBuffer() 를
- * 청크 base64 로 직렬화해 page.evaluate 경계를 넘긴다. 401/403 은 SessionExpiredError.
- */
-export async function fetchBinaryViaBrowser(
-  page: Page,
-  headers: Record<string, string>,
-  url: string,
-  label: string,
-): Promise<Buffer> {
-  const res = (await page.evaluate(
-    async ({ u, h }) => {
-      const doc = (globalThis as { document?: any }).document
-      const ifr = doc.createElement('iframe')
-      ifr.style.display = 'none'
-      doc.body.appendChild(ifr)
-      try {
-        const win = ifr.contentWindow
-        if (!win) return { status: 0, b64: '', text: 'IFRAME_NO_WINDOW' }
-        const nativeFetch = win.fetch.bind(win)
-        const r = await nativeFetch(u, { headers: h, credentials: 'include' })
-        if (r.status < 200 || r.status >= 300) {
-          return { status: r.status, b64: '', text: (await r.text()).slice(0, 400) }
-        }
-        const ab = await r.arrayBuffer()
-        const bytes = new Uint8Array(ab)
-        let bin = ''
-        const CHUNK = 0x8000 // 32KB 씩 — String.fromCharCode 스택 오버플로 방지
-        for (let i = 0; i < bytes.length; i += CHUNK) {
-          bin += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + CHUNK)) as unknown as number[])
-        }
-        return { status: r.status, b64: win.btoa(bin), text: '' }
-      } catch (e) {
-        return { status: 0, b64: '', text: `FETCH_ERROR: ${(e as Error).message}` }
-      } finally {
-        ifr.remove()
-      }
-    },
-    { u: url, h: pickReplayHeaders(headers) },
-  )) as { status: number; b64: string; text: string }
-  if (res.status === 0) throw new Error(`${label} 브라우저 fetch 실패: ${res.text.slice(0, 200)}`)
-  if (res.status === 401 || res.status === 403) throw new SessionExpiredError(`HTTP ${res.status} (${label})`)
-  if (res.status < 200 || res.status >= 300) throw new Error(`${label} HTTP ${res.status} body=${res.text}`)
-  const buf = Buffer.from(res.b64, 'base64')
-  if (buf.length === 0) throw new Error(`${label} 빈 응답(0 bytes)`)
-  return buf
-}
-
 /** 오늘 배달현황 한 페이지(delivery-status). */
 async function fetchPage(
   page: Page,

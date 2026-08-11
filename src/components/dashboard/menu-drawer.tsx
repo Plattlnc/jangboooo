@@ -70,7 +70,7 @@ export function MenuDrawer({ open, onClose, profile }: MenuDrawerProps) {
         <Link
           href="/myinfo"
           onClick={onClose}
-          className="block border-b border-jb-line bg-white px-[18px] pb-[18px] pt-[22px] transition-colors active:bg-jb-line-soft"
+          className="block bg-gradient-to-br from-[#4F6AF5] to-[#5d77ff] px-[18px] pb-[18px] pt-[22px] text-white transition-opacity active:opacity-90"
         >
           <div className="flex items-center gap-3">
             {profile.avatarUrl ? (
@@ -81,15 +81,15 @@ export function MenuDrawer({ open, onClose, profile }: MenuDrawerProps) {
                 className="size-12 shrink-0 rounded-[12px] object-cover"
               />
             ) : (
-              <div className="grid size-12 place-items-center rounded-[12px] bg-jb-indigo-tint2 text-[18px] font-black text-jb-indigo">
+              <div className="grid size-12 place-items-center rounded-[12px] bg-white/20 text-[18px] font-black">
                 {profile.initial}
               </div>
             )}
             <div className="flex-1">
-              <div className="text-[17px] font-black text-jb-ink">{profile.name}</div>
-              <div className="tnum mt-0.5 text-xs text-jb-ink-mute">UID {profile.uid}</div>
+              <div className="text-[17px] font-black">{profile.name}</div>
+              <div className="tnum mt-0.5 text-xs opacity-90">UID {profile.uid}</div>
             </div>
-            <span className="text-[11.5px] font-bold text-jb-ink-mute">내 정보 ›</span>
+            <span className="text-[11.5px] font-bold opacity-90">내 정보 ›</span>
           </div>
         </Link>
 
