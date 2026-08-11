@@ -1,12 +1,12 @@
-// 출석체크 — 주간(수~화) 일별 완료건 기준. 하루 30건 이상이면 그날 출석 달성.
-// 7일 중 5일 달성 시 35,000원 지급. 이 파일 = 출석 규칙 SSOT.
+// 출석체크 — 주간(수~화) 일별 완료건 기준. 하루 20건 이상이면 그날 출석 달성.
+// 7일 중 5일 달성 시 20,000원 지급. 이 파일 = 출석 규칙 SSOT.
 
 /** 하루 출석 달성 기준(완료건). */
-export const ATTENDANCE_DAILY_TARGET = 30;
+export const ATTENDANCE_DAILY_TARGET = 20;
 /** 주간 지급 조건(7일 중 필요한 달성일). */
 export const ATTENDANCE_DAYS_REQUIRED = 5;
 /** 조건 달성 시 지급액(원). */
-export const ATTENDANCE_REWARD = 35_000;
+export const ATTENDANCE_REWARD = 20_000;
 /** 한 주 일수. */
 export const ATTENDANCE_WEEK_DAYS = 7;
 
