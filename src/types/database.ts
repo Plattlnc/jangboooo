@@ -95,6 +95,20 @@ export type DeliveryFeeDetailRow = {
   captured_at: string
 }
 
+export type NoticeRow = {
+  id: string
+  title: string
+  body: string // sanitized HTML
+  excerpt: string | null
+  is_published: boolean
+  is_pinned: boolean
+  is_important: boolean
+  is_featured: boolean
+  published_at: string | null
+  created_at: string
+  updated_at: string
+}
+
 export type SlaSnapshotRow = {
   id: number
   admin_rider_id: string
@@ -287,6 +301,12 @@ export type Database = {
         Insert: Pick<DeliveryFeeDetailRow, 'delivery_no' | 'admin_rider_id' | 'snapshot_date' | 'status'> &
           Partial<Omit<DeliveryFeeDetailRow, 'delivery_no' | 'admin_rider_id' | 'snapshot_date' | 'status'>>
         Update: Partial<DeliveryFeeDetailRow>
+        Relationships: []
+      }
+      notices: {
+        Row: NoticeRow
+        Insert: Pick<NoticeRow, 'title'> & Partial<Omit<NoticeRow, 'title'>>
+        Update: Partial<NoticeRow>
         Relationships: []
       }
     }
