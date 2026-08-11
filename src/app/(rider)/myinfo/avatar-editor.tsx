@@ -224,11 +224,11 @@ export function AvatarEditor({ avatarUrl, initial }: AvatarEditorProps) {
             className="size-[52px] rounded-2xl object-cover"
           />
         ) : (
-          <span className="grid size-[52px] place-items-center rounded-2xl bg-white/20 text-[19px] font-black">
+          <span className="grid size-[52px] place-items-center rounded-2xl bg-jb-indigo-tint2 text-[19px] font-black text-jb-indigo">
             {initial}
           </span>
         )}
-        <span className="absolute -bottom-1 -right-1 grid size-[22px] place-items-center rounded-full bg-white text-jb-indigo shadow-[0_1px_2px_0_rgba(0,0,0,0.08)]">
+        <span className="absolute -bottom-1 -right-1 grid size-[22px] place-items-center rounded-full bg-jb-indigo text-white shadow-[0_1px_2px_0_rgba(0,0,0,0.12)]">
           <Camera size={13} strokeWidth={2.4} />
         </span>
       </button>
@@ -237,7 +237,7 @@ export function AvatarEditor({ avatarUrl, initial }: AvatarEditorProps) {
           type="button"
           onClick={remove}
           disabled={pending}
-          className="flex items-center gap-0.5 text-[10.5px] font-semibold text-white/75 underline underline-offset-2"
+          className="flex items-center gap-0.5 text-[10.5px] font-semibold text-jb-ink-mute underline underline-offset-2"
         >
           <Trash2 size={10} strokeWidth={2.2} />
           삭제
@@ -252,7 +252,7 @@ export function AvatarEditor({ avatarUrl, initial }: AvatarEditorProps) {
       />
       {/* 모달 밖(카드 위) 에러 — 삭제 실패 등 */}
       {error && !src ? (
-        <span className="max-w-[90px] text-center text-[10px] leading-tight text-white/90">{error}</span>
+        <span className="max-w-[90px] text-center text-[10px] leading-tight text-[#e03131]">{error}</span>
       ) : null}
 
       {/* 크롭 모달 */}

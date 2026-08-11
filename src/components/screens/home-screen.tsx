@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { HomeMetrics } from "@/lib/mock/home";
 import type { HomeProfile } from "./home-view";
+import { TierBadge } from "@/components/ui/tier-badge";
 import { PROMO_WEEKLY_THRESHOLD, PROMO_UNIT_KRW, weeklyPromo } from "@/lib/promo";
 
 // 시안 홈(SLA 대시보드) — 오늘/주간 탭 전환. 파생값은 시안 renderVals 로직 그대로.
@@ -140,8 +141,9 @@ export function HomeScreen({
             {profile.initial}
           </div>
         )}
-        <div className="min-w-0 flex-1">
-          <span className="block truncate text-[17px] font-black tracking-[-0.02em]">{profile.name}</span>
+        <div className="flex min-w-0 flex-1 items-center gap-1.5">
+          <span className="truncate text-[17px] font-black tracking-[-0.02em]">{profile.name}</span>
+          {profile.tier ? <TierBadge tier={profile.tier} size={22} /> : null}
         </div>
         {/* 상태 칩 = 탭하면 즉시 새로고침(수동). 자동은 60s 폴링. */}
         {profile.isLive ? (

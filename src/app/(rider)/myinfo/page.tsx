@@ -78,14 +78,14 @@ export default async function MyInfoPage() {
       <p className="mb-3.5 mt-1 text-[12.5px] text-jb-ink-mute">계정 · 차량 · 정산 계좌를 한 곳에서</p>
 
       {/* 프로필 카드 (로그인 정보) — 아바타 탭 = 사진 변경(크롭 모달) */}
-      <div className="flex items-center gap-[13px] rounded-2xl bg-[linear-gradient(135deg,#4F6AF5,#5d77ff)] p-[17px] text-white shadow-[0_8px_16px_-4px_rgba(0,112,243,0.28)]">
+      <div className="flex items-center gap-[13px] rounded-2xl border border-jb-line bg-white p-[17px] shadow-[0_1px_2px_0_rgba(0,0,0,0.04)]">
         <AvatarEditor avatarUrl={p.avatarUrl} initial={p.initial} />
         <div className="flex-1">
           <div className="flex items-center gap-1.5">
-            <span className="text-lg font-black">{p.name}</span>
+            <span className="text-lg font-black text-jb-ink">{p.name}</span>
             <TierBadge tier={grade.tier} size={26} />
           </div>
-          <div className="tnum mt-[3px] text-xs opacity-90">
+          <div className="tnum mt-[3px] text-xs text-jb-ink-mute">
             UID {p.uid} · {p.isActive ? "운행중" : "비활성"}
           </div>
         </div>

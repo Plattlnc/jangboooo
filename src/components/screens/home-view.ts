@@ -6,6 +6,7 @@
 import { formatUpdatedAt } from "@/app/(rider)/_lib/metrics";
 import type { DashboardData } from "@/app/(rider)/_lib/queries";
 import type { HomeMetrics, GoalIcon } from "@/lib/mock/home";
+import type { Tier } from "@/lib/grade";
 
 const GOAL_ICONS: GoalIcon[] = ["dawn", "noon", "evening", "night"];
 const PEAK_LABELS = ["아침점심", "오후", "저녁", "심야"];
@@ -41,9 +42,15 @@ export interface HomeProfile {
   avatarUrl: string | null;
   /** 마지막 수집이 신선(≤3분)하면 실시간으로 표기. */
   isLive: boolean;
+  /** 현재 배달등급 티어(이름 옆 아이콘). null 이면 미표시. */
+  tier: Tier | null;
 }
 
-export function toHomeProfile(data: DashboardData, avatarUrl: string | null = null): HomeProfile {
+export function toHomeProfile(
+  data: DashboardData,
+  avatarUrl: string | null = null,
+  tier: Tier | null = null,
+): HomeProfile {
   const name = data.riderName ?? "라이더";
   return {
     name,
@@ -51,6 +58,7 @@ export function toHomeProfile(data: DashboardData, avatarUrl: string | null = nu
     uid: data.summary.admin_rider_id ?? "—",
     avatarUrl,
     isLive: !formatUpdatedAt(data.summary.last_captured_at).stale,
+    tier,
   };
 }
 
