@@ -183,7 +183,7 @@ export function HomeScreen({
       {featured ? (
         <Link
           href={`/notice/${featured.id}`}
-          className="mt-2.5 flex items-center gap-2.5 rounded-[16px] bg-jb-card px-3.5 py-2.5 shadow-[var(--toss-shadow)] transition-transform active:scale-[0.99]"
+          className="mt-2.5 flex items-center gap-2.5 rounded-[16px] border-[1.5px] border-jb-indigo/35 bg-jb-card px-3.5 py-2.5 shadow-[0_0_0_3px_color-mix(in_srgb,var(--jb-indigo)_10%,transparent),var(--toss-shadow)] transition-transform active:scale-[0.99]"
         >
           <span className="grid size-7 shrink-0 place-items-center rounded-full bg-jb-indigo-tint text-jb-indigo">
             <Megaphone size={15} strokeWidth={2.2} />
