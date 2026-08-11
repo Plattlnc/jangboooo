@@ -74,6 +74,26 @@ export type RiderDailyFeeRow = {
   captured_at: string
 }
 
+// 0019: 배달건별 상세(배달처리비 내역) — 배달일지 일자 상세 노출용.
+export type DeliveryFeeDetailRow = {
+  delivery_no: string
+  admin_rider_id: string
+  snapshot_date: string
+  status: string
+  pickup_at: string | null
+  delivered_at: string | null
+  distance_m: number | null
+  base_fee: number
+  weather_fee: number
+  extra_fee: number
+  peak_fee: number
+  region_fee: number
+  bulk_fee: number
+  fee_krw: number
+  rider_fault: boolean
+  captured_at: string
+}
+
 export type SlaSnapshotRow = {
   id: number
   admin_rider_id: string
@@ -259,6 +279,13 @@ export type Database = {
         Insert: Pick<RiderDailyFeeRow, 'admin_rider_id' | 'snapshot_date'> &
           Partial<Omit<RiderDailyFeeRow, 'admin_rider_id' | 'snapshot_date'>>
         Update: Partial<RiderDailyFeeRow>
+        Relationships: []
+      }
+      delivery_fee_details: {
+        Row: DeliveryFeeDetailRow
+        Insert: Pick<DeliveryFeeDetailRow, 'delivery_no' | 'admin_rider_id' | 'snapshot_date' | 'status'> &
+          Partial<Omit<DeliveryFeeDetailRow, 'delivery_no' | 'admin_rider_id' | 'snapshot_date' | 'status'>>
+        Update: Partial<DeliveryFeeDetailRow>
         Relationships: []
       }
     }

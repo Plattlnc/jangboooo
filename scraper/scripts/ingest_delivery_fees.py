@@ -36,8 +36,13 @@ def parse(path, password):
 
     # (userId, date) -> {"fee": int, "mission": int, "completed": int}
     acc = defaultdict(lambda: {"fee": 0, "mission": 0, "completed": 0})
+    details = []  # 배달건별 상세(전 건 — 취소 포함)
 
-    # ── 배달 내역 상세: 배달처리비 + 완료건수 ──
+    def norm_date(v):
+        s = str(v)[:10]
+        return f"{s[:4]}-{s[4:6]}-{s[6:8]}" if len(s) == 8 and s.isdigit() else s
+
+    # ── 배달 내역 상세: 배달처리비 + 완료건수 + 건별 상세 ──
     ws = wb["배달 내역 상세"]
     it = ws.iter_rows(values_only=True)
     hdr = list(next(it))
@@ -48,14 +53,27 @@ def parse(path, password):
     gi = col_index(hdr, "라이더귀책여부")
     if None in (ui, di, si, fi, gi):
         sys.exit(f"[배달 내역 상세] 필수 컬럼 누락: {dict(User_ID=ui, 운행일=di, 배달상태=si, 배달처리비=fi, 귀책=gi)}")
+    # 상세 컬럼(없으면 -1 → None 저장)
+    no_i = col_index(hdr, "배달번호")
+    pu_i = col_index(hdr, "픽업완료")
+    dl_i = col_index(hdr, "전달완료")
+    ds_i = col_index(hdr, "거리")
+    b_i = col_index(hdr, "기본단가")
+    w_i = col_index(hdr, "기상할증")
+    x_i = col_index(hdr, "추가할증")
+    p_i = col_index(hdr, "피크할증 등", "피크할증")
+    rg_i = col_index(hdr, "지역 할증", "지역할증")
+    bk_i = col_index(hdr, "대량 할증", "대량할증")
+
+    def cell(row, i):
+        return row[i] if i is not None else None
+
     for r in it:
         uid = r[ui]
         if uid is None:
             continue
         uid = str(uid).strip()
-        date = str(r[di])[:10]  # YYYYMMDD 또는 YYYY-MM-DD
-        if len(date) == 8 and date.isdigit():
-            date = f"{date[:4]}-{date[4:6]}-{date[6:8]}"
+        date = norm_date(r[di])
         st = str(r[si]).strip()
         fee = r[fi] or 0
         blame = str(r[gi]).strip().upper() if r[gi] is not None else ""
@@ -64,6 +82,26 @@ def parse(path, password):
             acc[(uid, date)]["completed"] += 1
         elif st in ("배달취소", "배달 취소") and blame == "N":
             acc[(uid, date)]["fee"] += fee  # 무귀책 취소는 배달처리비 지급
+        # 건별 상세(전 건 — 취소 포함). 배달번호 없으면 skip.
+        dno = cell(r, no_i)
+        if dno is not None and str(dno).strip():
+            details.append({
+                "delivery_no": str(dno).strip(),
+                "admin_rider_id": uid,
+                "snapshot_date": date,
+                "status": st,
+                "pickup_at": str(cell(r, pu_i)) if cell(r, pu_i) is not None else None,
+                "delivered_at": str(cell(r, dl_i)) if cell(r, dl_i) is not None else None,
+                "distance_m": int(round(cell(r, ds_i))) if isinstance(cell(r, ds_i), (int, float)) else None,
+                "base_fee": int(round(cell(r, b_i) or 0)),
+                "weather_fee": int(round(cell(r, w_i) or 0)),
+                "extra_fee": int(round(cell(r, x_i) or 0)),
+                "peak_fee": int(round(cell(r, p_i) or 0)),
+                "region_fee": int(round(cell(r, rg_i) or 0)),
+                "bulk_fee": int(round(cell(r, bk_i) or 0)),
+                "fee_krw": int(round(fee)),
+                "rider_fault": blame == "Y",
+            })
 
     # ── 본사 미션 금액: 당일 미션 지급액 ──
     if "본사 미션 금액" in wb.sheetnames:
@@ -95,11 +133,11 @@ def parse(path, password):
             "completed_cnt": v["completed"],
             "source": os.path.basename(path),
         })
-    return rows
+    return rows, details
 
 
-def upsert(rows, url, key):
-    endpoint = url.rstrip("/") + "/rest/v1/rider_daily_fees?on_conflict=admin_rider_id,snapshot_date"
+def upsert(rows, url, key, table, on_conflict):
+    endpoint = url.rstrip("/") + f"/rest/v1/{table}?on_conflict={on_conflict}"
     headers = {
         "apikey": key, "Authorization": f"Bearer {key}",
         "Content-Type": "application/json", "Prefer": "resolution=merge-duplicates,return=minimal",
@@ -110,7 +148,7 @@ def upsert(rows, url, key):
         req = urllib.request.Request(endpoint, data=json.dumps(chunk).encode(), headers=headers, method="POST")
         with urllib.request.urlopen(req) as resp:
             if resp.status not in (200, 201, 204):
-                sys.exit(f"upsert 실패 status={resp.status}: {resp.read()[:200]}")
+                sys.exit(f"upsert 실패({table}) status={resp.status}: {resp.read()[:200]}")
         total += len(chunk)
     return total
 
@@ -122,13 +160,14 @@ def main():
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
 
-    rows = parse(args.excel, args.password)
+    rows, details = parse(args.excel, args.password)
     dates = sorted({r["snapshot_date"] for r in rows})
     riders = len({r["admin_rider_id"] for r in rows})
     total_fee = sum(r["fee_krw"] for r in rows)
     total_mission = sum(r["mission_krw"] for r in rows)
-    print(f"파싱: rows={len(rows)} riders={riders} dates={dates[0]}~{dates[-1]} "
-          f"배달처리비합={total_fee:,} 미션합={total_mission:,}")
+    canceled = sum(1 for d in details if d["status"] != "전달완료")
+    print(f"파싱: 일별 rows={len(rows)} riders={riders} dates={dates[0]}~{dates[-1]} "
+          f"배달처리비합={total_fee:,} 미션합={total_mission:,} | 건별 details={len(details)}(취소 {canceled})")
 
     if args.dry_run:
         print("(dry-run: 적재 안 함)")
@@ -137,8 +176,10 @@ def main():
     key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
     if not url or not key:
         sys.exit("NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY 환경변수 필요")
-    n = upsert(rows, url, key)
+    n = upsert(rows, url, key, "rider_daily_fees", "admin_rider_id,snapshot_date")
     print(f"적재 완료: {n} rows → rider_daily_fees")
+    nd = upsert(details, url, key, "delivery_fee_details", "delivery_no")
+    print(f"적재 완료: {nd} rows → delivery_fee_details")
 
 
 if __name__ == "__main__":

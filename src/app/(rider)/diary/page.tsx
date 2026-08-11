@@ -113,18 +113,20 @@ export default async function DiaryPage({
         </div>
       </div>
 
-      {/* 일별 목록 — 최신일 우선 */}
-      <div className="mt-3 rounded-[12px] border border-jb-line bg-white px-4 py-1.5 shadow-[0_1px_2px_0_rgba(0,0,0,0.04)]">
-        {diary.days.length === 0 ? (
-          <div className="py-9 text-center">
-            <div className="text-[13.5px] font-bold text-jb-ink">이 달 배달 기록이 없어요</div>
-            <p className="mt-1 text-[12px] leading-relaxed text-jb-ink-mute">
-              배달이 집계되면 일별 기록이 여기에 쌓입니다.
-            </p>
-          </div>
-        ) : (
-          diary.days.map((d) => (
-            <div key={d.date} className="flex items-center gap-3 border-t border-jb-line-soft py-3.5 first:border-t-0">
+      {/* 일별 목록 — 최신일 우선. 각 일자 카드 터치 시 배달건 상세로 이동. */}
+      {diary.days.length === 0 ? (
+        <div className="mt-3 rounded-[12px] border border-jb-line bg-white px-4 py-9 text-center shadow-[0_1px_2px_0_rgba(0,0,0,0.04)]">
+          <div className="text-[13.5px] font-bold text-jb-ink">이 달 배달 기록이 없어요</div>
+          <p className="mt-1 text-[12px] leading-relaxed text-jb-ink-mute">배달이 집계되면 일별 기록이 여기에 쌓입니다.</p>
+        </div>
+      ) : (
+        <div className="mt-3 space-y-2">
+          {diary.days.map((d) => (
+            <Link
+              key={d.date}
+              href={`/diary/${d.date}`}
+              className="flex items-center gap-3 rounded-[12px] border border-jb-line bg-white px-4 py-3.5 shadow-[0_1px_2px_0_rgba(0,0,0,0.04)] transition-colors active:bg-jb-line-soft"
+            >
               <div className="w-[56px] shrink-0">
                 <span className="tnum text-[13.5px] font-black text-jb-ink">
                   {Number(d.date.slice(5, 7))}.{d.date.slice(8, 10)}
@@ -139,9 +141,7 @@ export default async function DiaryPage({
                 </span>
               </div>
               <div className="min-w-0 flex-1">
-                <div className="tnum text-[13px] font-bold text-jb-ink">
-                  완료 {d.completed.toLocaleString("ko-KR")}건
-                </div>
+                <div className="tnum text-[13px] font-bold text-jb-ink">완료 {d.completed.toLocaleString("ko-KR")}건</div>
                 <div className="mt-1 flex flex-wrap gap-x-2 text-[11px] text-jb-ink-mute">
                   {d.rejected > 0 ? <span className="tnum">거절 {d.rejected}</span> : null}
                   {d.canceled > 0 ? <span className="tnum">취소 {d.canceled}</span> : null}
@@ -166,10 +166,11 @@ export default async function DiaryPage({
                   <span className="ml-0.5 text-[11.5px] font-semibold text-jb-ink-mute">건</span>
                 </span>
               )}
-            </div>
-          ))
-        )}
-      </div>
+              <ChevronRight size={17} strokeWidth={2.2} className="shrink-0 text-jb-ink-mute" />
+            </Link>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

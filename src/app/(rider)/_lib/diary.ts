@@ -96,6 +96,127 @@ function demoDiary(month: string): DiaryMonth {
   return toDiary(month, rows, fees);
 }
 
+// ── 일자별 배달건 상세 (배달일지 카드 터치 시) ──
+export interface DeliveryDetail {
+  deliveryNo: string;
+  status: string; // 배달상태(전달완료/배달취소 등)
+  isCanceled: boolean;
+  pickupTime: string | null; // HH:MM
+  deliveredTime: string | null; // HH:MM
+  distanceKm: number | null; // floor(m/100)/10 (예 2492→2.4)
+  feeKrw: number; // 배달처리비(세전)
+  base: number; // 기본단가
+  weather: number; // 기상할증
+  extra: number; // 추가할증
+  peak: number; // 피크할증 등
+  region: number; // 지역 할증
+  bulk: number; // 대량 할증
+}
+
+export interface DayDetail {
+  date: string;
+  deliveries: DeliveryDetail[]; // 시간순(빠른→늦은)
+  totalFeeKrw: number;
+  completedCount: number;
+  canceledCount: number;
+}
+
+/** ISO local('...T20:54:14') → 'HH:MM'. */
+function hhmm(iso: string | null): string | null {
+  if (!iso) return null;
+  const m = /T(\d{2}:\d{2})/.exec(iso);
+  return m ? m[1] : null;
+}
+
+export async function getDayDeliveryDetails(date: string): Promise<DayDetail | null> {
+  const hasEnv = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
+  if (DEMO_MODE || !hasEnv) return demoDayDetail(date);
+
+  const { getRiderSession } = await import("@/lib/auth/cookies");
+  const session = await getRiderSession();
+  if (!session) return demoDayDetail(date);
+
+  try {
+    const { createAdminClient } = await import("@/lib/supabase/admin");
+    const admin = createAdminClient();
+    const { data, error } = await admin
+      .from("delivery_fee_details")
+      .select("delivery_no, status, pickup_at, delivered_at, distance_m, base_fee, weather_fee, extra_fee, peak_fee, region_fee, bulk_fee, fee_krw")
+      .eq("admin_rider_id", session.adminRiderId)
+      .eq("snapshot_date", date);
+    if (error) {
+      console.error("[diary] delivery_fee_details 조회 실패:", error.code, error.message);
+      return { date, deliveries: [], totalFeeKrw: 0, completedCount: 0, canceledCount: 0 };
+    }
+    const deliveries: DeliveryDetail[] = (data ?? [])
+      .map((r) => {
+        const status = String(r.status ?? "");
+        return {
+          deliveryNo: r.delivery_no as string,
+          status,
+          isCanceled: status !== "전달완료",
+          pickupTime: hhmm(r.pickup_at as string | null),
+          deliveredTime: hhmm(r.delivered_at as string | null),
+          distanceKm: r.distance_m != null ? Math.floor((r.distance_m as number) / 100) / 10 : null,
+          feeKrw: (r.fee_krw as number) ?? 0,
+          base: (r.base_fee as number) ?? 0,
+          weather: (r.weather_fee as number) ?? 0,
+          extra: (r.extra_fee as number) ?? 0,
+          peak: (r.peak_fee as number) ?? 0,
+          region: (r.region_fee as number) ?? 0,
+          bulk: (r.bulk_fee as number) ?? 0,
+        };
+      })
+      // 시간순: 전달완료 시각 우선, 없으면 픽업, 그마저 없으면 뒤로.
+      .sort((a, b) => (a.deliveredTime ?? a.pickupTime ?? "99:99").localeCompare(b.deliveredTime ?? b.pickupTime ?? "99:99"));
+    return {
+      date,
+      deliveries,
+      totalFeeKrw: deliveries.reduce((s, d) => s + d.feeKrw, 0),
+      completedCount: deliveries.filter((d) => !d.isCanceled).length,
+      canceledCount: deliveries.filter((d) => d.isCanceled).length,
+    };
+  } catch (e) {
+    console.error("[diary] 상세 예외:", e);
+    return { date, deliveries: [], totalFeeKrw: 0, completedCount: 0, canceledCount: 0 };
+  }
+}
+
+function demoDayDetail(date: string): DayDetail {
+  const deliveries: DeliveryDetail[] = [];
+  const n = 8 + (Number(date.slice(8, 10)) % 6);
+  for (let i = 0; i < n; i++) {
+    const canceled = i === 2;
+    const base = 2400 + ((i * 130) % 900);
+    const peak = i % 2 === 0 ? 1000 : 0;
+    const weather = i % 5 === 0 ? 500 : 0;
+    const fee = canceled ? 0 : base + peak + weather;
+    const hh = String(11 + i).padStart(2, "0");
+    deliveries.push({
+      deliveryNo: `DEMO${date.replaceAll("-", "")}${i}`,
+      status: canceled ? "배달취소" : "전달완료",
+      isCanceled: canceled,
+      pickupTime: `${hh}:${String((i * 7) % 60).padStart(2, "0")}`,
+      deliveredTime: canceled ? null : `${hh}:${String((i * 7 + 15) % 60).padStart(2, "0")}`,
+      distanceKm: Math.floor((900 + i * 240) / 100) / 10,
+      feeKrw: fee,
+      base: canceled ? 0 : base,
+      weather: canceled ? 0 : weather,
+      extra: 0,
+      peak: canceled ? 0 : peak,
+      region: 0,
+      bulk: 0,
+    });
+  }
+  return {
+    date,
+    deliveries,
+    totalFeeKrw: deliveries.reduce((s, d) => s + d.feeKrw, 0),
+    completedCount: deliveries.filter((d) => !d.isCanceled).length,
+    canceledCount: deliveries.filter((d) => d.isCanceled).length,
+  };
+}
+
 export async function getDeliveryDiary(month: string): Promise<DiaryMonth> {
   const hasEnv = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
   if (DEMO_MODE || !hasEnv) return demoDiary(month);

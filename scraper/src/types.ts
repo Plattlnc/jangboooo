@@ -93,6 +93,26 @@ export type RiderDailyFee = {
   captured_at?: string
 }
 
+/** delivery_fee_details upsert: 배달건별 상세(전 건 — 취소 포함). */
+export type DeliveryFeeDetail = {
+  delivery_no: string
+  admin_rider_id: string
+  snapshot_date: string
+  status: string
+  pickup_at: string | null
+  delivered_at: string | null
+  distance_m: number | null
+  base_fee: number
+  weather_fee: number
+  extra_fee: number
+  peak_fee: number
+  region_fee: number
+  bulk_fee: number
+  fee_krw: number
+  rider_fault: boolean
+  captured_at?: string
+}
+
 /** 한 번의 수집 사이클 파싱 결과. */
 export type ScrapeResult = {
   riders: RiderUpsert[]

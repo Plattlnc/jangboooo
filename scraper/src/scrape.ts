@@ -8,7 +8,7 @@ import type { Logger } from './logger'
 import { serializeError } from './logger'
 import type { BrowserSession } from './browser'
 import type { Db } from './supabase'
-import { upsertCenterCurrents, upsertHourlyStats, upsertRiderDailyFees, upsertRiders, upsertSlaSnapshots } from './supabase'
+import { upsertCenterCurrents, upsertDeliveryFeeDetails, upsertHourlyStats, upsertRiderDailyFees, upsertRiders, upsertSlaSnapshots } from './supabase'
 import { captureApiHeaders, fetchSlaDataWithHeaders, isSessionExpired, mockScrapeResult } from './sources/baemin'
 import { collectDeliveryFees } from './sources/baemin-fees'
 import type { RiderDailyFee, ScrapeResult, UpsertCounts } from './types'
@@ -174,17 +174,17 @@ async function maybeCollectFees(deps: CycleDeps, api: ApiSession): Promise<void>
       lastFeeDay = target
       return
     }
-    const rows = await collectDeliveryFees(api.page, api.headers, cfg.fees.password!, cfg.fees.reason, target, log)
-    if (rows.length === 0) {
+    const parsed = await collectDeliveryFees(api.page, api.headers, cfg.fees.password!, cfg.fees.reason, target, log)
+    if (parsed.daily.length === 0) {
       log.warn('배달처리비 0건 — 기존 값 보존(덮어쓰지 않음)', { day: target })
       return // 빈값 가드: lastFeeDay 갱신 안 함 → 다음 사이클 재시도
     }
     const capturedAt = trustedNow().toISOString()
-    const withTs = rows.map((r) => ({ ...r, captured_at: capturedAt }))
-    const n = await upsertRiderDailyFees(db, withTs)
+    const n = await upsertRiderDailyFees(db, parsed.daily.map((r) => ({ ...r, captured_at: capturedAt })))
+    const nd = await upsertDeliveryFeeDetails(db, parsed.details.map((r) => ({ ...r, captured_at: capturedAt })))
     lastFeeDay = target
-    log.info('배달처리비 적재 완료', { day: target, rows: n })
-    await reconcileFees(db, target, rows, log)
+    log.info('배달처리비 적재 완료', { day: target, daily: n, details: nd })
+    await reconcileFees(db, target, parsed.daily, log)
   } catch (err) {
     if (isSessionExpired(err)) {
       log.warn('배달처리비 수집 스킵 — 세션 만료(다음 사이클 재시도)')
