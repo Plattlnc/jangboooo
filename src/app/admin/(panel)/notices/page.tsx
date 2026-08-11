@@ -1,6 +1,6 @@
 // 공지사항 관리(관리자) — 전체 목록(초안 포함). 작성/편집으로 이동.
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { Plus, Pin } from "lucide-react";
 import { getAllNotices } from "@/lib/notices";
 import { noticePlainText } from "@/lib/sanitize-notice";
 import type { NoticeRow } from "@/types/database";
@@ -22,7 +22,7 @@ function Chips({ n }: { n: NoticeRow }) {
       >
         {n.is_published ? "게시" : "초안"}
       </span>
-      {n.is_pinned ? <span className="rounded-full bg-jb-indigo-tint px-2 py-0.5 text-[10px] font-black text-jb-indigo">고정</span> : null}
+      {n.is_pinned ? <Pin size={14} className="shrink-0 text-jb-indigo" fill="currentColor" aria-label="고정" /> : null}
       {n.is_important ? <span className="rounded-full bg-jb-red-tint px-2 py-0.5 text-[10px] font-black text-jb-red">중요</span> : null}
       {n.is_featured ? <span className="rounded-full bg-jb-orange-tint px-2 py-0.5 text-[10px] font-black text-jb-orange">홈노출</span> : null}
     </div>

@@ -1,6 +1,6 @@
 // 공지사항(라이더) — 게시된 공지 목록. 고정 우선·최신순. 클릭 시 상세.
 import Link from "next/link";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Pin } from "lucide-react";
 import { getPublishedNotices } from "@/lib/notices";
 import { noticePlainText } from "@/lib/sanitize-notice";
 import type { NoticeRow } from "@/types/database";
@@ -36,7 +36,7 @@ export default async function NoticePage() {
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
                   {n.is_pinned ? (
-                    <span className="rounded-full bg-jb-indigo-tint px-2 py-0.5 text-[10px] font-black text-jb-indigo">고정</span>
+                    <Pin size={14} className="shrink-0 text-jb-indigo" fill="currentColor" aria-label="고정" />
                   ) : null}
                   {n.is_important ? (
                     <span className="rounded-full bg-jb-red-tint px-2 py-0.5 text-[10px] font-black text-jb-red">중요</span>

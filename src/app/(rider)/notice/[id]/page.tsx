@@ -1,7 +1,7 @@
 // 공지 상세(라이더) — 게시된 공지 본문(sanitized HTML) 렌더.
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Pin } from "lucide-react";
 import { getPublishedNotice } from "@/lib/notices";
 import type { NoticeRow } from "@/types/database";
 
@@ -33,7 +33,7 @@ export default async function NoticeDetailPage({ params }: { params: Promise<{ i
       <div className="rounded-2xl border border-jb-line bg-white px-[18px] py-[18px] shadow-[0_1px_2px_0_rgba(0,0,0,0.04)]">
         <div className="flex flex-wrap items-center gap-1.5">
           {n.is_pinned ? (
-            <span className="rounded-full bg-jb-indigo-tint px-2 py-0.5 text-[10px] font-black text-jb-indigo">고정</span>
+            <Pin size={15} className="shrink-0 text-jb-indigo" fill="currentColor" aria-label="고정" />
           ) : null}
           {n.is_important ? (
             <span className="rounded-full bg-jb-red-tint px-2 py-0.5 text-[10px] font-black text-jb-red">중요</span>
