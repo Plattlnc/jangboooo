@@ -81,14 +81,14 @@ export default async function DiaryPage({
             <>
               <div className="text-[11.5px] font-semibold opacity-90">이 달 수입 (세전)</div>
               <div className="tnum mt-0.5 text-[27px] font-black leading-none tracking-[-0.02em]">
-                <span className="mr-0.5 text-[17px] font-bold opacity-90">₩</span>
                 {diary.totalFeeKrw.toLocaleString("ko-KR")}
+                <span className="ml-1 text-[16px] font-bold opacity-90">원</span>
               </div>
               <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11.5px] font-semibold opacity-90">
                 <span className="tnum">완료 {diary.totalCompleted.toLocaleString("ko-KR")}건</span>
                 <span className="tnum">활동일 {diary.activeDays}일</span>
                 {diary.totalMissionKrw > 0 ? (
-                  <span className="tnum">미션 +₩{diary.totalMissionKrw.toLocaleString("ko-KR")}</span>
+                  <span className="tnum">미션 +{diary.totalMissionKrw.toLocaleString("ko-KR")}원</span>
                 ) : null}
               </div>
             </>
@@ -151,12 +151,12 @@ export default async function DiaryPage({
               {d.feeKrw != null ? (
                 <div className="shrink-0 text-right">
                   <div className="tnum text-[16px] font-black text-jb-green">
-                    <span className="mr-0.5 text-[11px] font-bold text-jb-ink-mute">₩</span>
                     {d.feeKrw.toLocaleString("ko-KR")}
+                    <span className="ml-0.5 text-[11px] font-bold text-jb-ink-mute">원</span>
                   </div>
                   {d.missionKrw > 0 ? (
                     <div className="tnum mt-1 text-[11.5px] font-bold text-jb-indigo">
-                      +₩{d.missionKrw.toLocaleString("ko-KR")} 미션
+                      +{d.missionKrw.toLocaleString("ko-KR")}원 미션
                     </div>
                   ) : null}
                 </div>
