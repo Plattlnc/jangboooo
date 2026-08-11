@@ -144,13 +144,13 @@ export default async function DiaryPage({
               href={`/diary/${d.date}`}
               className="flex items-center gap-3 rounded-[12px] border border-jb-line bg-white px-4 py-3.5 shadow-[0_1px_2px_0_rgba(0,0,0,0.04)] transition-colors active:bg-jb-line-soft"
             >
-              <div className="w-[56px] shrink-0">
+              <div className="flex w-[56px] shrink-0 items-center gap-1">
                 <span className="tnum text-[13.5px] font-black text-jb-ink">
                   {Number(d.date.slice(5, 7))}.{d.date.slice(8, 10)}
                 </span>
                 <span
                   className={
-                    "ml-1 text-[11.5px] font-bold " +
+                    "text-[11.5px] font-bold leading-none " +
                     (d.weekday === "일" ? "text-[#D9342B]" : d.weekday === "토" ? "text-jb-indigo" : "text-jb-ink-mute")
                   }
                 >
