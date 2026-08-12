@@ -10,7 +10,6 @@ import {
   Medal,
   Gift,
   Megaphone,
-  Flame,
   type LucideIcon,
 } from "lucide-react";
 
@@ -59,7 +58,6 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: "라이더 등급", href: "/grade", icon: Medal, tileColor: "#B8860B", tileBg: "#fbf3dd" },
       { label: "출석체크", href: "/attendance", icon: CalendarDays, tileColor: "#0EA5A5", tileBg: "#e3f6f6" },
-      { label: "버닝 이벤트", href: "/burning", icon: Flame, tileColor: "#F04452", tileBg: "#fdecee", badge: "기간한정" },
       { label: "프로모션", href: "/promo", icon: Gift, tileColor: "#E8590C", tileBg: "#fdf0e6" },
     ],
   },
