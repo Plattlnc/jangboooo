@@ -21,6 +21,8 @@ export interface MyGrade extends GradeResult {
   weekEnd: string | null; // 이번 주 끝(화)
   /** 이번 주 시간 외(09:00~24:00 이외 = 0~8시) 완료 합 — 주간 보너스 제외 산정용. */
   offHours: number;
+  /** 이번 주 수락률(%) — 등급 혜택 유지 조건 판정용. 미상이면 null. */
+  acceptance: number | null;
 }
 
 function wrap(
@@ -29,8 +31,9 @@ function wrap(
   weekStart: string | null,
   weekEnd: string | null,
   offHours = 0,
+  acceptance: number | null = null,
 ): MyGrade {
-  return { name, weekStart, weekEnd, offHours, ...computeGrade(completed) };
+  return { name, weekStart, weekEnd, offHours, acceptance, ...computeGrade(completed) };
 }
 
 export async function getMyGrade(): Promise<MyGrade> {
@@ -57,7 +60,8 @@ export async function getMyGrade(): Promise<MyGrade> {
     }
     const row = summaryRes.data?.[0];
     const offHours = hourly.reduce((s, h) => (h.hour < 9 ? s + h.completed : s), 0);
-    return wrap(profile.name, row?.completed ?? 0, row?.start_date ?? null, row?.end_date ?? null, offHours);
+    const acceptance = row?.acceptance_rate ?? null;
+    return wrap(profile.name, row?.completed ?? 0, row?.start_date ?? null, row?.end_date ?? null, offHours, acceptance);
   } catch (e) {
     console.error("[grade] 예외:", e);
     return wrap(profile.name, 0, null, null);

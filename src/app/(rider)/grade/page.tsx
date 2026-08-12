@@ -17,6 +17,11 @@ export const dynamic = "force-dynamic";
 export default async function GradePage() {
   const g = await getMyGrade();
 
+  // 내 등급 혜택 — 수락률 유지 조건 충족 시에만 적용.
+  const myPerks = g.tier.perks ?? [];
+  const perkReq = g.tier.minAccept ?? null;
+  const perksActive = myPerks.length > 0 && (perkReq == null || (g.acceptance != null && g.acceptance >= perkReq));
+
   const today = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Asia/Seoul",
     year: "numeric",
@@ -55,15 +60,29 @@ export default async function GradePage() {
             </div>
           </div>
         </div>
-        {g.tier.perks && g.tier.perks.length > 0 ? (
+        {myPerks.length > 0 ? (
           <div className="mt-3.5 border-t border-jb-line pt-3">
-            <div className="text-[11.5px] font-bold text-jb-ink-mute">
-              내 등급 혜택{g.tier.minAccept != null ? ` · 수락률 ${g.tier.minAccept}% 이상 유지 시` : ""}
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-[11.5px] font-bold text-jb-ink-mute">내 등급 혜택</span>
+              {perkReq != null ? (
+                perksActive ? (
+                  <span className="rounded-full bg-jb-green-tint px-2 py-0.5 text-[10px] font-black text-jb-green">
+                    적용 중 · 수락률 {g.acceptance}%
+                  </span>
+                ) : (
+                  <span className="rounded-full bg-jb-red-tint px-2 py-0.5 text-[10px] font-black text-jb-red">
+                    수락률 {g.acceptance ?? "—"}% · {perkReq}% 이상 유지 필요
+                  </span>
+                )
+              ) : null}
             </div>
             <ul className="mt-2 flex flex-col gap-1.5">
-              {g.tier.perks.map((p) => (
-                <li key={p} className="flex items-center gap-1.5 text-[13px] font-black text-jb-ink">
-                  <Check size={15} strokeWidth={3} className="shrink-0 text-jb-green" />
+              {myPerks.map((p) => (
+                <li
+                  key={p}
+                  className={"flex items-center gap-1.5 text-[13px] font-black " + (perksActive ? "text-jb-ink" : "text-jb-ink-mute")}
+                >
+                  <Check size={15} strokeWidth={3} className={"shrink-0 " + (perksActive ? "text-jb-green" : "text-jb-ink-mute")} />
                   {p}
                 </li>
               ))}
