@@ -29,7 +29,16 @@ export const TIERS: Tier[] = [
   { key: "gold", name: "골드", min: 101, max: 150, rate: 150, color: "#d9a520" },
   { key: "platinum", name: "플래티넘", min: 151, max: 200, rate: 600, color: "#3fb7ab" },
   { key: "diamond", name: "다이아", min: 201, max: 250, rate: 900, color: "#45b6e8" },
-  { key: "master", name: "마스터", min: 251, max: 400, rate: 1200, color: "#7c5cff" },
+  {
+    key: "master",
+    name: "마스터",
+    min: 251,
+    max: 400,
+    rate: 1200,
+    color: "#7c5cff",
+    minAccept: 80,
+    perks: ["라이더 수수료 면제"],
+  },
   {
     key: "challenger",
     name: "그랜드 마스터",
