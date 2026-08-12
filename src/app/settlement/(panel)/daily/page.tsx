@@ -1,11 +1,11 @@
 import { fetchDailySettlement } from "@/app/settlement/_lib/daily";
-import { loadSettlementMemo } from "@/app/settlement/_lib/memo";
+import { loadRiderNotes, loadSettlementRiders } from "@/app/settlement/_lib/notes";
 import { kstToday, kstYesterday, isValidYmd } from "@/app/settlement/_lib/dates";
 import { DailyTabs } from "@/components/settlement/daily-tabs";
 
 export const dynamic = "force-dynamic";
 
-// 일일 정산 — ?date=YYYY-MM-DD (기본: 어제, 배달처리비 T+1). [정산 내역] 테이블 + [기타] 메모.
+// 일일 정산 — ?date=YYYY-MM-DD (기본: 어제, 배달처리비 T+1). [정산 내역] 테이블 + [기타] 라이더별 특이사항.
 export default async function DailySettlementPage({
   searchParams,
 }: {
@@ -13,6 +13,10 @@ export default async function DailySettlementPage({
 }) {
   const sp = await searchParams;
   const date = isValidYmd(sp.date) ? sp.date : kstYesterday();
-  const [data, memo] = await Promise.all([fetchDailySettlement(date), loadSettlementMemo()]);
-  return <DailyTabs data={data} today={kstToday()} memo={memo.content} />;
+  const [data, riders, notes] = await Promise.all([
+    fetchDailySettlement(date),
+    loadSettlementRiders(),
+    loadRiderNotes(),
+  ]);
+  return <DailyTabs data={data} today={kstToday()} riders={riders} notes={notes} />;
 }

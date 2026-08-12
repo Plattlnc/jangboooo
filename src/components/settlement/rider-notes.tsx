@@ -1,0 +1,155 @@
+"use client";
+
+import { useCallback, useMemo, useState, memo } from "react";
+import { Save, Check, Search } from "lucide-react";
+import { saveRiderNotes } from "@/actions/settlement-notes";
+import type { SettlementRider } from "@/app/settlement/_lib/notes";
+
+// 라이더별 특이사항(기타) — 라이더 ID 에 귀속, 날짜 무관 유지. 검색 + 인라인 입력 + 일괄 저장.
+export function RiderNotes({
+  riders,
+  initial,
+}: {
+  riders: SettlementRider[];
+  initial: Record<string, string>;
+}) {
+  const [notes, setNotes] = useState<Record<string, string>>(initial);
+  const [q, setQ] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string>();
+  const [onlyNoted, setOnlyNoted] = useState(false);
+
+  const dirty = useMemo(() => {
+    const keys = new Set([...Object.keys(notes), ...Object.keys(initial)]);
+    for (const k of keys) if ((notes[k] ?? "").trim() !== (initial[k] ?? "").trim()) return true;
+    return false;
+  }, [notes, initial]);
+
+  const setNote = useCallback((id: string, val: string) => {
+    setNotes((prev) => ({ ...prev, [id]: val }));
+    setSaved(false);
+    setError(undefined);
+  }, []);
+
+  const view = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    return riders.filter((r) => {
+      if (onlyNoted && !(notes[r.id] ?? "").trim()) return false;
+      if (!needle) return true;
+      return r.name.toLowerCase().includes(needle) || r.id.toLowerCase().includes(needle);
+    });
+  }, [riders, q, onlyNoted, notes]);
+
+  const notedCount = useMemo(
+    () => riders.reduce((n, r) => n + ((notes[r.id] ?? "").trim() ? 1 : 0), 0),
+    [riders, notes],
+  );
+
+  async function save() {
+    setSaving(true);
+    setError(undefined);
+    const res = await saveRiderNotes(notes);
+    setSaving(false);
+    if (res.ok) setSaved(true);
+    else setError(res.message);
+  }
+
+  return (
+    <div className="overflow-hidden rounded-[12px] border border-jb-line bg-jb-card shadow-[var(--toss-shadow)]">
+      {/* 툴바 */}
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-jb-line px-4 py-3">
+        <div>
+          <h2 className="text-[15px] font-semibold text-jb-ink">라이더별 특이사항</h2>
+          <p className="mt-0.5 text-[12.5px] text-jb-ink-mute">
+            라이더에 귀속돼 날짜가 바뀌어도 유지됩니다 · 기록 {notedCount}명
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <label className="flex items-center gap-1.5 text-[12.5px] text-jb-ink-soft">
+            <input type="checkbox" checked={onlyNoted} onChange={(e) => setOnlyNoted(e.target.checked)} className="accent-jb-indigo" />
+            기록된 라이더만
+          </label>
+          <div className="flex items-center gap-1.5 rounded-[10px] border border-jb-line bg-jb-surface px-2.5 py-1.5">
+            <Search size={15} className="text-jb-ink-mute" />
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="이름·ID 검색"
+              className="w-[130px] bg-transparent text-[13px] text-jb-ink outline-none placeholder:text-jb-ink-mute"
+            />
+          </div>
+          {saved && !dirty ? (
+            <span className="flex items-center gap-1 text-[12px] font-medium text-jb-green">
+              <Check size={14} /> 저장됨
+            </span>
+          ) : dirty ? (
+            <span className="text-[12px] font-medium text-jb-orange">저장 안 됨</span>
+          ) : null}
+          <button
+            type="button"
+            onClick={save}
+            disabled={saving || !dirty}
+            className="flex items-center gap-1.5 rounded-[10px] bg-jb-indigo px-3.5 py-2 text-[13px] font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-40"
+          >
+            <Save size={15} />
+            {saving ? "저장 중…" : "저장"}
+          </button>
+        </div>
+      </div>
+
+      {error ? <p className="border-b border-jb-line px-4 py-2 text-[12.5px] font-medium text-jb-red">{error}</p> : null}
+
+      <div className="max-h-[calc(100dvh-320px)] overflow-y-auto">
+        <table className="w-full border-collapse text-[13px]">
+          <thead className="sticky top-0 z-10 bg-jb-surface text-[12px] font-medium text-jb-ink-mute">
+            <tr>
+              <th className="border-b border-jb-line px-4 py-2.5 text-left">라이더</th>
+              <th className="border-b border-jb-line px-3 py-2.5 text-left">라이더 ID</th>
+              <th className="border-b border-jb-line px-3 py-2.5 text-left">특이사항</th>
+            </tr>
+          </thead>
+          <tbody>
+            {view.map((r) => (
+              <NoteRow key={r.id} id={r.id} name={r.name} value={notes[r.id] ?? ""} onChange={setNote} />
+            ))}
+            {view.length === 0 ? (
+              <tr>
+                <td colSpan={3} className="px-4 py-12 text-center text-[13px] text-jb-ink-mute">
+                  해당하는 라이더가 없습니다.
+                </td>
+              </tr>
+            ) : null}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+const NoteRow = memo(function NoteRow({
+  id,
+  name,
+  value,
+  onChange,
+}: {
+  id: string;
+  name: string;
+  value: string;
+  onChange: (id: string, val: string) => void;
+}) {
+  return (
+    <tr className="border-b border-jb-line-soft">
+      <td className="whitespace-nowrap px-4 py-1.5 font-medium text-jb-ink">{name}</td>
+      <td className="whitespace-nowrap px-3 py-1.5 font-mono text-[12px] text-jb-ink-mute">{id}</td>
+      <td className="px-3 py-1.5">
+        <input
+          value={value}
+          onChange={(e) => onChange(id, e.target.value)}
+          placeholder="특이사항 입력…"
+          className="w-full rounded-[8px] border border-transparent bg-transparent px-2 py-1.5 text-[13px] text-jb-ink outline-none hover:border-jb-line focus:border-jb-indigo/50 focus:bg-jb-surface placeholder:text-jb-ink-mute"
+        />
+      </td>
+    </tr>
+  );
+});

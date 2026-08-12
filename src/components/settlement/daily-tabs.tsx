@@ -3,12 +3,23 @@
 import { useState, type ReactNode } from "react";
 import { ListChecks, StickyNote } from "lucide-react";
 import type { DailySettlement } from "@/app/settlement/_lib/daily";
+import type { SettlementRider } from "@/app/settlement/_lib/notes";
 import { DailySettlementView } from "./daily-view";
-import { SettlementMemo } from "./settlement-memo";
+import { RiderNotes } from "./rider-notes";
 
-// 일일 정산 화면 탭 — [정산 내역] 테이블 / [기타] 메모(저장 가능).
-export function DailyTabs({ data, today, memo }: { data: DailySettlement; today: string; memo: string }) {
-  const [tab, setTab] = useState<"settle" | "memo">("settle");
+// 일일 정산 화면 탭 — [정산 내역] 테이블 / [기타] 라이더별 특이사항(저장, 날짜 무관 유지).
+export function DailyTabs({
+  data,
+  today,
+  riders,
+  notes,
+}: {
+  data: DailySettlement;
+  today: string;
+  riders: SettlementRider[];
+  notes: Record<string, string>;
+}) {
+  const [tab, setTab] = useState<"settle" | "notes">("settle");
 
   return (
     <div className="flex flex-col gap-5">
@@ -16,11 +27,15 @@ export function DailyTabs({ data, today, memo }: { data: DailySettlement; today:
         <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-jb-ink">일일 정산</h1>
         <div className="mt-3 flex items-center gap-1 border-b border-jb-line">
           <TabButton active={tab === "settle"} onClick={() => setTab("settle")} icon={<ListChecks size={15} />} label="정산 내역" />
-          <TabButton active={tab === "memo"} onClick={() => setTab("memo")} icon={<StickyNote size={15} />} label="기타" />
+          <TabButton active={tab === "notes"} onClick={() => setTab("notes")} icon={<StickyNote size={15} />} label="기타" />
         </div>
       </div>
 
-      {tab === "settle" ? <DailySettlementView data={data} today={today} /> : <SettlementMemo initial={memo} />}
+      {tab === "settle" ? (
+        <DailySettlementView data={data} today={today} />
+      ) : (
+        <RiderNotes riders={riders} initial={notes} />
+      )}
     </div>
   );
 }
