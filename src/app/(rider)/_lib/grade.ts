@@ -19,10 +19,18 @@ export interface MyGrade extends GradeResult {
   name: string;
   weekStart: string | null; // 이번 주 시작(수)
   weekEnd: string | null; // 이번 주 끝(화)
+  /** 이번 주 시간 외(09:00~24:00 이외 = 0~8시) 완료 합 — 주간 보너스 제외 산정용. */
+  offHours: number;
 }
 
-function wrap(name: string, completed: number, weekStart: string | null, weekEnd: string | null): MyGrade {
-  return { name, weekStart, weekEnd, ...computeGrade(completed) };
+function wrap(
+  name: string,
+  completed: number,
+  weekStart: string | null,
+  weekEnd: string | null,
+  offHours = 0,
+): MyGrade {
+  return { name, weekStart, weekEnd, offHours, ...computeGrade(completed) };
 }
 
 export async function getMyGrade(): Promise<MyGrade> {
@@ -36,17 +44,20 @@ export async function getMyGrade(): Promise<MyGrade> {
 
   try {
     const { createAdminClient } = await import("@/lib/supabase/admin");
+    const { getRiderHourlyFor } = await import("@/lib/supabase/queries");
     const admin = createAdminClient();
-    const { data, error } = await admin.rpc("get_rider_summary_for", {
-      p_admin_rider_id: session.adminRiderId,
-      p_period: "week",
-    });
-    if (error) {
-      console.error("[grade] get_rider_summary_for 실패:", error.code, error.message);
+    // 주간 요약(완료) + 주간 시간대별(시간 외 산정)을 병렬 조회.
+    const [summaryRes, hourly] = await Promise.all([
+      admin.rpc("get_rider_summary_for", { p_admin_rider_id: session.adminRiderId, p_period: "week" }),
+      getRiderHourlyFor(session.adminRiderId, "week").catch(() => []),
+    ]);
+    if (summaryRes.error) {
+      console.error("[grade] get_rider_summary_for 실패:", summaryRes.error.code, summaryRes.error.message);
       return wrap(profile.name, 0, null, null);
     }
-    const row = data?.[0];
-    return wrap(profile.name, row?.completed ?? 0, row?.start_date ?? null, row?.end_date ?? null);
+    const row = summaryRes.data?.[0];
+    const offHours = hourly.reduce((s, h) => (h.hour < 9 ? s + h.completed : s), 0);
+    return wrap(profile.name, row?.completed ?? 0, row?.start_date ?? null, row?.end_date ?? null, offHours);
   } catch (e) {
     console.error("[grade] 예외:", e);
     return wrap(profile.name, 0, null, null);

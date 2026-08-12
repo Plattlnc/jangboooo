@@ -300,9 +300,9 @@ export function HomeScreen({
         </div>
       </div>
 
-      {/* 자사 프로모션 (주간 보너스) — 종료(PROMO_WEEKLY_ACTIVE=false) 시 숨김. */}
+      {/* 자사 프로모션 (주간 보너스) — 종료(PROMO_WEEKLY_ACTIVE=false) 시 숨김. 시간 외(0~8시) 완료 제외. */}
       {PROMO_WEEKLY_ACTIVE && (() => {
-        const promo = weeklyPromo(weekM.count);
+        const promo = weeklyPromo(Math.max(0, weekM.count - weekM.offHours));
         const barColor = promo.reached ? "var(--jb-green)" : "var(--jb-indigo)";
         return (
           <div className={cardCls + " mt-3 px-[18px] py-[15px]"}>
@@ -329,7 +329,7 @@ export function HomeScreen({
               </div>
               <div className="mt-1 flex items-baseline gap-1.5">
                 <span className="tnum text-[22px] font-extrabold tracking-[-0.02em]" style={{ color: barColor }}>
-                  <CountUp value={weekM.count} />
+                  <CountUp value={promo.completed} />
                 </span>
                 <span className="tnum text-[13px] font-bold text-jb-ink-mute">/ {PROMO_WEEKLY_THRESHOLD}건</span>
                 <span className="tnum text-[12.5px] font-extrabold text-jb-ink-mute">{promo.progressPct}%</span>

@@ -30,7 +30,8 @@ export default async function PromoPage() {
   const [grade, attendance, burning] = await Promise.all([getMyGrade(), getMyAttendance(), getMyBurning()]);
   const season = seasonOf(kstToday());
   const seasonOpen = season.number != null;
-  const promo = weeklyPromo(grade.completed);
+  // 주간 보너스: 시간 외(0~8시) 완료 제외.
+  const promo = weeklyPromo(Math.max(0, grade.completed - grade.offHours));
   const burnCur = burning.current;
 
   // 진행 중(쌓이고 있는) 금액 — 등급·출석은 시즌(8/12) 시작 후부터 집계

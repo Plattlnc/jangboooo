@@ -45,5 +45,7 @@ export interface HomeMetrics {
   cats: CatDatum[];
   peaks: PeakDatum[];
   goals: GoalDatum[];
+  /** 시간 외(09:00~24:00 이외 = 0~8시) 완료 합 — 주간 보너스 제외 산정용. */
+  offHours: number;
 }
 

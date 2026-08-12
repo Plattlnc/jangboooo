@@ -95,6 +95,7 @@ export function toHomeMetrics(data: DashboardData, period: "today" | "week"): Ho
       { label: "배달취소", ...split(s.delivery_canceled, c?.bmart.riderFault, c?.store.riderFault), color: "#9b9588" },
     ],
     cats: [], // 소스 없음 — 미표시
+    offHours: offHoursCompleted,
     peaks: peakValues.map((value, i) => ({ label: PEAK_LABELS[i], value })),
     goals: data.centerGoals.slice(0, 4).map((g, i) => ({
       label: g.label,
