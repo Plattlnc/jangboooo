@@ -136,8 +136,45 @@ export function AdminHome({
         </div>
       </div>
 
-      <PeriodSection title="주간" vm={week} compact />
-      <PeriodSection title="월간" vm={month} compact />
+      {/* 주간·월간 요약 — 한 카드에 두 행(중복 카드 통합) */}
+      <div className="mt-4">
+        <div className="mb-1.5 px-0.5">
+          <span className="text-[15px] font-black text-jb-ink">주간 · 월간 요약</span>
+        </div>
+        <div className="rounded-[18px] border border-jb-line bg-jb-card shadow-[var(--toss-shadow)]">
+          {[
+            { label: "주간", vm: week },
+            { label: "월간", vm: month },
+          ].map(({ label, vm }, i) => (
+            <div
+              key={label}
+              className={"flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3 " + (i > 0 ? "border-t border-jb-line-soft" : "")}
+            >
+              <div className="min-w-0">
+                <div className="text-[14px] font-black text-jb-ink">{label}</div>
+                <div className="tnum text-[10px] font-semibold text-jb-ink-mute">{vm.rangeLabel}</div>
+              </div>
+              <div className="ml-auto flex items-baseline gap-1">
+                <span className="text-[12px] font-bold text-jb-ink-soft">배달</span>
+                <span className="tnum text-[18px] font-black text-jb-ink">{vm.hero.completed}</span>
+                <span className="text-[12px] font-bold text-jb-ink-soft">건</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="flex items-baseline gap-1">
+                  <span className="text-[12px] font-bold text-jb-ink-soft">수락률</span>
+                  <span className="tnum text-[18px] font-black" style={{ color: vm.hero.bandColor }}>{vm.hero.accept}</span>
+                </span>
+                <span
+                  className="rounded-[7px] px-2 py-[2px] text-[9.5px] font-black text-white"
+                  style={{ background: vm.hero.bandColor }}
+                >
+                  {vm.hero.bandLabel}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
 
       {/* 수락률 주의 라이더 (주간 기준) */}
       <div className="mt-4">
