@@ -30,6 +30,56 @@ export function isValidIsoDate(v: unknown): v is string {
   return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d
 }
 
+/** 'YYYY-MM-DD' → 'M.D'(월.일). */
+function mmdd(iso: string): string {
+  const [, m, d] = iso.split('-').map(Number)
+  return `${m}.${d}`
+}
+
+/** iso 가 속한 주(수요일 시작)의 수요일 날짜. (isodow: 월1..일7, 수=3 — 0009 마이그레이션과 동일) */
+export function weekStartOf(iso: string): string {
+  const [y, m, d] = iso.split('-').map(Number)
+  const dow = new Date(Date.UTC(y, m - 1, d)).getUTCDay() // 일0..토6
+  const isodow = ((dow + 6) % 7) + 1 // 월1..일7
+  const offset = (isodow - 3 + 7) % 7
+  return addDaysIso(iso, -offset)
+}
+
+/** 주(수~화) 범위. weekStart = 수요일. */
+export function weekRangeOf(weekStart: string): DateRange {
+  return { start_date: weekStart, end_date: addDaysIso(weekStart, 6) }
+}
+
+/** 최근 count 주(현재 주 포함) 목록 — 수~화. 최신이 먼저(value=수요일 날짜). */
+export function buildWeekOptions(businessToday: string, count: number): { value: string; label: string; range: DateRange }[] {
+  const curWed = weekStartOf(businessToday)
+  return Array.from({ length: count }, (_, i) => {
+    const value = addDaysIso(curWed, -7 * i)
+    const range = weekRangeOf(value)
+    return { value, label: `${mmdd(range.start_date)} ~ ${mmdd(range.end_date)}`, range }
+  })
+}
+
+/** 'YYYY-MM' → 달력월 범위(1일~말일, end 는 businessToday 이하로 클램프). */
+export function monthRangeOf(ym: string, businessToday: string): DateRange {
+  const [y, m] = ym.split('-').map(Number) // m: 1-based
+  const lastDay = new Date(Date.UTC(y, m, 0)).getUTCDate()
+  const end = `${ym}-${String(lastDay).padStart(2, '0')}`
+  return { start_date: `${ym}-01`, end_date: end > businessToday ? businessToday : end }
+}
+
+/** 최근 count 개월(이번 달 포함) 목록 — 최신이 먼저(value='YYYY-MM'). */
+export function buildMonthOptions(businessToday: string, count: number): { value: string; label: string; range: DateRange }[] {
+  const [y, m] = businessToday.split('-').map(Number) // m: 1-based
+  return Array.from({ length: count }, (_, i) => {
+    const dt = new Date(Date.UTC(y, m - 1 - i, 1))
+    const yy = dt.getUTCFullYear()
+    const mm = dt.getUTCMonth() + 1
+    const value = `${yy}-${String(mm).padStart(2, '0')}`
+    return { value, label: `${yy}년 ${mm}월`, range: monthRangeOf(value, businessToday) }
+  })
+}
+
 /**
  * 커스텀 기간 클램프 — from/to 둘 중 하나라도 유효하면 규칙에 맞게 보정해 반환.
  * 둘 다 무효(미지정)면 null(커스텀 미사용 신호).

@@ -17,6 +17,11 @@ const PERIODS = [
 
 type Tab = (typeof PERIODS)[number]["key"] | "custom";
 
+interface PeriodOption {
+  value: string;
+  label: string;
+}
+
 export function AdminHome({
   today,
   week,
@@ -24,6 +29,11 @@ export function AdminHome({
   custom,
   customRange,
   maxDate,
+  weekOptions,
+  monthOptions,
+  selectedWeek,
+  selectedMonth,
+  initialTab,
 }: {
   today: AdminHomeVM;
   week: AdminHomeVM;
@@ -33,9 +43,26 @@ export function AdminHome({
   customRange: { from: string; to: string } | null;
   /** 날짜 입력 상한(어제 영업일) — 당일은 실시간 수집 중이라 제외. */
   maxDate: string;
+  /** 주(수~화) 선택 옵션 — 최신이 먼저(value=수요일 날짜). */
+  weekOptions: PeriodOption[];
+  /** 월(달력월) 선택 옵션 — 최신이 먼저(value='YYYY-MM'). */
+  monthOptions: PeriodOption[];
+  selectedWeek: string;
+  selectedMonth: string;
+  initialTab: Tab;
 }) {
-  const [tab, setTab] = useState<Tab>(custom ? "custom" : "today");
+  const [tab, setTab] = useState<Tab>(initialTab);
   const router = useRouter();
+
+  // 주/월 선택 → URL 갱신(서버 재조회) + 해당 탭 활성. 상대 선택은 유지.
+  const pickWeek = (v: string) => {
+    setTab("week");
+    router.push(`/admin?tab=week&wk=${v}&mo=${selectedMonth}`);
+  };
+  const pickMonth = (v: string) => {
+    setTab("month");
+    router.push(`/admin?tab=month&mo=${v}&wk=${selectedWeek}`);
+  };
 
   // 스크래퍼 1분 주기에 맞춘 60s 폴링(라이더 홈과 동일 — 탭 숨김 시 중단).
   useEffect(() => {
@@ -96,9 +123,13 @@ export function AdminHome({
         ) : null}
       </div>
 
-      {/* 날짜 직접 선택 — 조회 시 from/to 쿼리로 서버 재렌더('기간' 탭 활성).
-          일간 탭은 당일 현황만 보므로 날짜 선택 불필요 → 숨김. */}
-      {tab !== "today" ? (
+      {/* 기간 선택 — 주간/월간: 주(수~화)·월 드롭다운 / 기간: 날짜 직접 선택 / 일간: 없음. */}
+      {tab === "week" || tab === "month" ? (
+        <div className="mt-2.5 flex flex-wrap items-center gap-2">
+          <PeriodPicker label="주간" value={selectedWeek} options={weekOptions} onChange={pickWeek} active={tab === "week"} />
+          <PeriodPicker label="월간" value={selectedMonth} options={monthOptions} onChange={pickMonth} active={tab === "month"} />
+        </div>
+      ) : tab === "custom" ? (
         <DateRangeForm
           basePath="/admin"
           from={customRange?.from}
@@ -345,5 +376,43 @@ export function AdminHome({
         수락률은 배민 공식 산식(푸드 기준)이며 B마트·스토어 건은 포함되지 않습니다.
       </div>
     </div>
+  );
+}
+
+// 주/월 선택 드롭다운 — 라벨 + 네이티브 select. 활성 기간은 인디고 강조.
+function PeriodPicker({
+  label,
+  value,
+  options,
+  onChange,
+  active,
+}: {
+  label: string;
+  value: string;
+  options: PeriodOption[];
+  onChange: (v: string) => void;
+  active: boolean;
+}) {
+  return (
+    <label
+      className={
+        "flex items-center gap-1.5 rounded-[12px] border px-2.5 py-1.5 " +
+        (active ? "border-jb-indigo bg-jb-indigo-tint" : "border-jb-line bg-jb-card")
+      }
+    >
+      <span className={"text-[11.5px] font-bold " + (active ? "text-jb-indigo" : "text-jb-ink-mute")}>{label}</span>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        aria-label={`${label} 기간 선택`}
+        className="tnum bg-transparent text-[12.5px] font-bold text-jb-ink outline-none"
+      >
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }
