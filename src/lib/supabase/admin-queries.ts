@@ -35,6 +35,8 @@ export interface AdminPeriodView {
   totals: AdminTotals
   riders: RiderTotals[]
   daily: DailyTotals[]
+  /** 시간 외(SLA 운영시간 09:00~24:00 이외 = 새벽 0~8시) 완료건 합. 미조회 시 0. */
+  offHours: number
 }
 
 export interface AdminRiderInfoMap {
@@ -123,6 +125,70 @@ function fetchSnapshotsRange(range: PeriodRange, businessToday: string): Promise
   )
 }
 
+/** SLA 운영시간(09:00~24:00) 이외 = hour 0~8. */
+const OFF_HOURS_LIMIT = 9
+
+/** rider_hourly_stats 에서 0~8시 완료건을 영업일별로 합산(Record<date, sum>). 페이지드 fetch. */
+async function fetchOffHoursByDateRaw(startDate: string, endDate: string): Promise<Record<string, number>> {
+  const supabase = createAdminClient()
+  const BATCH = 1000
+  const base = () =>
+    supabase
+      .from('rider_hourly_stats')
+      .select('snapshot_date, completed')
+      .gte('snapshot_date', startDate)
+      .lte('snapshot_date', endDate)
+      .lt('hour', OFF_HOURS_LIMIT)
+      .order('snapshot_date', { ascending: true })
+      .order('admin_rider_id', { ascending: true })
+      .order('hour', { ascending: true })
+
+  const { count, error: countError } = await supabase
+    .from('rider_hourly_stats')
+    .select('admin_rider_id', { count: 'exact', head: true })
+    .gte('snapshot_date', startDate)
+    .lte('snapshot_date', endDate)
+    .lt('hour', OFF_HOURS_LIMIT)
+  if (countError) throw countError
+
+  const byDate: Record<string, number> = {}
+  const add = (rows: { snapshot_date: string; completed: number }[]) => {
+    for (const r of rows) byDate[r.snapshot_date] = (byDate[r.snapshot_date] ?? 0) + r.completed
+  }
+  const pages = Math.max(1, Math.ceil((count ?? 0) / BATCH))
+  const results = await Promise.all(
+    Array.from({ length: pages }, (_, i) => base().range(i * BATCH, (i + 1) * BATCH - 1)),
+  )
+  for (const r of results) {
+    if (r.error) throw r.error
+    add(r.data ?? [])
+  }
+  let lastLen = results.at(-1)?.data?.length ?? 0
+  for (let offset = pages * BATCH; lastLen === BATCH; offset += BATCH) {
+    const { data, error } = await base().range(offset, offset + BATCH - 1)
+    if (error) throw error
+    add(data ?? [])
+    lastLen = data?.length ?? 0
+  }
+  return byDate
+}
+
+function fetchOffHoursByDate(range: PeriodRange, businessToday: string): Promise<Record<string, number>> {
+  const ttl = range.end_date < businessToday ? TTL_SETTLED_MS : TTL_LIVE_MS
+  return memoized(`offhrs:${range.start_date}:${range.end_date}`, ttl, () =>
+    fetchOffHoursByDateRaw(range.start_date, range.end_date),
+  )
+}
+
+/** 영업일별 시간외 합계 맵에서 기간 범위 합산. */
+function sumOffHours(byDate: Record<string, number>, range: PeriodRange): number {
+  let sum = 0
+  for (const date in byDate) {
+    if (date >= range.start_date && date <= range.end_date) sum += byDate[date]
+  }
+  return sum
+}
+
 /** 라이더 명부(이름/활성) — 5분 메모. */
 export function getAdminRiderInfo(): Promise<AdminRiderInfoMap> {
   return memoized('riders', TTL_RIDERS_MS, async () => {
@@ -139,13 +205,18 @@ export function getAdminRiderInfo(): Promise<AdminRiderInfoMap> {
   })
 }
 
-function toView(rows: AdminSnapshotRow[], range: PeriodRange): AdminPeriodView {
+function toView(
+  rows: AdminSnapshotRow[],
+  range: PeriodRange,
+  offHoursByDate: Record<string, number> = {},
+): AdminPeriodView {
   const sliced = sliceRange(rows, range.start_date, range.end_date)
   return {
     range,
     totals: aggregateTotals(sliced),
     riders: aggregateByRider(sliced),
     daily: aggregateByDate(sliced),
+    offHours: sumOffHours(offHoursByDate, range),
   }
 }
 
@@ -162,10 +233,15 @@ export async function getAdminPeriodView(
 /** 커스텀 기간 뷰 — 클램프 완료 범위(항상 과거 완결)라 긴 TTL 로 fetch. */
 export async function getAdminCustomView(range: PeriodRange): Promise<AdminPeriodView> {
   // clampCustomRange 가 마감을 어제 이하로 보장 — end < businessToday 로 취급.
-  const rows = await memoized(`snap:${range.start_date}:${range.end_date}`, TTL_SETTLED_MS, () =>
-    fetchSnapshotsRangeRaw(range.start_date, range.end_date),
-  )
-  return toView(rows, range)
+  const [rows, offHoursByDate] = await Promise.all([
+    memoized(`snap:${range.start_date}:${range.end_date}`, TTL_SETTLED_MS, () =>
+      fetchSnapshotsRangeRaw(range.start_date, range.end_date),
+    ),
+    memoized(`offhrs:${range.start_date}:${range.end_date}`, TTL_SETTLED_MS, () =>
+      fetchOffHoursByDateRaw(range.start_date, range.end_date),
+    ),
+  ])
+  return toView(rows, range, offHoursByDate)
 }
 
 /** 관리자 홈 전체(일간/주간/월간 + 라이더 정보) — 스냅샷은 superset 1회 fetch. */
@@ -180,12 +256,15 @@ export async function getAdminDashboardData(ref?: string): Promise<AdminDashboar
     start_date: [today.start_date, week.start_date, month.start_date].sort()[0],
     end_date: [today.end_date, week.end_date, month.end_date].sort().at(-1) as string,
   }
-  const rows = await fetchSnapshotsRange(superset, today.start_date)
+  const [rows, offHoursByDate] = await Promise.all([
+    fetchSnapshotsRange(superset, today.start_date),
+    fetchOffHoursByDate(superset, today.start_date),
+  ])
 
   return {
-    today: toView(rows, today),
-    week: toView(rows, week),
-    month: toView(rows, month),
+    today: toView(rows, today, offHoursByDate),
+    week: toView(rows, week, offHoursByDate),
+    month: toView(rows, month, offHoursByDate),
     riderInfo: riderMeta.info,
     registeredRiders: riderMeta.registered,
   }

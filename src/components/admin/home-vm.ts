@@ -17,7 +17,7 @@ export interface AdminHomeVM {
     captured: string;
   };
   hasBreakdown: boolean;
-  status: { label: string; value: string; bmart: string | null; store: string | null; color: string; tileBg: string }[];
+  status: { label: string; value: string; bmart: string | null; store: string | null; offHours: string | null; color: string; tileBg: string }[];
   peaks: { label: string; value: string; isMax: boolean }[];
   atRisk: { id: string; name: string; rate: string; bandLabel: string; bandColor: string }[];
   top: { id: string; name: string; completed: string; bmart: string | null; store: string | null; rate: string }[];
@@ -62,6 +62,8 @@ export function toAdminHomeVM(
       value: fmtCount(hasBreakdown ? Math.max(0, total - bmart - store) : total),
       bmart: hasBreakdown ? fmtCount(bmart) : null,
       store: hasBreakdown ? fmtCount(store) : null,
+      // 시간 외(0~8시) 완료 — 완료 타일에만. B마트/스토어와 동일 서브라인.
+      offHours: meta.key === "completed" ? fmtCount(view.offHours) : null,
       color: total > 0 ? meta.color : "#b0b8c1",
       tileBg: total > 0 ? meta.tint : "#eef1f4",
     };
