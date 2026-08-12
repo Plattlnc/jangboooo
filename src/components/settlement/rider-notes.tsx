@@ -1,36 +1,15 @@
 "use client";
 
-import { useCallback, useMemo, useState, memo } from "react";
-import { Save, Check, Search } from "lucide-react";
-import { saveRiderNotes } from "@/actions/settlement-notes";
+import { useMemo, useState, memo } from "react";
+import { Search } from "lucide-react";
 import type { SettlementRider } from "@/app/settlement/_lib/notes";
+import { NotesSaveButton, type NotesApi } from "./notes-api";
 
-// 라이더별 특이사항(기타) — 라이더 ID 에 귀속, 날짜 무관 유지. 검색 + 인라인 입력 + 일괄 저장.
-export function RiderNotes({
-  riders,
-  initial,
-}: {
-  riders: SettlementRider[];
-  initial: Record<string, string>;
-}) {
-  const [notes, setNotes] = useState<Record<string, string>>(initial);
+// 라이더별 특이사항(기타 탭) — 상위 공유 상태(NotesApi) 소비. 검색 + 인라인 입력 + 저장.
+export function RiderNotes({ api, riders }: { api: NotesApi; riders: SettlementRider[] }) {
+  const { notes, setNote } = api;
   const [q, setQ] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [error, setError] = useState<string>();
   const [onlyNoted, setOnlyNoted] = useState(false);
-
-  const dirty = useMemo(() => {
-    const keys = new Set([...Object.keys(notes), ...Object.keys(initial)]);
-    for (const k of keys) if ((notes[k] ?? "").trim() !== (initial[k] ?? "").trim()) return true;
-    return false;
-  }, [notes, initial]);
-
-  const setNote = useCallback((id: string, val: string) => {
-    setNotes((prev) => ({ ...prev, [id]: val }));
-    setSaved(false);
-    setError(undefined);
-  }, []);
 
   const view = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -46,18 +25,8 @@ export function RiderNotes({
     [riders, notes],
   );
 
-  async function save() {
-    setSaving(true);
-    setError(undefined);
-    const res = await saveRiderNotes(notes);
-    setSaving(false);
-    if (res.ok) setSaved(true);
-    else setError(res.message);
-  }
-
   return (
     <div className="overflow-hidden rounded-[12px] border border-jb-line bg-jb-card shadow-[var(--toss-shadow)]">
-      {/* 툴바 */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-jb-line px-4 py-3">
         <div>
           <h2 className="text-[15px] font-semibold text-jb-ink">라이더별 특이사항</h2>
@@ -79,26 +48,11 @@ export function RiderNotes({
               className="w-[130px] bg-transparent text-[13px] text-jb-ink outline-none placeholder:text-jb-ink-mute"
             />
           </div>
-          {saved && !dirty ? (
-            <span className="flex items-center gap-1 text-[12px] font-medium text-jb-green">
-              <Check size={14} /> 저장됨
-            </span>
-          ) : dirty ? (
-            <span className="text-[12px] font-medium text-jb-orange">저장 안 됨</span>
-          ) : null}
-          <button
-            type="button"
-            onClick={save}
-            disabled={saving || !dirty}
-            className="flex items-center gap-1.5 rounded-[10px] bg-jb-indigo px-3.5 py-2 text-[13px] font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-40"
-          >
-            <Save size={15} />
-            {saving ? "저장 중…" : "저장"}
-          </button>
+          <NotesSaveButton api={api} />
         </div>
       </div>
 
-      {error ? <p className="border-b border-jb-line px-4 py-2 text-[12.5px] font-medium text-jb-red">{error}</p> : null}
+      {api.error ? <p className="border-b border-jb-line px-4 py-2 text-[12.5px] font-medium text-jb-red">{api.error}</p> : null}
 
       <div className="max-h-[calc(100dvh-320px)] overflow-y-auto">
         <table className="w-full border-collapse text-[13px]">

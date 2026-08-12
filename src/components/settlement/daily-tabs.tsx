@@ -6,8 +6,10 @@ import type { DailySettlement } from "@/app/settlement/_lib/daily";
 import type { SettlementRider } from "@/app/settlement/_lib/notes";
 import { DailySettlementView } from "./daily-view";
 import { RiderNotes } from "./rider-notes";
+import { useRiderNotesApi } from "./notes-api";
 
-// 일일 정산 화면 탭 — [정산 내역] 테이블 / [기타] 라이더별 특이사항(저장, 날짜 무관 유지).
+// 일일 정산 화면 탭 — [정산 내역](특이사항 컬럼 포함) / [기타](라이더별 특이사항 목록).
+// 두 탭이 동일한 특이사항 상태(useRiderNotesApi)를 공유 → 어디서 수정하든 함께 저장.
 export function DailyTabs({
   data,
   today,
@@ -20,6 +22,7 @@ export function DailyTabs({
   notes: Record<string, string>;
 }) {
   const [tab, setTab] = useState<"settle" | "notes">("settle");
+  const notesApi = useRiderNotesApi(notes);
 
   return (
     <div className="flex flex-col gap-5">
@@ -32,9 +35,9 @@ export function DailyTabs({
       </div>
 
       {tab === "settle" ? (
-        <DailySettlementView data={data} today={today} />
+        <DailySettlementView data={data} today={today} notesApi={notesApi} />
       ) : (
-        <RiderNotes riders={riders} initial={notes} />
+        <RiderNotes api={notesApi} riders={riders} />
       )}
     </div>
   );

@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState, memo, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, Download, Search, ArrowUp, ArrowDown } from "lucide-react";
 import type { DailySettlement, DailySettlementRow, DailyTotals } from "@/app/settlement/_lib/daily";
 import { WITHHOLDING_RATE, INSURANCE_RATE, PER_COMPLETED_FEE } from "@/app/settlement/_lib/rates";
 import { ymdAdd, formatKoreanDate } from "@/app/settlement/_lib/dates";
+import { NotesSaveButton, type NotesApi } from "./notes-api";
 
 // 일일 정산 뷰 — 선택일 라이더별 배달처리비(세전)에서 원천세·고용산재·수수료(완료건당 100원) 공제 → 지급액.
 // 미션비 제외(일일정산 대상 아님). 데스크톱 퍼스트: 데이터 테이블 + 검색/정렬/날짜이동/CSV.
@@ -18,7 +19,15 @@ const ded = (n: number) => (n > 0 ? `−${won(n)}` : "0"); // 공제 표기(0이
 const WHT_PCT = `${(WITHHOLDING_RATE * 100).toFixed(1)}%`; // 3.3%
 const INS_PCT = `${(INSURANCE_RATE * 100).toFixed(1)}%`; // 1.8%
 
-export function DailySettlementView({ data, today }: { data: DailySettlement; today: string }) {
+export function DailySettlementView({
+  data,
+  today,
+  notesApi,
+}: {
+  data: DailySettlement;
+  today: string;
+  notesApi: NotesApi;
+}) {
   const router = useRouter();
   const { date, rows } = data;
 
@@ -56,14 +65,15 @@ export function DailySettlementView({ data, today }: { data: DailySettlement; to
   function exportCsv() {
     const head = [
       "번호", "라이더", "라이더ID", "완료건수",
-      "배달처리비(세전)", `원천세(${WHT_PCT})`, `고용산재(${INS_PCT})`, "수수료(건당)", "지급액",
+      "배달처리비(세전)", `원천세(${WHT_PCT})`, `고용산재(${INS_PCT})`, "수수료(건당)", "지급액", "특이사항",
     ];
     const body = view.map((r, i) => [
       i + 1, r.name, r.riderId, r.completed, r.fee, r.feeWht, r.feeIns, r.feeFee, r.feePayout,
+      notesApi.notes[r.riderId] ?? "",
     ]);
     const foot = [
       "합계", "", "", vTotals.completed,
-      vTotals.fee, vTotals.feeWht, vTotals.feeIns, vTotals.feeFee, vTotals.feePayout,
+      vTotals.fee, vTotals.feeWht, vTotals.feeIns, vTotals.feeFee, vTotals.feePayout, "",
     ];
     const csv = [head, ...body, foot]
       .map((row) => row.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","))
@@ -141,11 +151,12 @@ export function DailySettlementView({ data, today }: { data: DailySettlement; to
               type="button"
               onClick={exportCsv}
               disabled={view.length === 0}
-              className="flex items-center gap-1.5 rounded-[10px] bg-jb-indigo px-3 py-2 text-[13px] font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-40"
+              className="flex items-center gap-1.5 rounded-[10px] border border-jb-line bg-jb-card px-3 py-2 text-[13px] font-semibold text-jb-ink-soft transition-colors hover:bg-jb-surface disabled:opacity-40"
             >
               <Download size={15} />
               CSV 내보내기
             </button>
+            <NotesSaveButton api={notesApi} />
           </div>
         </div>
 
@@ -158,7 +169,7 @@ export function DailySettlementView({ data, today }: { data: DailySettlement; to
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[880px] border-collapse text-[13px]">
+            <table className="w-full min-w-[1120px] border-collapse text-[13px]">
               <thead className="text-jb-ink-mute">
                 <tr className="bg-jb-surface text-[12px] font-medium">
                   <th className="border-b border-jb-line px-3 py-2.5 text-right">#</th>
@@ -170,11 +181,18 @@ export function DailySettlementView({ data, today }: { data: DailySettlement; to
                   <th className="border-b border-jb-line px-3 py-2.5 text-right">고용산재 {INS_PCT}</th>
                   <th className="border-b border-jb-line px-3 py-2.5 text-right">수수료 <span className="font-normal text-jb-ink-mute">건당 {won(PER_COMPLETED_FEE)}</span></th>
                   <SortableTh label="지급액" onClick={() => toggleSort("total")} active={sortKey === "total"} dir={sortDir} align="right" className="border-l border-jb-line font-semibold text-jb-ink" />
+                  <th className="w-[240px] border-b border-l border-jb-line px-3 py-2.5 text-left">특이사항</th>
                 </tr>
               </thead>
               <tbody>
                 {view.map((r, i) => (
-                  <Row key={r.riderId} row={r} index={i + 1} />
+                  <Row
+                    key={r.riderId}
+                    row={r}
+                    index={i + 1}
+                    note={notesApi.notes[r.riderId] ?? ""}
+                    onNote={notesApi.setNote}
+                  />
                 ))}
               </tbody>
               <tfoot>
@@ -186,6 +204,7 @@ export function DailySettlementView({ data, today }: { data: DailySettlement; to
                   <Num v={vTotals.feeIns} deduct />
                   <Num v={vTotals.feeFee} deduct />
                   <Num v={vTotals.total} className="border-l border-jb-line text-jb-indigo" />
+                  <td className="border-l border-jb-line-soft" />
                 </tr>
               </tfoot>
             </table>
@@ -252,7 +271,17 @@ function Num({ v, deduct, className = "" }: { v: number; deduct?: boolean; class
   );
 }
 
-function Row({ row, index }: { row: DailySettlementRow; index: number }) {
+const Row = memo(function Row({
+  row,
+  index,
+  note,
+  onNote,
+}: {
+  row: DailySettlementRow;
+  index: number;
+  note: string;
+  onNote: (id: string, val: string) => void;
+}) {
   return (
     <tr className="border-b border-jb-line-soft transition-colors hover:bg-jb-surface/60">
       <td className="px-3 py-2.5 text-right font-mono text-[12px] tabular-nums text-jb-ink-mute">{index}</td>
@@ -264,6 +293,14 @@ function Row({ row, index }: { row: DailySettlementRow; index: number }) {
       <td className="px-3 py-2.5 text-right font-mono tabular-nums text-jb-red">{ded(row.feeIns)}</td>
       <td className="px-3 py-2.5 text-right font-mono tabular-nums text-jb-red">{ded(row.feeFee)}</td>
       <td className="border-l border-jb-line-soft px-3 py-2.5 text-right font-mono font-bold tabular-nums text-jb-indigo">{won(row.total)}</td>
+      <td className="border-l border-jb-line-soft px-2 py-1.5">
+        <input
+          value={note}
+          onChange={(e) => onNote(row.riderId, e.target.value)}
+          placeholder="특이사항…"
+          className="w-full rounded-[8px] border border-transparent bg-transparent px-2 py-1.5 text-[13px] text-jb-ink outline-none hover:border-jb-line focus:border-jb-indigo/50 focus:bg-jb-surface placeholder:text-jb-ink-mute"
+        />
+      </td>
     </tr>
   );
-}
+});
