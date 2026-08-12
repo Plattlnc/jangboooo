@@ -26,8 +26,7 @@ export const GRADE_SEASON_START = "2026-08-12"; // 2026-08-12(수) ~ 첫 시즌
 // 브론즈·실버(무보상 하위 구간) 제거(2026-08-13). 골드가 최하위 표시 등급 — 구간·요율은 유지.
 // 골드 min 유지(101): 보상은 각 구간 min~max 로 누진 산정하므로 min 변경 시 보상액이 달라짐.
 export const TIERS: Tier[] = [
-  { key: "gold", name: "골드", min: 101, max: 150, rate: 150, color: "#d9a520" },
-  { key: "platinum", name: "플래티넘", min: 151, max: 200, rate: 600, color: "#3fb7ab" },
+  { key: "gold", name: "골드", min: 101, max: 200, rate: 150, color: "#d9a520" },
   { key: "diamond", name: "다이아", min: 201, max: 250, rate: 900, color: "#45b6e8" },
   {
     key: "master",
