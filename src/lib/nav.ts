@@ -54,7 +54,7 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     title: "프로모션",
     items: [
-      { label: "라이더 등급", href: "/grade", icon: Medal, tileColor: "#B8860B", tileBg: "#fbf3dd" },
+      { label: "라이더 등급", href: "/grade", icon: Medal, tileColor: "#B8860B", tileBg: "#fbf3dd", locked: true },
     ],
   },
   {
