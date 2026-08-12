@@ -1,8 +1,7 @@
 // 배달등급 — 주간(수~화) 누적 완료건 기준 등급. 보상 시스템 개편 중 — 건당 금액·수행건 표시 제거(2026-08-13).
 
 import type { CSSProperties } from "react";
-import Link from "next/link";
-import { ChevronRight, Check } from "lucide-react";
+import { Check } from "lucide-react";
 import { getMyGrade } from "@/app/(rider)/_lib/grade";
 import { TierBadge } from "@/components/ui/tier-badge";
 import { seasonOf, TIERS } from "@/lib/grade";
@@ -94,16 +93,6 @@ export default async function GradePage() {
           </div>
         )}
       </div>
-
-      {/* 내 등급 기록 */}
-      <Link
-        href="/grade/history"
-        className="mt-3 flex items-center gap-2 rounded-[12px] border border-jb-line bg-white px-4 py-3.5 shadow-[0_1px_2px_0_rgba(0,0,0,0.04)] transition-colors active:bg-jb-line-soft"
-      >
-        <span className="flex-1 text-[13.5px] font-black text-jb-ink">내 등급 기록</span>
-        <span className="text-[11.5px] font-semibold text-jb-ink-mute">주차별 등급</span>
-        <ChevronRight size={17} strokeWidth={2.2} className="shrink-0 text-jb-ink-mute" />
-      </Link>
 
       {/* 등급 목록 */}
       <div className="mb-2 mt-5 text-[15px] font-black text-jb-ink">등급</div>
