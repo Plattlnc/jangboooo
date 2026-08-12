@@ -96,14 +96,17 @@ export function AdminHome({
         ) : null}
       </div>
 
-      {/* 날짜 직접 선택 — 조회 시 from/to 쿼리로 서버 재렌더('기간' 탭 활성). */}
-      <DateRangeForm
-        basePath="/admin"
-        from={customRange?.from}
-        to={customRange?.to}
-        maxDate={maxDate}
-        note="최대 7일 조회 · 오늘은 실시간 수집 중이라 선택할 수 없어요"
-      />
+      {/* 날짜 직접 선택 — 조회 시 from/to 쿼리로 서버 재렌더('기간' 탭 활성).
+          일간 탭은 당일 현황만 보므로 날짜 선택 불필요 → 숨김. */}
+      {tab !== "today" ? (
+        <DateRangeForm
+          basePath="/admin"
+          from={customRange?.from}
+          to={customRange?.to}
+          maxDate={maxDate}
+          note="최대 7일 조회 · 오늘은 실시간 수집 중이라 선택할 수 없어요"
+        />
+      ) : null}
 
       {/* 통합 요약 히어로 */}
       <div className="mt-3">
