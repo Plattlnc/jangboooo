@@ -280,9 +280,9 @@ export function AdminHome({
             이력 보기
           </Link>
         </div>
-        <div className="rounded-[18px] border border-jb-line bg-jb-card px-[13px] py-[10px] shadow-[var(--toss-shadow)]">
+        <div className="rounded-[18px] border border-jb-line bg-jb-card px-[18px] py-4 shadow-[var(--toss-shadow)]">
           {centerGoals.every((g) => g.current == null && g.goal == null) ? (
-            <div className="flex flex-col items-center gap-1 py-4 text-center">
+            <div className="flex flex-col items-center gap-1 py-5 text-center">
               <span className="text-[12.5px] font-bold text-jb-ink-soft">오늘 공동목표가 아직 수집 전이에요</span>
               <span className="text-[11px] text-jb-ink-mute">수집되면 자동으로 표시돼요</span>
             </div>
@@ -290,21 +290,22 @@ export function AdminHome({
             centerGoals.map((g) => {
               const over = (g.pct ?? 0) >= 100;
               const remaining = g.goal != null && g.current != null ? g.goal - g.current : null;
+              const barColor = over ? "#3182f6" : "#f28a00";
               return (
-                <div key={g.key} className="mb-1.5 last:mb-0">
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="w-[74px] shrink-0 text-[13px] font-black text-jb-ink">{g.label}</span>
-                    <span className="tnum text-[15px] font-black" style={{ color: over ? "#3182f6" : "#f28a00" }}>
+                <div key={g.key} className="border-t border-jb-line-soft py-[11px] first:border-t-0 first:pt-1 last:pb-1">
+                  <span className="text-[14.5px] font-black tracking-[-0.02em] text-jb-ink">{g.label}</span>
+                  <div className="mt-1 flex items-baseline gap-1.5">
+                    <span className="tnum text-[22px] font-black tracking-[-0.02em]" style={{ color: barColor }}>
                       {g.current == null ? "—" : g.current.toLocaleString()}
                     </span>
-                    <span className="tnum text-[12px] font-bold text-jb-ink-mute">
+                    <span className="tnum text-[13px] font-bold text-jb-ink-mute">
                       / {g.goal == null ? "—" : `${g.goal.toLocaleString()}건`}
                     </span>
-                    <span className="tnum text-[11.5px] font-black text-jb-ink-mute">{g.pct == null ? "—" : `${g.pct}%`}</span>
+                    <span className="tnum text-[12.5px] font-black text-jb-ink-mute">{g.pct == null ? "—" : `${g.pct}%`}</span>
                     {remaining != null && g.pct != null ? (
                       <span
                         className={
-                          "tnum ml-auto whitespace-nowrap text-[11.5px] font-black " +
+                          "tnum ml-auto whitespace-nowrap text-[12px] font-black " +
                           (remaining <= 0 ? "text-jb-green" : "text-jb-indigo")
                         }
                       >
@@ -312,11 +313,8 @@ export function AdminHome({
                       </span>
                     ) : null}
                   </div>
-                  <div className="mt-1 h-[7px] overflow-hidden rounded-full bg-jb-track">
-                    <div
-                      className="h-full"
-                      style={{ width: `${Math.min(g.pct ?? 0, 100)}%`, background: over ? "#3182f6" : "#f28a00" }}
-                    />
+                  <div className="mt-1.5 h-[9px] overflow-hidden rounded-full bg-jb-track">
+                    <div className="h-full rounded-full" style={{ width: `${Math.min(g.pct ?? 0, 100)}%`, background: barColor }} />
                   </div>
                 </div>
               );
