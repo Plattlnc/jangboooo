@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, type ReactNode } from "react";
+import { useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { AdminHomeVM } from "./home-vm";
@@ -69,7 +69,19 @@ export function AdminHome({
 
   return (
     <div className="px-3.5 py-3">
-      <PeriodSection title="일간" vm={today} />
+      {/* 상단: 오늘 날짜 + 주/월 선택 */}
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2 px-0.5">
+        <div className="flex items-baseline gap-2">
+          <span className="text-[16px] font-black text-jb-ink">오늘</span>
+          <span className="tnum text-[10.5px] font-semibold text-jb-ink-mute">{today.rangeLabel}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <PeriodPicker label="주" value={selectedWeek} options={weekOptions} onChange={pickWeek} />
+          <PeriodPicker label="월" value={selectedMonth} options={monthOptions} onChange={pickMonth} />
+        </div>
+      </div>
+
+      <PeriodSection vm={today} />
 
       {/* 오늘 공동목표(협력사 4피크) — 당일 실시간, 1회. */}
       <div className="mt-4">
@@ -124,16 +136,8 @@ export function AdminHome({
         </div>
       </div>
 
-      <PeriodSection
-        title="주간"
-        vm={week}
-        selector={<PeriodPicker label="주" value={selectedWeek} options={weekOptions} onChange={pickWeek} />}
-      />
-      <PeriodSection
-        title="월간"
-        vm={month}
-        selector={<PeriodPicker label="월" value={selectedMonth} options={monthOptions} onChange={pickMonth} />}
-      />
+      <PeriodSection title="주간" vm={week} compact />
+      <PeriodSection title="월간" vm={month} compact />
 
       {/* 수락률 주의 라이더 (주간 기준) */}
       <div className="mt-4">
@@ -240,17 +244,16 @@ export function AdminHome({
   );
 }
 
-// 한 기간(일간/주간/월간) 블록 — 히어로 + 운행상태 + 시간대별 분포.
-function PeriodSection({ title, vm, selector }: { title: string; vm: AdminHomeVM; selector?: ReactNode }) {
+// 한 기간 블록 — 히어로(+ compact 아니면 운행상태·시간대별 분포). title 없으면 헤더 생략.
+function PeriodSection({ title, vm, compact }: { title?: string; vm: AdminHomeVM; compact?: boolean }) {
   return (
     <div className="mt-4 first:mt-0">
-      <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2 px-0.5">
-        <div className="flex items-baseline gap-2">
+      {title ? (
+        <div className="mb-1.5 flex items-baseline gap-2 px-0.5">
           <span className="text-[16px] font-black text-jb-ink">{title}</span>
           <span className="tnum text-[10.5px] font-semibold text-jb-ink-mute">{vm.rangeLabel}</span>
         </div>
-        {selector}
-      </div>
+      ) : null}
 
       {/* 통합 운행 요약 히어로 */}
       <div className="rounded-[18px] border border-jb-line bg-jb-card px-4 py-3 shadow-[var(--toss-shadow)]">
@@ -280,6 +283,8 @@ function PeriodSection({ title, vm, selector }: { title: string; vm: AdminHomeVM
         </div>
       </div>
 
+      {!compact ? (
+        <>
       {/* 운행 상태 4타일 */}
       <div className="mt-2">
         <div className="mb-1 flex items-center justify-between px-0.5">
@@ -328,6 +333,8 @@ function PeriodSection({ title, vm, selector }: { title: string; vm: AdminHomeVM
           </div>
         </div>
       </div>
+        </>
+      ) : null}
     </div>
   );
 }
