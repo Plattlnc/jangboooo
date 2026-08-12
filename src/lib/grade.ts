@@ -9,10 +9,14 @@ export interface Tier {
   min: number;
   /** 상한(포함). 최상위는 Infinity. */
   max: number;
-  /** 건당 보상(원). 0 = 보상 없음. */
+  /** 건당 보상(원). 0 = 보상 없음. (구 보상제 — 개편 중, 미표시) */
   rate: number;
   /** 임시 색(사용자가 티어 아이콘 직접 디자인해 교체 예정). */
   color: string;
+  /** 등급 혜택(개편 신규) — 표시용. 없으면 미정. */
+  perks?: string[];
+  /** 등급 유지/달성 조건: 최소 수락률(%). 없으면 조건 없음. */
+  minAccept?: number;
 }
 
 /** 배달등급 제도 시행 시작일(첫 시즌 첫 주의 수요일). 이 날짜 이전 주는 기록에 포함하지 않는다. */
@@ -26,7 +30,16 @@ export const TIERS: Tier[] = [
   { key: "platinum", name: "플래티넘", min: 151, max: 200, rate: 600, color: "#3fb7ab" },
   { key: "diamond", name: "다이아", min: 201, max: 250, rate: 900, color: "#45b6e8" },
   { key: "master", name: "마스터", min: 251, max: 400, rate: 1200, color: "#7c5cff" },
-  { key: "challenger", name: "그랜드 마스터", min: 401, max: Infinity, rate: 1500, color: "#e0323c" },
+  {
+    key: "challenger",
+    name: "그랜드 마스터",
+    min: 401,
+    max: Infinity,
+    rate: 1500,
+    color: "#e0323c",
+    minAccept: 70,
+    perks: ["라이더 수수료 면제", "원천세 3.3% 면제", "고용·산재보험료 1.8% 면제"],
+  },
 ];
 
 export interface GradeBreakdown {

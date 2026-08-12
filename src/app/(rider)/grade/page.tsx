@@ -2,7 +2,7 @@
 
 import type { CSSProperties } from "react";
 import Link from "next/link";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Check } from "lucide-react";
 import { getMyGrade } from "@/app/(rider)/_lib/grade";
 import { TierBadge } from "@/components/ui/tier-badge";
 import { seasonOf, TIERS } from "@/lib/grade";
@@ -55,9 +55,25 @@ export default async function GradePage() {
             </div>
           </div>
         </div>
-        <div className="mt-3.5 rounded-[10px] border-t border-jb-line bg-jb-surface px-3 py-2.5 text-[12px] font-bold text-jb-ink-soft">
-          등급 보상은 현재 개편 중이에요
-        </div>
+        {g.tier.perks && g.tier.perks.length > 0 ? (
+          <div className="mt-3.5 border-t border-jb-line pt-3">
+            <div className="text-[11.5px] font-bold text-jb-ink-mute">
+              내 등급 혜택{g.tier.minAccept != null ? ` · 수락률 ${g.tier.minAccept}% 이상 유지 시` : ""}
+            </div>
+            <ul className="mt-2 flex flex-col gap-1.5">
+              {g.tier.perks.map((p) => (
+                <li key={p} className="flex items-center gap-1.5 text-[13px] font-black text-jb-ink">
+                  <Check size={15} strokeWidth={3} className="shrink-0 text-jb-green" />
+                  {p}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : (
+          <div className="mt-3.5 rounded-[10px] border-t border-jb-line bg-jb-surface px-3 py-2.5 text-[12px] font-bold text-jb-ink-soft">
+            등급 보상은 현재 개편 중이에요
+          </div>
+        )}
       </div>
 
       {/* 내 등급 기록 */}
@@ -80,20 +96,39 @@ export default async function GradePage() {
               key={t.key}
               style={current ? tierVar(t.color) : undefined}
               className={
-                "flex items-center gap-3 rounded-[12px] px-3.5 py-3 " +
+                "flex items-start gap-3 rounded-[12px] px-3.5 py-3 " +
                 (current
                   ? "tier-glow bg-jb-card"
                   : "border border-jb-line bg-white shadow-[0_1px_2px_0_rgba(0,0,0,0.04)]")
               }
             >
               <TierBadge tier={t} size={40} />
-              <div className="flex min-w-0 flex-1 items-center gap-1.5">
-                <span className="text-[14px] font-black text-jb-ink">{t.name}</span>
-                {current ? (
-                  <span className="rounded-[6px] px-1.5 py-0.5 text-[10px] font-black text-white" style={{ background: t.color }}>
-                    현재
-                  </span>
-                ) : null}
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-[14px] font-black text-jb-ink">{t.name}</span>
+                  {t.minAccept != null ? (
+                    <span className="rounded-[6px] bg-jb-indigo-tint px-1.5 py-0.5 text-[10px] font-black text-jb-indigo">
+                      수락률 {t.minAccept}%↑
+                    </span>
+                  ) : null}
+                  {current ? (
+                    <span className="rounded-[6px] px-1.5 py-0.5 text-[10px] font-black text-white" style={{ background: t.color }}>
+                      현재
+                    </span>
+                  ) : null}
+                </div>
+                {t.perks && t.perks.length > 0 ? (
+                  <ul className="mt-1.5 flex flex-col gap-1">
+                    {t.perks.map((p) => (
+                      <li key={p} className="flex items-center gap-1.5 text-[12px] font-bold text-jb-ink-soft">
+                        <Check size={13} strokeWidth={3} className="shrink-0 text-jb-green" />
+                        {p}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="mt-0.5 text-[11.5px] font-semibold text-jb-ink-mute">혜택 개편 중</div>
+                )}
               </div>
             </div>
           );
