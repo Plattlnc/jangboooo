@@ -24,11 +24,14 @@ function dirtyDiff(a: Record<string, string>, b: Record<string, string>): boolea
 /** 초기 맵으로 공유 특이사항 상태 생성(상위에서 1회 호출, 양 탭에 전달). */
 export function useRiderNotesApi(initial: Record<string, string>): NotesApi {
   const [notes, setNotes] = useState<Record<string, string>>(initial);
+  // 마지막 저장 스냅샷(저장 성공 시 갱신) — dirty 판정 기준. 마운트 prop 이 아니라 이걸로 비교해야
+  // 저장 직후 "저장됨"이 정확히 표시된다.
+  const [baseline, setBaseline] = useState<Record<string, string>>(initial);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string>();
 
-  const dirty = useMemo(() => dirtyDiff(notes, initial), [notes, initial]);
+  const dirty = useMemo(() => dirtyDiff(notes, baseline), [notes, baseline]);
 
   const setNote = useCallback((id: string, val: string) => {
     setNotes((prev) => ({ ...prev, [id]: val }));
@@ -39,10 +42,15 @@ export function useRiderNotesApi(initial: Record<string, string>): NotesApi {
   const save = useCallback(async () => {
     setSaving(true);
     setError(undefined);
-    const res = await saveRiderNotes(notes);
+    const snapshot = notes;
+    const res = await saveRiderNotes(snapshot);
     setSaving(false);
-    if (res.ok) setSaved(true);
-    else setError(res.message);
+    if (res.ok) {
+      setBaseline(snapshot);
+      setSaved(true);
+    } else {
+      setError(res.message);
+    }
   }, [notes]);
 
   return { notes, setNote, save, saving, saved, dirty, error };
