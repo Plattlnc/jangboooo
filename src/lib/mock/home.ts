@@ -11,6 +11,8 @@ export interface StatusDatum {
   bmart?: number;
   /** 배민스토어 건수 — 값이 있으면 타일에 "스토어 n" 서브라인 표시(>0일 때만). */
   store?: number;
+  /** 시간 외(09:00~24:00 이외 = 새벽 0~8시) 완료건 — 완료 타일에만 부여, "시간 외 n" 서브라인. */
+  offHours?: number;
   color: string;
 }
 export interface CatDatum {

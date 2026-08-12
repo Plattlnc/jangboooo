@@ -269,6 +269,11 @@ export function HomeScreen({
                     스토어 {it.store}
                   </div>
                 ) : null}
+                {it.offHours != null ? (
+                  <div className={"tnum text-[10px] font-bold " + (it.offHours > 0 ? "text-jb-orange" : "text-jb-ink-mute")}>
+                    시간 외 {it.offHours}
+                  </div>
+                ) : null}
               </div>
             ))}
           </div>

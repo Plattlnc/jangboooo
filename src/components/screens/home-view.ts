@@ -77,6 +77,9 @@ export function toHomeMetrics(data: DashboardData, period: "today" | "week"): Ho
       ? { value: total }
       : { value: Math.max(0, total - bmartCount - storeCount), bmart: bmartCount, store: storeCount };
 
+  // 시간 외 완료 = SLA 운영시간(09:00~24:00) 이외 = 새벽 0~8시 완료건 합. 완료 타일 서브라인(B마트/스토어와 동일 영역).
+  const offHoursCompleted = data.hourly.reduce((sum, h) => (h.hour < 9 ? sum + h.completed : sum), 0);
+
   return {
     period:
       period === "today"
@@ -86,7 +89,7 @@ export function toHomeMetrics(data: DashboardData, period: "today" | "week"): Ho
     revenue: 0, // 소스 없음 — 미표시
     accept: s.acceptance_rate ?? 0,
     status: [
-      { label: "완료", ...split(s.completed, c?.bmart.complete, c?.store.complete), color: "#1E9E5A" },
+      { label: "완료", ...split(s.completed, c?.bmart.complete, c?.store.complete), offHours: offHoursCompleted, color: "#1E9E5A" },
       { label: "거절", ...split(s.rejected, c?.bmart.reject, c?.store.reject), color: "#D9342B" },
       { label: "배차취소", ...split(s.dispatch_canceled, c?.bmart.cancel, c?.store.cancel), color: "#E8590C" },
       { label: "배달취소", ...split(s.delivery_canceled, c?.bmart.riderFault, c?.store.riderFault), color: "#9b9588" },
