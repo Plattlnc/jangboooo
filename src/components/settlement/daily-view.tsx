@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, Download, Search, ArrowUp, ArrowDown } from "lucide-react";
 import type { DailySettlement, DailySettlementRow, DailyTotals } from "@/app/settlement/_lib/daily";
-import { WITHHOLDING_RATE, INSURANCE_RATE, CATEGORY_FEE } from "@/app/settlement/_lib/rates";
+import { WITHHOLDING_RATE, INSURANCE_RATE, PER_COMPLETED_FEE } from "@/app/settlement/_lib/rates";
 import { ymdAdd, formatKoreanDate } from "@/app/settlement/_lib/dates";
 
 // 일일 정산 뷰 — 선택일 라이더별 배달처리비/미션비 세전 → 원천세(3.3%)·고용산재(1.8%) 공제 → 지급액.
@@ -57,20 +57,20 @@ export function DailySettlementView({ data, today }: { data: DailySettlement; to
   function exportCsv() {
     const head = [
       "번호", "라이더", "라이더ID", "완료건수",
-      "배달처리비(세전)", `원천세(${WHT_PCT})`, `고용산재(${INS_PCT})`, "수수료", "배달처리비 지급액",
-      "미션비(세전)", `원천세(${WHT_PCT})`, `고용산재(${INS_PCT})`, "수수료", "미션비 지급액",
+      "배달처리비(세전)", `원천세(${WHT_PCT})`, `고용산재(${INS_PCT})`, "수수료(건당)", "배달처리비 지급액",
+      "미션비(세전)", `원천세(${WHT_PCT})`, `고용산재(${INS_PCT})`, "미션비 지급액",
       "총지급액",
     ];
     const body = view.map((r, i) => [
       i + 1, r.name, r.riderId, r.completed,
       r.fee, r.feeWht, r.feeIns, r.feeFee, r.feePayout,
-      r.mission, r.missionWht, r.missionIns, r.missionFee, r.missionPayout,
+      r.mission, r.missionWht, r.missionIns, r.missionPayout,
       r.total,
     ]);
     const foot = [
       "합계", "", "", vTotals.completed,
       vTotals.fee, vTotals.feeWht, vTotals.feeIns, vTotals.feeFee, vTotals.feePayout,
-      vTotals.mission, vTotals.missionWht, vTotals.missionIns, vTotals.missionFee, vTotals.missionPayout,
+      vTotals.mission, vTotals.missionWht, vTotals.missionIns, vTotals.missionPayout,
       vTotals.total,
     ];
     const csv = [head, ...body, foot]
@@ -92,7 +92,7 @@ export function DailySettlementView({ data, today }: { data: DailySettlement; to
         <div>
           <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-jb-ink">일일 정산</h1>
           <p className="mt-1 text-[13px] text-jb-ink-mute">
-            라이더별 배달처리비·미션비(세전)에서 원천세 {WHT_PCT} · 고용산재 {INS_PCT} · 수수료 {won(CATEGORY_FEE)}원 공제 후 지급액. 배달처리비는 익일 오전 반영.
+            세전에서 원천세 {WHT_PCT} · 고용산재 {INS_PCT} 공제, 배달처리비는 수수료(완료건당 {won(PER_COMPLETED_FEE)}원) 추가 공제 후 지급액. 배달처리비는 익일 오전 반영.
           </p>
         </div>
         <div className="flex items-center rounded-[10px] border border-jb-line bg-jb-card shadow-[var(--toss-shadow)]">
@@ -169,7 +169,7 @@ export function DailySettlementView({ data, today }: { data: DailySettlement; to
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[1360px] border-collapse text-[13px]">
+            <table className="w-full min-w-[1280px] border-collapse text-[13px]">
               <thead className="text-jb-ink-mute">
                 <tr className="bg-jb-surface text-[12px] font-medium">
                   <th rowSpan={2} className="border-b border-jb-line px-3 py-2.5 text-right">#</th>
@@ -177,19 +177,18 @@ export function DailySettlementView({ data, today }: { data: DailySettlement; to
                   <th rowSpan={2} className="border-b border-jb-line px-3 py-2.5 text-left">라이더 ID</th>
                   <SortableTh rowSpan={2} label="완료" onClick={() => toggleSort("completed")} active={sortKey === "completed"} dir={sortDir} align="right" />
                   <th colSpan={5} className="border-b border-l border-jb-line px-3 py-2 text-center font-semibold text-jb-ink">배달처리비</th>
-                  <th colSpan={5} className="border-b border-l border-jb-line px-3 py-2 text-center font-semibold text-jb-ink">미션비</th>
+                  <th colSpan={4} className="border-b border-l border-jb-line px-3 py-2 text-center font-semibold text-jb-ink">미션비</th>
                   <SortableTh rowSpan={2} label="총 지급액" onClick={() => toggleSort("total")} active={sortKey === "total"} dir={sortDir} align="right" className="border-l border-jb-line" />
                 </tr>
                 <tr className="bg-jb-surface text-[11.5px] font-medium">
                   <SortableTh label="세전" onClick={() => toggleSort("fee")} active={sortKey === "fee"} dir={sortDir} align="right" className="border-l border-jb-line" />
                   <th className="border-b border-jb-line px-3 py-2 text-right">원천세 {WHT_PCT}</th>
                   <th className="border-b border-jb-line px-3 py-2 text-right">고용산재 {INS_PCT}</th>
-                  <th className="border-b border-jb-line px-3 py-2 text-right">수수료</th>
+                  <th className="border-b border-jb-line px-3 py-2 text-right">수수료 <span className="font-normal text-jb-ink-mute">건당 {won(PER_COMPLETED_FEE)}</span></th>
                   <th className="border-b border-jb-line px-3 py-2 text-right font-semibold text-jb-ink">지급액</th>
                   <th className="border-b border-l border-jb-line px-3 py-2 text-right">세전</th>
                   <th className="border-b border-jb-line px-3 py-2 text-right">원천세 {WHT_PCT}</th>
                   <th className="border-b border-jb-line px-3 py-2 text-right">고용산재 {INS_PCT}</th>
-                  <th className="border-b border-jb-line px-3 py-2 text-right">수수료</th>
                   <th className="border-b border-jb-line px-3 py-2 text-right font-semibold text-jb-ink">지급액</th>
                 </tr>
               </thead>
@@ -210,7 +209,6 @@ export function DailySettlementView({ data, today }: { data: DailySettlement; to
                   <Num v={vTotals.mission} className="border-l border-jb-line" />
                   <Num v={vTotals.missionWht} deduct />
                   <Num v={vTotals.missionIns} deduct />
-                  <Num v={vTotals.missionFee} deduct />
                   <Num v={vTotals.missionPayout} />
                   <Num v={vTotals.total} className="border-l border-jb-line text-jb-indigo" />
                 </tr>
@@ -224,11 +222,11 @@ export function DailySettlementView({ data, today }: { data: DailySettlement; to
 }
 
 function sumRows(rows: DailySettlementRow[]): DailyTotals {
-  const t: DailyTotals = { riders: rows.length, completed: 0, fee: 0, feeWht: 0, feeIns: 0, feeFee: 0, feePayout: 0, mission: 0, missionWht: 0, missionIns: 0, missionFee: 0, missionPayout: 0, total: 0 };
+  const t: DailyTotals = { riders: rows.length, completed: 0, fee: 0, feeWht: 0, feeIns: 0, feeFee: 0, feePayout: 0, mission: 0, missionWht: 0, missionIns: 0, missionPayout: 0, total: 0 };
   for (const r of rows) {
     t.completed += r.completed;
     t.fee += r.fee; t.feeWht += r.feeWht; t.feeIns += r.feeIns; t.feeFee += r.feeFee; t.feePayout += r.feePayout;
-    t.mission += r.mission; t.missionWht += r.missionWht; t.missionIns += r.missionIns; t.missionFee += r.missionFee; t.missionPayout += r.missionPayout;
+    t.mission += r.mission; t.missionWht += r.missionWht; t.missionIns += r.missionIns; t.missionPayout += r.missionPayout;
     t.total += r.total;
   }
   return t;
@@ -294,11 +292,10 @@ function Row({ row, index }: { row: DailySettlementRow; index: number }) {
       <td className="px-3 py-2.5 text-right font-mono tabular-nums text-jb-red">{ded(row.feeIns)}</td>
       <td className="px-3 py-2.5 text-right font-mono tabular-nums text-jb-red">{ded(row.feeFee)}</td>
       <td className="px-3 py-2.5 text-right font-mono font-bold tabular-nums text-jb-ink">{won(row.feePayout)}</td>
-      {/* 미션비 그룹 */}
+      {/* 미션비 그룹 (수수료 없음) */}
       <td className="border-l border-jb-line-soft px-3 py-2.5 text-right font-mono tabular-nums text-jb-ink">{won(row.mission)}</td>
       <td className="px-3 py-2.5 text-right font-mono tabular-nums text-jb-red">{ded(row.missionWht)}</td>
       <td className="px-3 py-2.5 text-right font-mono tabular-nums text-jb-red">{ded(row.missionIns)}</td>
-      <td className="px-3 py-2.5 text-right font-mono tabular-nums text-jb-red">{ded(row.missionFee)}</td>
       <td className="px-3 py-2.5 text-right font-mono font-bold tabular-nums text-jb-ink">{won(row.missionPayout)}</td>
       {/* 총 지급액 */}
       <td className="border-l border-jb-line-soft px-3 py-2.5 text-right font-mono font-bold tabular-nums text-jb-indigo">{won(row.total)}</td>
