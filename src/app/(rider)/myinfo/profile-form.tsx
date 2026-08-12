@@ -34,7 +34,7 @@ interface Field {
 }
 
 const FIELDS: Field[] = [
-  { key: "realName", label: "실 사용자 이름", placeholder: "예) 김건우", maxLength: 30 },
+  { key: "realName", label: "실 사용자 이름", placeholder: "예) 홍길동", maxLength: 30 },
   { key: "realPhone", label: "실 사용자 번호", placeholder: "예) 010-1234-5678", inputMode: "tel", maxLength: 13 },
   { key: "bikePlate", label: "바이크 번호판", placeholder: "예) 서울강남차1234", maxLength: 12 },
   { key: "bikeModel", label: "바이크 기종", placeholder: "예) PCX 125", maxLength: 30 },
