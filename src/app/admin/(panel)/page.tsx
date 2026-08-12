@@ -33,7 +33,7 @@ export default async function AdminHomePage({
     return { key, label, current: g?.current ?? null, goal: g?.goal ?? null, pct: g?.pct ?? null };
   });
 
-  const weekRaw = buildWeekOptions(businessToday, 12);
+  const weekRaw = buildWeekOptions(businessToday, 5); // 이번 주 포함 최대 5주
   const monthRaw = buildMonthOptions(businessToday, 6);
   // 드롭다운 라벨 = ISO 날짜(주: YYYY-MM-DD ~ YYYY-MM-DD, 월: YYYY-MM).
   const weekOptions = weekRaw.map((o) => ({ value: o.value, label: `${o.range.start_date} ~ ${o.range.end_date}` }));
