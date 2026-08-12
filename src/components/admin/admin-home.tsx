@@ -22,6 +22,14 @@ interface PeriodOption {
   label: string;
 }
 
+interface CenterGoalVM {
+  key: string;
+  label: string;
+  current: number | null;
+  goal: number | null;
+  pct: number | null;
+}
+
 export function AdminHome({
   today,
   week,
@@ -34,6 +42,7 @@ export function AdminHome({
   selectedWeek,
   selectedMonth,
   initialTab,
+  centerGoals,
 }: {
   today: AdminHomeVM;
   week: AdminHomeVM;
@@ -50,6 +59,8 @@ export function AdminHome({
   selectedWeek: string;
   selectedMonth: string;
   initialTab: Tab;
+  /** 오늘(영업일) 공동목표 4피크 — 실시간. 미수집 시 값 null. */
+  centerGoals: CenterGoalVM[];
 }) {
   const [tab, setTab] = useState<Tab>(initialTab);
   const router = useRouter();
@@ -256,6 +267,61 @@ export function AdminHome({
               </div>
             ))}
           </div>
+        </div>
+      </div>
+
+      {/* 오늘 공동목표(협력사 4피크) — 시간대별 분포 아래. 목표 탭과 동일 소스, 항상 당일 실시간. */}
+      <div className="mt-3">
+        <div className="mb-1.5 flex items-center justify-between px-0.5">
+          <span className="text-[15px] font-black text-jb-ink">
+            오늘 공동목표 <span className="text-jb-indigo">· 협력사 4피크</span>
+          </span>
+          <Link href="/admin/goals" className="text-[11px] font-bold text-jb-indigo">
+            이력 보기
+          </Link>
+        </div>
+        <div className="rounded-[18px] border border-jb-line bg-jb-card px-[13px] py-[10px] shadow-[var(--toss-shadow)]">
+          {centerGoals.every((g) => g.current == null && g.goal == null) ? (
+            <div className="flex flex-col items-center gap-1 py-4 text-center">
+              <span className="text-[12.5px] font-bold text-jb-ink-soft">오늘 공동목표가 아직 수집 전이에요</span>
+              <span className="text-[11px] text-jb-ink-mute">수집되면 자동으로 표시돼요</span>
+            </div>
+          ) : (
+            centerGoals.map((g) => {
+              const over = (g.pct ?? 0) >= 100;
+              const remaining = g.goal != null && g.current != null ? g.goal - g.current : null;
+              return (
+                <div key={g.key} className="mb-1.5 last:mb-0">
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="w-[74px] shrink-0 text-[13px] font-black text-jb-ink">{g.label}</span>
+                    <span className="tnum text-[15px] font-black" style={{ color: over ? "#3182f6" : "#f28a00" }}>
+                      {g.current == null ? "—" : g.current.toLocaleString()}
+                    </span>
+                    <span className="tnum text-[12px] font-bold text-jb-ink-mute">
+                      / {g.goal == null ? "—" : `${g.goal.toLocaleString()}건`}
+                    </span>
+                    <span className="tnum text-[11.5px] font-black text-jb-ink-mute">{g.pct == null ? "—" : `${g.pct}%`}</span>
+                    {remaining != null && g.pct != null ? (
+                      <span
+                        className={
+                          "tnum ml-auto whitespace-nowrap text-[11.5px] font-black " +
+                          (remaining <= 0 ? "text-jb-green" : "text-jb-indigo")
+                        }
+                      >
+                        {remaining <= 0 ? "목표 달성" : `${remaining.toLocaleString()}건 남음`}
+                      </span>
+                    ) : null}
+                  </div>
+                  <div className="mt-1 h-[7px] overflow-hidden rounded-full bg-jb-track">
+                    <div
+                      className="h-full"
+                      style={{ width: `${Math.min(g.pct ?? 0, 100)}%`, background: over ? "#3182f6" : "#f28a00" }}
+                    />
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
 
