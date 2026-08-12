@@ -2,9 +2,8 @@ import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { applyDeductions, PER_COMPLETED_FEE } from "@/app/settlement/_lib/rates";
 
-// 일일 정산 데이터 — 선택 영업일의 라이더별 배달처리비(세전)·미션비(세전)에서
-// 원천세(3.3%)·고용산재(1.8%)를 각각 공제한 지급액 산출. 원천: rider_daily_fees(0018).
-// 정산팀 송금 목록의 기반. 세율/공제식 SSOT = rates.ts.
+// 일일 정산 데이터 — 선택 영업일의 라이더별 배달처리비(세전)에서 원천세(3.3%)·고용산재(1.8%)
+// + 수수료(완료건당 100원) 공제 후 지급액. 미션비는 일일정산 대상 아님(제외). 원천: rider_daily_fees(0018).
 
 export interface DailySettlementRow {
   riderId: string;
@@ -15,17 +14,11 @@ export interface DailySettlementRow {
   fee: number;
   feeWht: number;
   feeIns: number;
-  /** 배달처리비 수수료 = 완료건수 × PER_COMPLETED_FEE */
+  /** 수수료 = 완료건수 × PER_COMPLETED_FEE */
   feeFee: number;
-  /** 배달처리비 지급액 = 세전 − 원천세 − 고용산재 − 수수료 */
+  /** 지급액 = 세전 − 원천세 − 고용산재 − 수수료 */
   feePayout: number;
-  /** 미션비(세전) */
-  mission: number;
-  missionWht: number;
-  missionIns: number;
-  /** 미션비 지급액 = 세전 − 원천세 − 고용산재 (미션비는 수수료 없음) */
-  missionPayout: number;
-  /** 총 지급액 = 배달처리비 지급액 + 미션비 지급액 */
+  /** 총 지급액(= 배달처리비 지급액, 미션 제외) */
   total: number;
 }
 
@@ -37,10 +30,6 @@ export interface DailyTotals {
   feeIns: number;
   feeFee: number;
   feePayout: number;
-  mission: number;
-  missionWht: number;
-  missionIns: number;
-  missionPayout: number;
   total: number;
 }
 
@@ -57,10 +46,6 @@ const NUMERIC_KEYS: (keyof DailyTotals & keyof DailySettlementRow)[] = [
   "feeIns",
   "feeFee",
   "feePayout",
-  "mission",
-  "missionWht",
-  "missionIns",
-  "missionPayout",
   "total",
 ];
 
@@ -70,7 +55,7 @@ export async function fetchDailySettlement(date: string): Promise<DailySettlemen
 
   const { data: fees, error } = await supabase
     .from("rider_daily_fees")
-    .select("admin_rider_id, fee_krw, mission_krw, completed_cnt")
+    .select("admin_rider_id, fee_krw, completed_cnt")
     .eq("snapshot_date", date);
   if (error) throw new Error(`rider_daily_fees 조회 실패: ${error.message}`);
 
@@ -88,29 +73,24 @@ export async function fetchDailySettlement(date: string): Promise<DailySettlemen
 
   const rows: DailySettlementRow[] = feeRows.map((f) => {
     const meta = info.get(f.admin_rider_id);
-    // 배달처리비 수수료 = 완료건수 × 100원(배달처리비에만). 미션비는 수수료 없음(fee=0).
-    const feeD = applyDeductions(f.fee_krw, f.completed_cnt * PER_COMPLETED_FEE);
-    const missionD = applyDeductions(f.mission_krw);
+    // 수수료 = 완료건수 × 100원(배달처리비에만).
+    const d = applyDeductions(f.fee_krw, f.completed_cnt * PER_COMPLETED_FEE);
     return {
       riderId: f.admin_rider_id,
       name: meta?.name ?? f.admin_rider_id,
       phone: meta?.phone ?? null,
       completed: f.completed_cnt,
       fee: f.fee_krw,
-      feeWht: feeD.wht,
-      feeIns: feeD.ins,
-      feeFee: feeD.fee,
-      feePayout: feeD.payout,
-      mission: f.mission_krw,
-      missionWht: missionD.wht,
-      missionIns: missionD.ins,
-      missionPayout: missionD.payout,
-      total: feeD.payout + missionD.payout,
+      feeWht: d.wht,
+      feeIns: d.ins,
+      feeFee: d.fee,
+      feePayout: d.payout,
+      total: d.payout,
     };
   });
   rows.sort((a, b) => b.total - a.total || a.name.localeCompare(b.name, "ko"));
 
-  const totals: DailyTotals = { riders: rows.length, completed: 0, fee: 0, feeWht: 0, feeIns: 0, feeFee: 0, feePayout: 0, mission: 0, missionWht: 0, missionIns: 0, missionPayout: 0, total: 0 };
+  const totals: DailyTotals = { riders: rows.length, completed: 0, fee: 0, feeWht: 0, feeIns: 0, feeFee: 0, feePayout: 0, total: 0 };
   for (const r of rows) {
     for (const k of NUMERIC_KEYS) totals[k] += r[k];
   }
