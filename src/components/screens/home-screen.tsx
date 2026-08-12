@@ -311,8 +311,9 @@ export function HomeScreen({
               <span className="text-[15px] font-extrabold tracking-[-0.02em] text-jb-ink">
                 자사 프로모션 <span className="text-jb-indigo">· 주간 보너스</span>
               </span>
-              <div className="mt-0.5 text-[11px] font-medium text-jb-ink-mute">
-                주간 {PROMO_WEEKLY_THRESHOLD}건 초과분 1건당 +{PROMO_UNIT_KRW.toLocaleString("ko-KR")}원 · 매주 초기화
+              <div className="mt-1 text-[13px] font-bold text-jb-ink-soft">
+                주간 <span className="font-extrabold text-jb-ink">{PROMO_WEEKLY_THRESHOLD}건 초과분</span> 1건당{" "}
+                <span className="font-extrabold text-jb-indigo">+{PROMO_UNIT_KRW.toLocaleString("ko-KR")}원</span> · 매주 초기화
               </div>
             </div>
             <div className="mt-3">
