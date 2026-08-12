@@ -4,7 +4,7 @@ import type { CSSProperties } from "react";
 import { Check } from "lucide-react";
 import { getMyGrade } from "@/app/(rider)/_lib/grade";
 import { TierBadge } from "@/components/ui/tier-badge";
-import { seasonOf, TIERS } from "@/lib/grade";
+import { TIERS } from "@/lib/grade";
 
 /** 티어 컬러를 CSS 변수(--tier)로 — .tier-glow 아웃라인용. */
 function tierVar(color: string): CSSProperties {
@@ -21,29 +21,9 @@ export default async function GradePage() {
   const perkReq = g.tier.minAccept ?? null;
   const perksActive = myPerks.length > 0 && (perkReq == null || (g.acceptance != null && g.acceptance >= perkReq));
 
-  const today = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Seoul",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date());
-  const season = seasonOf(today);
-  const seasonOpen = season.number != null;
-
   return (
     <div className="px-3.5 pb-10 pt-3.5">
-      <div className="flex items-center gap-2">
-        <h1 className="text-xl font-black tracking-[-0.03em]">라이더 등급</h1>
-        <span
-          className={
-            "rounded-full px-2 py-0.5 text-[11px] font-black " +
-            (seasonOpen ? "bg-jb-indigo-tint text-jb-indigo" : "bg-jb-track text-jb-ink-mute")
-          }
-        >
-          {seasonOpen ? `시즌 ${season.number}` : "시즌 미오픈"}
-        </span>
-      </div>
-      <p className="mb-3.5 mt-1 text-[12.5px] text-jb-ink-mute">주간(수~화) 실적 기준 등급</p>
+      <h1 className="mb-3.5 text-xl font-black tracking-[-0.03em]">라이더 등급</h1>
 
       {/* 최상위 카드 — 현재 등급(티어 컬러 아웃라인) */}
       <div className="tier-glow rounded-2xl bg-jb-card px-[18px] py-[17px]" style={tierVar(g.tier.color)}>
