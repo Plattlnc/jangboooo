@@ -8,10 +8,10 @@ export const PROMO_WEEKLY_THRESHOLD = 151;
 export const PROMO_UNIT_KRW = 2_000;
 
 /**
- * 주간 보너스 종료 플래그 — false 면 라이더 화면(홈 카드·프로모션 대시보드·총 적립 합산)에서 숨김.
- * 종료: 2026-08-12(사용자 지시, 프로모션 종료). 재개 시 true 로만 바꾸면 전 노출 복원.
+ * 주간 보너스 노출 플래그 — false 면 라이더 화면(홈 카드·프로모션 대시보드·총 적립 합산)에서 숨김.
+ * 2026-08-12 종료 → 2026-08-13 재개(사용자 지시, 복구). true = 전 노출.
  */
-export const PROMO_WEEKLY_ACTIVE = false;
+export const PROMO_WEEKLY_ACTIVE = true;
 
 export interface WeeklyPromo {
   /** 이번 주 완료건 */
