@@ -1,34 +1,48 @@
 import Link from "next/link";
 import { getAdminCustomView, getAdminPeriodView, getAdminRiderInfo } from "@/lib/supabase/admin-queries";
-import { PeriodTabs, type PeriodTabKey } from "@/components/admin/period-tabs";
-import { DateRangeForm } from "@/components/admin/date-range-form";
-import { acceptBand, fmtCount, fmtDateRange, fmtPct, fmtRangeLabel } from "@/components/admin/format";
-import { addDaysIso, clampCustomRange } from "@/lib/admin/date-range";
-import { isSlaPeriod } from "@/app/(rider)/_lib/metrics";
-import type { SlaPeriod } from "@/types/database";
+import { PeriodSelector } from "@/components/admin/period-selector";
+import { acceptBand, fmtCount, fmtPct, fmtRangeLabel } from "@/components/admin/format";
+import { buildWeekOptions, buildMonthOptions, weekRangeOf, monthRangeOf, isValidIsoDate } from "@/lib/admin/date-range";
 
 export const dynamic = "force-dynamic";
 
+const YM = /^\d{4}-\d{2}$/;
+
 // 라이더(직원) 전체 목록 — 기간별 실적 테이블. 행 탭 → 개별 상세.
-// from/to 쿼리 = 날짜 직접 선택(포함 최대 7일, 당일 제외 — 서버 클램프).
+// 상단 오늘/주(수~화)/월 드롭다운(홈과 동일). ?wk=수요일 / ?mo=YYYY-MM.
 export default async function AdminRidersPage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const sp = await searchParams;
-  const period: SlaPeriod = isSlaPeriod(sp.period) ? sp.period : "today";
   const q = typeof sp.q === "string" ? sp.q.trim() : "";
 
-  // 페이지에 필요한 기간 범위만 fetch(홈 superset 미사용) + 라이더 명부는 5분 메모.
-  const [{ view: periodView, businessToday }, riderMeta] = await Promise.all([
-    getAdminPeriodView(period),
+  const [{ view: todayView, businessToday }, riderMeta] = await Promise.all([
+    getAdminPeriodView("today"),
     getAdminRiderInfo(),
   ]);
-  const customRange = clampCustomRange(sp.from, sp.to, businessToday, 7);
-  const view = customRange ? await getAdminCustomView(customRange) : periodView;
-  const tab: PeriodTabKey = customRange ? "custom" : period;
-  const rangeLabel = customRange ? fmtDateRange(customRange) : fmtRangeLabel(period, view.range);
+
+  const weekRaw = buildWeekOptions(businessToday, 5);
+  const monthRaw = buildMonthOptions(businessToday, 6);
+  const weekOptions = weekRaw.map((o) => ({ value: o.value, label: `${o.range.start_date} ~ ${o.range.end_date}` }));
+  const monthOptions = monthRaw.map((o) => ({ value: o.value, label: o.value }));
+
+  const wk = isValidIsoDate(sp.wk) && weekRaw.some((o) => o.value === sp.wk) ? (sp.wk as string) : undefined;
+  const mo = typeof sp.mo === "string" && YM.test(sp.mo) && monthRaw.some((o) => o.value === sp.mo) ? sp.mo : undefined;
+
+  let view = todayView;
+  let activePeriod: "today" | "week" | "month" = "today";
+  let rangeLabel = fmtRangeLabel("today", todayView.range);
+  if (mo) {
+    view = await getAdminCustomView(monthRangeOf(mo, businessToday));
+    activePeriod = "month";
+    rangeLabel = mo;
+  } else if (wk) {
+    view = await getAdminCustomView(weekRangeOf(wk));
+    activePeriod = "week";
+    rangeLabel = weekOptions.find((o) => o.value === wk)?.label ?? fmtRangeLabel("week", view.range);
+  }
 
   const nameOf = (id: string) => riderMeta.info[id]?.name ?? null;
   const matches = (id: string) => {
@@ -47,33 +61,27 @@ export default async function AdminRidersPage({
 
   return (
     <div className="px-3.5 py-3">
-      <PeriodTabs period={tab} basePath="/admin/riders" extraQuery={q ? { q } : {}} />
-
-      <DateRangeForm
+      <PeriodSelector
         basePath="/admin/riders"
-        from={customRange?.start_date}
-        to={customRange?.end_date}
-        maxDate={addDaysIso(businessToday, -1)}
+        activePeriod={activePeriod}
+        weekOptions={weekOptions}
+        monthOptions={monthOptions}
+        selectedWeek={wk ?? weekRaw[0].value}
+        selectedMonth={mo ?? monthRaw[0].value}
+        rangeLabel={rangeLabel}
         extraQuery={q ? { q } : {}}
-        note="최대 7일 조회 · 오늘은 실시간 수집 중이라 선택할 수 없어요"
       />
 
-      <div className="mt-2 flex items-center justify-between px-0.5">
+      <div className="mt-2.5 px-0.5">
         <span className="text-[15px] font-black text-jb-ink">
           라이더 실적 <span className="tnum text-jb-indigo">{fmtCount(riders.length)}명</span>
         </span>
-        <span className="tnum text-[10px] font-semibold text-jb-ink-mute">{rangeLabel}</span>
       </div>
 
       {/* 검색(GET) — 기간/커스텀 범위 유지 */}
       <form className="mt-1.5 flex gap-1.5" action="/admin/riders" method="get">
-        <input type="hidden" name="period" value={period} />
-        {customRange ? (
-          <>
-            <input type="hidden" name="from" value={customRange.start_date} />
-            <input type="hidden" name="to" value={customRange.end_date} />
-          </>
-        ) : null}
+        {wk ? <input type="hidden" name="wk" value={wk} /> : null}
+        {mo ? <input type="hidden" name="mo" value={mo} /> : null}
         <input
           type="search"
           name="q"
