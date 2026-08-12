@@ -6,7 +6,7 @@ import Link from "next/link";
 import { ChevronRight, CalendarDays, Gift, Flame } from "lucide-react";
 import { getMyGrade, getMyAttendance, getMyBurning } from "@/app/(rider)/_lib/grade";
 import { seasonOf } from "@/lib/grade";
-import { weeklyPromo, PROMO_WEEKLY_THRESHOLD, PROMO_UNIT_KRW } from "@/lib/promo";
+import { weeklyPromo, PROMO_WEEKLY_THRESHOLD, PROMO_UNIT_KRW, PROMO_WEEKLY_ACTIVE } from "@/lib/promo";
 import { ATTENDANCE_DAILY_TARGET, ATTENDANCE_DAYS_REQUIRED, ATTENDANCE_REWARD } from "@/lib/attendance";
 import { BURNING_MIN_TIER_NAME } from "@/lib/burning";
 import { TierBadge } from "@/components/ui/tier-badge";
@@ -37,7 +37,9 @@ export default async function PromoPage() {
   const gradeReward = seasonOpen ? grade.reward : 0;
   const attReward = seasonOpen && attendance.reached ? ATTENDANCE_REWARD : 0;
   const burningReward = burnCur?.eligible ? burnCur.bonusKrw : 0;
-  const total = gradeReward + attReward + promo.bonusKrw + burningReward;
+  // 주간 보너스 종료(PROMO_WEEKLY_ACTIVE=false) 시 총 적립에서 제외.
+  const promoReward = PROMO_WEEKLY_ACTIVE ? promo.bonusKrw : 0;
+  const total = gradeReward + attReward + promoReward + burningReward;
 
   const weekLabel = attendance.weekStart ? `${md(attendance.weekStart)} ~ ${md(attendance.weekEnd)}` : "이번 주";
 
@@ -161,7 +163,8 @@ export default async function PromoPage() {
           <ChevronRight size={16} strokeWidth={2.2} className="shrink-0 text-jb-ink-mute" />
         </Link>
 
-        {/* 4) 자사 주간 보너스 */}
+        {/* 4) 자사 주간 보너스 — 종료(PROMO_WEEKLY_ACTIVE=false) 시 숨김 */}
+        {PROMO_WEEKLY_ACTIVE && (
         <div className="flex items-center gap-3 rounded-[14px] border border-jb-line bg-white px-4 py-3.5 shadow-[0_1px_2px_0_rgba(0,0,0,0.04)]">
           <span className="grid size-[38px] shrink-0 place-items-center rounded-full bg-jb-orange-tint text-jb-orange">
             <Gift size={19} strokeWidth={2.2} />
@@ -187,6 +190,7 @@ export default async function PromoPage() {
             )}
           </div>
         </div>
+        )}
       </div>
 
       <div className="mt-4 rounded-[12px] bg-jb-surface px-4 py-3 text-[11.5px] leading-relaxed text-jb-ink-soft">

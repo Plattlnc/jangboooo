@@ -7,7 +7,7 @@ import { Megaphone, ChevronRight } from "lucide-react";
 import type { HomeMetrics } from "@/lib/mock/home";
 import type { HomeProfile } from "./home-view";
 import { TierBadge } from "@/components/ui/tier-badge";
-import { PROMO_WEEKLY_THRESHOLD, PROMO_UNIT_KRW, weeklyPromo } from "@/lib/promo";
+import { PROMO_WEEKLY_THRESHOLD, PROMO_UNIT_KRW, PROMO_WEEKLY_ACTIVE, weeklyPromo } from "@/lib/promo";
 
 export interface HomeFeatured {
   id: string;
@@ -295,8 +295,8 @@ export function HomeScreen({
         </div>
       </div>
 
-      {/* 자사 프로모션 (주간 보너스) — 탭과 무관하게 항상 이번 주 기준. 공동목표 상단 고정. */}
-      {(() => {
+      {/* 자사 프로모션 (주간 보너스) — 종료(PROMO_WEEKLY_ACTIVE=false) 시 숨김. */}
+      {PROMO_WEEKLY_ACTIVE && (() => {
         const promo = weeklyPromo(weekM.count);
         const barColor = promo.reached ? "var(--jb-green)" : "var(--jb-indigo)";
         return (
