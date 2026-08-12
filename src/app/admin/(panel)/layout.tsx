@@ -6,7 +6,6 @@ import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { isAdminSession } from "@/lib/auth/admin-cookies";
 import { signOutAdmin } from "@/actions/admin-auth";
-import { AdminBottomNav } from "@/components/admin/admin-nav";
 import { AdminMenuButton } from "@/components/admin/admin-drawer";
 import { BrandLogo } from "@/components/ui/brand-logo";
 
@@ -45,8 +44,7 @@ export default async function AdminPanelLayout({ children }: { children: ReactNo
           </button>
         </form>
       </header>
-      <main className="flex-1 pb-28 text-jb-ink">{children}</main>
-      <AdminBottomNav />
+      <main className="flex-1 pb-8 text-jb-ink">{children}</main>
     </div>
   );
 }

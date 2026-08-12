@@ -152,28 +152,6 @@ export function AdminHome({
         </div>
       </div>
 
-      {/* 시간대별 분포 */}
-      <div className="mt-3">
-        <div className="mb-1.5 flex items-center justify-between px-0.5">
-          <span className="text-[15px] font-black text-jb-ink">시간대별 분포</span>
-          <span className="text-[11px] font-bold text-jb-indigo">최다 시간대 강조</span>
-        </div>
-        <div className="rounded-[18px] border border-jb-line bg-jb-card p-3 shadow-[var(--toss-shadow)]">
-          <div className="grid grid-cols-4 gap-[7px]">
-            {view.peaks.map((p) => (
-              <div
-                key={p.label}
-                className="rounded-[12px] px-1 py-[7px] text-center"
-                style={{ background: p.isMax ? "#e8f1fe" : "#f2f4f6", border: p.isMax ? "1px solid #c7d2fe" : "1px solid transparent" }}
-              >
-                <div className="text-[11.5px] font-bold" style={{ color: p.isMax ? "#3182f6" : "#8b95a1" }}>{p.label}</div>
-                <div className="tnum mt-0.5 text-xl font-black tracking-[-0.02em]" style={{ color: p.isMax ? "#3182f6" : "#191f28" }}>{p.value}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
       {/* 오늘 공동목표(협력사 4피크) — 항상 당일 실시간 */}
       <div className="mt-3">
         <div className="mb-1.5 flex items-center justify-between px-0.5">

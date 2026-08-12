@@ -3,12 +3,12 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, Megaphone, Menu, Wrench, type LucideIcon } from "lucide-react";
+import { BarChart3, Megaphone, Menu, Wrench, Users, LineChart, Target, type LucideIcon } from "lucide-react";
 import { BrandLogo } from "@/components/ui/brand-logo";
 import { cn } from "@/lib/cn";
 
-// 관리자 햄버거 드로어 — 2026-07-31 신설. 하단 플로팅 탭(홈/라이더/지표/목표)에서
-// 빠진 보조 메뉴(정비소 등)를 담는다. 라이더 MenuDrawer 와 동일한 스크림/슬라이드 패턴.
+// 관리자 햄버거 드로어 — 하단 플로팅 탭 제거(2026-08-13)로 라이더/지표/목표 이동 + 보조 메뉴.
+// 라이더 MenuDrawer 와 동일한 스크림/슬라이드 패턴.
 
 interface DrawerItem {
   label: string;
@@ -19,6 +19,9 @@ interface DrawerItem {
 }
 
 const ITEMS: DrawerItem[] = [
+  { label: "라이더", href: "/admin/riders", icon: Users, tileColor: "#3182f6", tileBg: "#e8f1fe" },
+  { label: "지표", href: "/admin/metrics", icon: LineChart, tileColor: "#3182f6", tileBg: "#e8f1fe" },
+  { label: "목표", href: "/admin/goals", icon: Target, tileColor: "#3182f6", tileBg: "#e8f1fe" },
   { label: "공지사항 관리", href: "/admin/notices", icon: Megaphone, tileColor: "#3182f6", tileBg: "#e8f1fe" },
   { label: "사용 현황", href: "/admin/usage", icon: BarChart3, tileColor: "#3182f6", tileBg: "#e8f1fe" },
   { label: "제휴 정비소 관리", href: "/admin/repair-shops", icon: Wrench, tileColor: "#4e5968", tileBg: "#eef0f3" },
