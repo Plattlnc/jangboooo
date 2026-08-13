@@ -40,21 +40,22 @@ export interface PromoSettlement {
   end: string;
   threshold: number; // 이 주 초과 기준(건)
   unit: number; // 이 주 건당 단가(원)
+  basis: "operating" | "daily"; // 완료건 집계 기준
   rows: PromoSettlementRow[];
   totals: PromoTotals;
 }
 
-/** 기간 [start,end] 09~00시 완료건을 라이더별 합산(페이지드). */
-async function fetchInHoursByRider(start: string, end: string): Promise<Map<string, number>> {
+/** 기간 [start,end] 완료건을 라이더별 합산(페이지드). op=09~00시(운영시간), daily=일일 전체. */
+async function fetchCountsByRider(start: string, end: string): Promise<Map<string, { op: number; daily: number }>> {
   const supabase = createAdminClient();
   const BATCH = 1000;
   const base = () =>
     supabase
       .from("rider_hourly_stats")
-      .select("admin_rider_id, completed")
+      .select("admin_rider_id, hour, completed")
       .gte("snapshot_date", start)
       .lte("snapshot_date", end)
-      .gte("hour", IN_HOURS_FROM)
+      .gt("completed", 0)
       .order("snapshot_date", { ascending: true })
       .order("admin_rider_id", { ascending: true })
       .order("hour", { ascending: true });
@@ -64,18 +65,22 @@ async function fetchInHoursByRider(start: string, end: string): Promise<Map<stri
     .select("admin_rider_id", { count: "exact", head: true })
     .gte("snapshot_date", start)
     .lte("snapshot_date", end)
-    .gte("hour", IN_HOURS_FROM);
+    .gt("completed", 0);
   if (countError) throw new Error(`rider_hourly_stats 카운트 실패: ${countError.message}`);
 
   const pages = Math.max(1, Math.ceil((count ?? 0) / BATCH));
   const results = await Promise.all(
     Array.from({ length: pages }, (_, i) => base().range(i * BATCH, (i + 1) * BATCH - 1)),
   );
-  const byRider = new Map<string, number>();
+  const byRider = new Map<string, { op: number; daily: number }>();
   for (const r of results) {
     if (r.error) throw new Error(`rider_hourly_stats 조회 실패: ${r.error.message}`);
     for (const row of r.data ?? []) {
-      byRider.set(row.admin_rider_id, (byRider.get(row.admin_rider_id) ?? 0) + (row.completed ?? 0));
+      const a = byRider.get(row.admin_rider_id) ?? { op: 0, daily: 0 };
+      const c = row.completed ?? 0;
+      a.daily += c;
+      if ((row.hour ?? 0) >= IN_HOURS_FROM) a.op += c;
+      byRider.set(row.admin_rider_id, a);
     }
   }
   return byRider;
@@ -83,8 +88,11 @@ async function fetchInHoursByRider(start: string, end: string): Promise<Map<stri
 
 /** 기간 자사 프로모션 정산. weekly=true 면 100건 초과분 × 2,000원 지급 계산. */
 export async function fetchPromoSettlement(start: string, end: string, weekly: boolean): Promise<PromoSettlement> {
-  const byRider = await fetchInHoursByRider(start, end);
-  const ids = [...byRider.entries()].filter(([, c]) => c > 0).map(([id]) => id);
+  const counts = await fetchCountsByRider(start, end);
+  const rules = await loadPromoRules();
+  const rule = rules[start] ?? { threshold: 0, unit: 0, basis: "operating" as const };
+  const useDaily = rule.basis === "daily";
+  const ids = [...counts.entries()].filter(([, c]) => (useDaily ? c.daily : c.op) > 0).map(([id]) => id);
 
   const info = new Map<string, { name: string | null; phone: string | null }>();
   if (ids.length > 0) {
@@ -96,10 +104,9 @@ export async function fetchPromoSettlement(start: string, end: string, weekly: b
     for (const r of riders ?? []) info.set(r.admin_rider_id, { name: r.name, phone: r.phone });
   }
 
-  const rules = await loadPromoRules();
-  const rule = rules[start] ?? { threshold: 0, unit: 0 }; // 이 주 규칙(없으면 프로모션 0)
   const rows: PromoSettlementRow[] = ids.map((id) => {
-    const promoCount = byRider.get(id)!;
+    const c = counts.get(id)!;
+    const promoCount = useDaily ? c.daily : c.op;
     const over = weekly && rule.unit > 0 ? Math.max(0, promoCount - rule.threshold) : 0;
     const gross = over * rule.unit; // 세전
     const d = applyDeductions(gross, 0); // 원천세·고용산재만(수수료 미적용)
@@ -128,5 +135,5 @@ export async function fetchPromoSettlement(start: string, end: string, weekly: b
     totals.payout += r.payout;
   }
 
-  return { start, end, threshold: rule.threshold, unit: rule.unit, rows, totals };
+  return { start, end, threshold: rule.threshold, unit: rule.unit, basis: rule.basis, rows, totals };
 }

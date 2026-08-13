@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, Save, Check, ArrowLeft } from "lucide-react";
 import { savePromoRules } from "@/actions/promo-rules";
-import type { PromoRule, PromoRules } from "@/app/settlement/_lib/promo-rules";
+import type { PromoRules, PromoBasis } from "@/app/settlement/_lib/promo-rules";
 import { ymAdd, mdShort } from "@/app/settlement/_lib/dates";
 
 // 자사 프로모션 설정 — 주(수~화)마다 초과 기준 건수·건당 단가를 입력. 정산서·프로모션 정산에 자동 적용.
@@ -32,15 +32,24 @@ export function PromoSettings({
   const go = (m: string) => router.push(`/settlement/promo/settings?month=${m}`);
   const canNext = ym < thisMonth;
 
-  function setField(weekStart: string, field: keyof PromoRule, raw: string) {
+  function setNum(weekStart: string, field: "threshold" | "unit", raw: string) {
     const n = Math.max(0, Math.floor(Number(raw.replace(/[^0-9]/g, "")) || 0));
     setRules((prev) => {
-      const cur = prev[weekStart] ?? { threshold: 0, unit: 0 };
+      const cur = prev[weekStart] ?? { threshold: 0, unit: 0, basis: "operating" as PromoBasis };
       const next = { ...cur, [field]: n };
       const copy = { ...prev };
       if (next.threshold === 0 && next.unit === 0) delete copy[weekStart];
       else copy[weekStart] = next;
       return copy;
+    });
+    setSaved(false);
+    setError(undefined);
+  }
+  function setBasis(weekStart: string, basis: PromoBasis) {
+    setRules((prev) => {
+      const cur = prev[weekStart];
+      if (!cur) return prev; // 초과기준·단가 먼저 입력해야 규칙 생성
+      return { ...prev, [weekStart]: { ...cur, basis } };
     });
     setSaved(false);
     setError(undefined);
@@ -108,6 +117,7 @@ export function PromoSettings({
               <th className="border-b border-jb-line px-4 py-2.5 text-left">주차 (수~화)</th>
               <th className="border-b border-jb-line px-4 py-2.5 text-right">초과 기준(건)</th>
               <th className="border-b border-jb-line px-4 py-2.5 text-right">건당 단가(원)</th>
+              <th className="border-b border-jb-line px-4 py-2.5 text-left">집계 기준</th>
               <th className="border-b border-jb-line px-4 py-2.5 text-left">규칙 요약</th>
             </tr>
           </thead>
@@ -123,7 +133,7 @@ export function PromoSettings({
                     <input
                       inputMode="numeric"
                       value={r?.threshold ?? ""}
-                      onChange={(e) => setField(w.start, "threshold", e.target.value)}
+                      onChange={(e) => setNum(w.start, "threshold", e.target.value)}
                       placeholder="0"
                       className="w-full rounded-[8px] border border-jb-line bg-jb-surface px-2.5 py-1.5 text-right font-mono text-[13px] text-jb-ink outline-none focus:border-jb-indigo/50"
                     />
@@ -132,14 +142,25 @@ export function PromoSettings({
                     <input
                       inputMode="numeric"
                       value={r?.unit ?? ""}
-                      onChange={(e) => setField(w.start, "unit", e.target.value)}
+                      onChange={(e) => setNum(w.start, "unit", e.target.value)}
                       placeholder="0"
                       className="w-full rounded-[8px] border border-jb-line bg-jb-surface px-2.5 py-1.5 text-right font-mono text-[13px] text-jb-ink outline-none focus:border-jb-indigo/50"
                     />
                   </td>
+                  <td className="px-3 py-1.5">
+                    <select
+                      value={r?.basis ?? "operating"}
+                      onChange={(e) => setBasis(w.start, e.target.value as PromoBasis)}
+                      disabled={!r}
+                      className="w-full rounded-[8px] border border-jb-line bg-jb-surface px-2 py-1.5 text-[12.5px] text-jb-ink outline-none focus:border-jb-indigo/50 disabled:opacity-50"
+                    >
+                      <option value="operating">운영시간 09~00시</option>
+                      <option value="daily">일일 전체</option>
+                    </select>
+                  </td>
                   <td className="whitespace-nowrap px-4 py-2.5 text-[12.5px] text-jb-ink-soft">
                     {r && (r.threshold > 0 || r.unit > 0)
-                      ? `${r.threshold.toLocaleString("ko-KR")}건 초과분 건당 ${r.unit.toLocaleString("ko-KR")}원`
+                      ? `${r.basis === "daily" ? "일일 전체" : "09~00시"} · ${r.threshold.toLocaleString("ko-KR")}건 초과분 건당 ${r.unit.toLocaleString("ko-KR")}원`
                       : "— (프로모션 없음)"}
                   </td>
                 </tr>

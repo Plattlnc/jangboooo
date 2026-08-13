@@ -21,10 +21,11 @@ export async function savePromoRules(input: unknown): Promise<SaveResult> {
     if (!WED.test(k) || !v || typeof v !== "object") continue;
     const t = Math.max(0, Math.floor(Number((v as { threshold?: unknown }).threshold)));
     const u = Math.max(0, Math.floor(Number((v as { unit?: unknown }).unit)));
+    const b = (v as { basis?: unknown }).basis === "daily" ? "daily" : "operating";
     if (!Number.isFinite(t) || !Number.isFinite(u)) continue;
     // 초과기준·단가 둘 다 0 이면 규칙 없음으로 간주(저장 제외).
     if (t === 0 && u === 0) continue;
-    clean[k] = { threshold: t, unit: u };
+    clean[k] = { threshold: t, unit: u, basis: b };
     if (++count > 1000) break;
   }
   try {

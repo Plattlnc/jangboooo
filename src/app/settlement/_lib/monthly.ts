@@ -98,15 +98,14 @@ export async function fetchMonthlySettlement(ym: string): Promise<MonthlySettlem
         .lte("snapshot_date", end) as never,
   );
 
-  // 자사 프로모션 개수(09~00시 완료, rider_hourly_stats)
-  const hourRows = await paginate<{ admin_rider_id: string; snapshot_date: string; completed: number }>(
+  // 완료건(rider_hourly_stats, 전체 시간) — op=09~00시, daily=일일 전체
+  const hourRows = await paginate<{ admin_rider_id: string; snapshot_date: string; hour: number; completed: number }>(
     () =>
       supabase
         .from("rider_hourly_stats")
-        .select("admin_rider_id, snapshot_date, completed")
+        .select("admin_rider_id, snapshot_date, hour, completed")
         .gte("snapshot_date", start)
         .lte("snapshot_date", end)
-        .gte("hour", 9)
         .gt("completed", 0)
         .order("snapshot_date", { ascending: true })
         .order("admin_rider_id", { ascending: true })
@@ -117,16 +116,20 @@ export async function fetchMonthlySettlement(ym: string): Promise<MonthlySettlem
         .select("admin_rider_id", { count: "exact", head: true })
         .gte("snapshot_date", start)
         .lte("snapshot_date", end)
-        .gte("hour", 9)
         .gt("completed", 0) as never,
   );
 
-  type Agg = { fee: number[]; mission: number[]; inHours: number[] };
+  type Agg = { fee: number[]; mission: number[]; op: number[]; daily: number[] };
   const agg = new Map<string, Agg>();
   const ensure = (id: string): Agg => {
     let a = agg.get(id);
     if (!a) {
-      a = { fee: Array(weeks.length).fill(0), mission: Array(weeks.length).fill(0), inHours: Array(weeks.length).fill(0) };
+      a = {
+        fee: Array(weeks.length).fill(0),
+        mission: Array(weeks.length).fill(0),
+        op: Array(weeks.length).fill(0),
+        daily: Array(weeks.length).fill(0),
+      };
       agg.set(id, a);
     }
     return a;
@@ -141,7 +144,10 @@ export async function fetchMonthlySettlement(ym: string): Promise<MonthlySettlem
   for (const r of hourRows) {
     const i = widx(r.snapshot_date);
     if (i < 0) continue;
-    ensure(r.admin_rider_id).inHours[i] += r.completed ?? 0;
+    const a = ensure(r.admin_rider_id);
+    const c = r.completed ?? 0;
+    a.daily[i] += c;
+    if ((r.hour ?? 0) >= 9) a.op[i] += c;
   }
 
   const ids = [...agg.keys()];
@@ -161,7 +167,7 @@ export async function fetchMonthlySettlement(ym: string): Promise<MonthlySettlem
       const a = agg.get(id)!;
       const cells: MonthlyWeekCell[] = weeks.map((w, i) => {
         const delivery = a.fee[i] + a.mission[i]; // 배달처리비 = 배달처리비 + 본사미션
-        const promo = promoForWeek(rules, w.start, a.inHours[i]); // 기타/인센티브 = 자사프로모션(주차 규칙)
+        const promo = promoForWeek(rules[w.start], a.op[i], a.daily[i]); // 기타/인센티브 = 자사프로모션(주차 규칙·기준)
         return { delivery, etc: promo };
       });
       const total = cells.reduce((s, c) => s + c.delivery + c.etc, 0);
@@ -169,7 +175,7 @@ export async function fetchMonthlySettlement(ym: string): Promise<MonthlySettlem
         for (let i = 0; i < weeks.length; i++) {
           gDelivery += a.fee[i];
           gMission += a.mission[i];
-          gPromo += promoForWeek(rules, weeks[i].start, a.inHours[i]);
+          gPromo += promoForWeek(rules[weeks[i].start], a.op[i], a.daily[i]);
         }
       }
       return { riderId: id, name: info.get(id) ?? id, rrn: rrns[id] ?? "", weeks: cells, total };

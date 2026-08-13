@@ -30,7 +30,9 @@ export function PromoSettlementView({
   notesApi: NotesApi;
 }) {
   const router = useRouter();
-  const { start, end, threshold, unit, rows } = data;
+  const { start, end, threshold, unit, basis, rows } = data;
+  const basisLabel = basis === "daily" ? "일일 전체" : "09:00~00:00";
+  const basisShort = basis === "daily" ? "일일" : "09~00시";
 
   const [q, setQ] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("payout");
@@ -92,11 +94,11 @@ export function PromoSettlementView({
       {/* 주 네비게이션(수~화) */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-[13px] text-jb-ink-mute">
-          운영시간 <span className="font-semibold text-jb-ink-soft">09:00~00:00</span> 완료건 집계 ·{" "}
+          <span className="font-semibold text-jb-ink-soft">{basisLabel}</span> 완료건 집계 ·{" "}
           {unit > 0 ? (
             <>이 주 규칙 <span className="font-semibold text-jb-ink-soft">{won(threshold)}건 초과분 건당 {won(unit)}원</span>(세전) · 원천세 {WHT_PCT} · 고용산재 {INS_PCT} 공제 후 지급</>
           ) : (
-            <>이 주 프로모션 규칙 미설정 (<span className="font-semibold text-jb-indigo">설정</span>에서 초과 기준·단가 입력)</>
+            <>이 주 프로모션 규칙 미설정 (<span className="font-semibold text-jb-indigo">설정</span>에서 초과 기준·단가·집계기준 입력)</>
           )}
         </p>
         <div className="flex items-center rounded-[10px] border border-jb-line bg-jb-card shadow-[var(--toss-shadow)]">
@@ -126,7 +128,7 @@ export function PromoSettlementView({
       {/* 요약 카드 */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <SummaryCard label="지급 라이더" value={`${won(paidCount)}명`} sub={unit > 0 ? `${won(threshold)}건 초과` : "미설정"} />
-        <SummaryCard label="총 완료" value={`${won(vTotals.promoCount)}건`} sub="09~00시" />
+        <SummaryCard label="총 완료" value={`${won(vTotals.promoCount)}건`} sub={basisShort} />
         <SummaryCard label="총 프로모션" value={`${won(vTotals.gross)}원`} sub="세전" />
         <SummaryCard label="총 지급액" value={`${won(vTotals.payout)}원`} sub="공제 후" accent />
       </div>
@@ -175,7 +177,7 @@ export function PromoSettlementView({
                   <SortableTh label="라이더" onClick={() => toggleSort("name")} active={sortKey === "name"} dir={sortDir} align="left" className="sticky left-[48px] z-10 bg-jb-surface" />
                   <th className="w-[200px] border-b border-jb-line px-3 py-2.5 text-left">메모</th>
                   <th className="border-b border-jb-line px-3 py-2.5 text-left">라이더 ID</th>
-                  <SortableTh label="완료 09~00시" onClick={() => toggleSort("promoCount")} active={sortKey === "promoCount"} dir={sortDir} align="right" className="border-l border-jb-line" />
+                  <SortableTh label={`완료 (${basisShort})`} onClick={() => toggleSort("promoCount")} active={sortKey === "promoCount"} dir={sortDir} align="right" className="border-l border-jb-line" />
                   <th className="border-b border-jb-line px-3 py-2.5 text-right">{unit > 0 ? `${won(threshold)} 초과` : "초과"}</th>
                   <th className="border-b border-l border-jb-line px-3 py-2.5 text-right">프로모션(세전)</th>
                   <th className="border-b border-jb-line px-3 py-2.5 text-right">원천세 {WHT_PCT}</th>
