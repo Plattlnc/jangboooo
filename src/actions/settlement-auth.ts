@@ -63,17 +63,20 @@ export async function signInSettlement(input: unknown): Promise<SettlementSignIn
   }
   const { id, password } = parsed.data
 
-  // 조기 반환 없이 전 계정 검사 — 계정 존재/타이밍 노출 방지.
+  // env(SETTLEMENT_ACCOUNTS) 가 설정돼 있으면 그것이 계정 목록 전체(코드 기본 계정 무시).
+  // 미설정 시 코드 기본 계정(scrypt 해시). 조기 반환 없이 전 계정 검사 — 타이밍/존재 노출 방지.
+  const env = envAccounts()
   let match = false
-  // env 오버라이드(있으면) — 평문 상수시간 비교.
-  for (const acc of envAccounts()) {
-    if (constantTimeEqual(id, acc.id) && constantTimeEqual(password, acc.password)) match = true
-  }
-  // 코드 기본 계정 — scrypt 해시 검증.
-  for (const acc of HASHED_ACCOUNTS) {
-    const idOk = constantTimeEqual(id, acc.id)
-    const pwOk = verifyHashed(password, acc.salt, acc.hash)
-    if (idOk && pwOk) match = true
+  if (env.length > 0) {
+    for (const acc of env) {
+      if (constantTimeEqual(id, acc.id) && constantTimeEqual(password, acc.password)) match = true
+    }
+  } else {
+    for (const acc of HASHED_ACCOUNTS) {
+      const idOk = constantTimeEqual(id, acc.id)
+      const pwOk = verifyHashed(password, acc.salt, acc.hash)
+      if (idOk && pwOk) match = true
+    }
   }
 
   if (!match) {
