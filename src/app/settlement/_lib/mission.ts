@@ -1,28 +1,33 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { applyDeductions } from "@/app/settlement/_lib/rates";
+import { applyDeductions, PER_COMPLETED_FEE } from "@/app/settlement/_lib/rates";
 
 // 본사 미션 정산 데이터 — 선택 영업일의 라이더별 본사 미션 지급액(세전, mission_krw)에서
-// 원천세(3.3%)·고용산재(1.8%) 공제 후 지급액. 수수료(완료건당 100원)는 미적용(배달처리비 전용).
+// 원천세(3.3%)·고용산재(1.8%) + 수수료(완료건당 100원) 공제 후 지급액.
 // 원천: rider_daily_fees(0018). 미션이 있는(>0) 라이더만 집계.
 
 export interface MissionSettlementRow {
   riderId: string;
   name: string;
   phone: string | null;
+  completed: number;
   /** 본사 미션 지급액(세전) */
   mission: number;
   wht: number;
   ins: number;
-  /** 지급액 = 세전 − 원천세 − 고용산재 (수수료 미적용) */
+  /** 수수료 = 완료건수 × PER_COMPLETED_FEE */
+  fee: number;
+  /** 지급액 = 세전 − 원천세 − 고용산재 − 수수료 */
   payout: number;
 }
 
 export interface MissionTotals {
   riders: number;
+  completed: number;
   mission: number;
   wht: number;
   ins: number;
+  fee: number;
   payout: number;
 }
 
@@ -32,7 +37,14 @@ export interface MissionSettlement {
   totals: MissionTotals;
 }
 
-const NUMERIC_KEYS: (keyof MissionTotals & keyof MissionSettlementRow)[] = ["mission", "wht", "ins", "payout"];
+const NUMERIC_KEYS: (keyof MissionTotals & keyof MissionSettlementRow)[] = [
+  "completed",
+  "mission",
+  "wht",
+  "ins",
+  "fee",
+  "payout",
+];
 
 /** 선택 영업일(YYYY-MM-DD)의 라이더별 본사 미션 정산 내역. 데이터 없으면 rows 빈 배열. */
 export async function fetchMissionSettlement(date: string): Promise<MissionSettlement> {
@@ -40,7 +52,7 @@ export async function fetchMissionSettlement(date: string): Promise<MissionSettl
 
   const { data: fees, error } = await supabase
     .from("rider_daily_fees")
-    .select("admin_rider_id, mission_krw")
+    .select("admin_rider_id, mission_krw, completed_cnt")
     .eq("snapshot_date", date);
   if (error) throw new Error(`rider_daily_fees 조회 실패: ${error.message}`);
 
@@ -58,20 +70,23 @@ export async function fetchMissionSettlement(date: string): Promise<MissionSettl
 
   const rows: MissionSettlementRow[] = feeRows.map((f) => {
     const meta = info.get(f.admin_rider_id);
-    const d = applyDeductions(f.mission_krw, 0); // 수수료 미적용
+    // 수수료 = 완료건수 × 100원.
+    const d = applyDeductions(f.mission_krw, f.completed_cnt * PER_COMPLETED_FEE);
     return {
       riderId: f.admin_rider_id,
       name: meta?.name ?? f.admin_rider_id,
       phone: meta?.phone ?? null,
+      completed: f.completed_cnt,
       mission: f.mission_krw,
       wht: d.wht,
       ins: d.ins,
+      fee: d.fee,
       payout: d.payout,
     };
   });
   rows.sort((a, b) => b.payout - a.payout || a.name.localeCompare(b.name, "ko"));
 
-  const totals: MissionTotals = { riders: rows.length, mission: 0, wht: 0, ins: 0, payout: 0 };
+  const totals: MissionTotals = { riders: rows.length, completed: 0, mission: 0, wht: 0, ins: 0, fee: 0, payout: 0 };
   for (const r of rows) {
     for (const k of NUMERIC_KEYS) totals[k] += r[k];
   }
