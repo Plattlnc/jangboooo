@@ -95,9 +95,11 @@ export function SettlementSidebar() {
       </aside>
 
       {/* 모바일 상단바 */}
-      <header className="sticky top-0 z-30 flex items-center justify-between border-b border-jb-line bg-jb-card/95 px-4 py-3 backdrop-blur md:hidden">
-        <Brand />
-        <div className="flex items-center gap-1">
+      <header className="sticky top-0 z-30 flex items-center gap-2 border-b border-jb-line bg-jb-card/95 px-4 py-3 backdrop-blur md:hidden">
+        <div className="shrink-0">
+          <Brand />
+        </div>
+        <div className="ml-auto flex min-w-0 items-center gap-0.5 overflow-x-auto">
           {NAV.map((it) => {
             const active = isActive(it);
             const Icon = it.icon;
@@ -108,7 +110,7 @@ export function SettlementSidebar() {
                 aria-label={it.label}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "grid size-9 place-items-center rounded-[10px] transition-colors",
+                  "grid size-9 shrink-0 place-items-center rounded-[10px] transition-colors",
                   active ? "bg-jb-indigo-tint text-jb-indigo" : "text-jb-ink-mute",
                 )}
               >
@@ -116,11 +118,11 @@ export function SettlementSidebar() {
               </Link>
             );
           })}
-          <form action={signOutSettlement}>
+          <form action={signOutSettlement} className="shrink-0">
             <button
               type="submit"
               aria-label="로그아웃"
-              className="grid size-9 place-items-center rounded-[10px] text-jb-ink-mute"
+              className="grid size-9 shrink-0 place-items-center rounded-[10px] text-jb-ink-mute"
             >
               <LogOut size={17} strokeWidth={2} />
             </button>
