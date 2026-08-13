@@ -15,14 +15,16 @@ export function DailyTabs({
   today,
   riders,
   notes,
+  memos,
 }: {
   data: DailySettlement;
   today: string;
   riders: SettlementRider[];
   notes: Record<string, string>;
+  memos: Record<string, string>;
 }) {
   const [tab, setTab] = useState<"settle" | "notes">("settle");
-  const notesApi = useRiderNotesApi(notes);
+  const notesApi = useRiderNotesApi(notes, memos);
 
   return (
     <div className="flex flex-col gap-5">

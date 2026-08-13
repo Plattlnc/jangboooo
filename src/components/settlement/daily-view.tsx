@@ -64,15 +64,15 @@ export function DailySettlementView({
 
   function exportCsv() {
     const head = [
-      "번호", "라이더", "라이더ID", "완료건수",
+      "번호", "라이더", "메모", "라이더ID", "완료건수",
       "배달처리비(세전)", `원천세(${WHT_PCT})`, `고용산재(${INS_PCT})`, "수수료(건당)", "지급액", "특이사항",
     ];
     const body = view.map((r, i) => [
-      i + 1, r.name, r.riderId, r.completed, r.fee, r.feeWht, r.feeIns, r.feeFee, r.feePayout,
+      i + 1, r.name, notesApi.memos[r.riderId] ?? "", r.riderId, r.completed, r.fee, r.feeWht, r.feeIns, r.feeFee, r.feePayout,
       notesApi.notes[r.riderId] ?? "",
     ]);
     const foot = [
-      "합계", "", "", vTotals.completed,
+      "합계", "", "", "", vTotals.completed,
       vTotals.fee, vTotals.feeWht, vTotals.feeIns, vTotals.feeFee, vTotals.feePayout, "",
     ];
     const csv = [head, ...body, foot]
@@ -169,11 +169,12 @@ export function DailySettlementView({
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[1120px] border-collapse text-[13px]">
+            <table className="w-full min-w-[1320px] border-collapse text-[13px]">
               <thead className="text-jb-ink-mute">
                 <tr className="bg-jb-surface text-[12px] font-medium">
                   <th className="border-b border-jb-line px-3 py-2.5 text-right">#</th>
                   <SortableTh label="라이더" onClick={() => toggleSort("name")} active={sortKey === "name"} dir={sortDir} align="left" />
+                  <th className="w-[200px] border-b border-jb-line px-3 py-2.5 text-left">메모</th>
                   <th className="border-b border-jb-line px-3 py-2.5 text-left">라이더 ID</th>
                   <SortableTh label="완료" onClick={() => toggleSort("completed")} active={sortKey === "completed"} dir={sortDir} align="right" />
                   <SortableTh label="배달처리비(세전)" onClick={() => toggleSort("fee")} active={sortKey === "fee"} dir={sortDir} align="right" className="border-l border-jb-line" />
@@ -190,6 +191,8 @@ export function DailySettlementView({
                     key={r.riderId}
                     row={r}
                     index={i + 1}
+                    memo={notesApi.memos[r.riderId] ?? ""}
+                    onMemo={notesApi.setMemo}
                     note={notesApi.notes[r.riderId] ?? ""}
                     onNote={notesApi.setNote}
                   />
@@ -197,7 +200,7 @@ export function DailySettlementView({
               </tbody>
               <tfoot>
                 <tr className="border-t-2 border-jb-line bg-jb-surface text-[13px] font-semibold text-jb-ink">
-                  <td className="px-3 py-3 text-right text-jb-ink-mute" colSpan={3}>합계 · {won(view.length)}명</td>
+                  <td className="px-3 py-3 text-right text-jb-ink-mute" colSpan={4}>합계 · {won(view.length)}명</td>
                   <Num v={vTotals.completed} />
                   <Num v={vTotals.fee} className="border-l border-jb-line" />
                   <Num v={vTotals.feeWht} deduct />
@@ -274,11 +277,15 @@ function Num({ v, deduct, className = "" }: { v: number; deduct?: boolean; class
 const Row = memo(function Row({
   row,
   index,
+  memo: memoVal,
+  onMemo,
   note,
   onNote,
 }: {
   row: DailySettlementRow;
   index: number;
+  memo: string;
+  onMemo: (id: string, val: string) => void;
   note: string;
   onNote: (id: string, val: string) => void;
 }) {
@@ -286,6 +293,14 @@ const Row = memo(function Row({
     <tr className="border-b border-jb-line-soft transition-colors hover:bg-jb-surface/60">
       <td className="px-3 py-2.5 text-right font-mono text-[12px] tabular-nums text-jb-ink-mute">{index}</td>
       <td className="px-3 py-2.5 font-medium text-jb-ink">{row.name}</td>
+      <td className="px-2 py-1.5">
+        <input
+          value={memoVal}
+          onChange={(e) => onMemo(row.riderId, e.target.value)}
+          placeholder="메모…"
+          className="w-full rounded-[8px] border border-transparent bg-transparent px-2 py-1.5 text-[13px] text-jb-ink outline-none hover:border-jb-line focus:border-jb-indigo/50 focus:bg-jb-surface placeholder:text-jb-ink-mute"
+        />
+      </td>
       <td className="px-3 py-2.5 font-mono text-[12px] text-jb-ink-mute">{row.riderId}</td>
       <td className="px-3 py-2.5 text-right font-mono tabular-nums text-jb-ink-soft">{won(row.completed)}</td>
       <td className="border-l border-jb-line-soft px-3 py-2.5 text-right font-mono tabular-nums text-jb-ink">{won(row.fee)}</td>

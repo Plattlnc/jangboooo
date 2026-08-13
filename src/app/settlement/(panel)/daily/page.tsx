@@ -1,5 +1,5 @@
 import { fetchDailySettlement } from "@/app/settlement/_lib/daily";
-import { loadRiderNotes, loadSettlementRiders } from "@/app/settlement/_lib/notes";
+import { loadRiderNotes, loadRiderMemos, loadSettlementRiders } from "@/app/settlement/_lib/notes";
 import { kstToday, kstYesterday, isValidYmd } from "@/app/settlement/_lib/dates";
 import { DailyTabs } from "@/components/settlement/daily-tabs";
 
@@ -13,10 +13,11 @@ export default async function DailySettlementPage({
 }) {
   const sp = await searchParams;
   const date = isValidYmd(sp.date) ? sp.date : kstYesterday();
-  const [data, riders, notes] = await Promise.all([
+  const [data, riders, notes, memos] = await Promise.all([
     fetchDailySettlement(date),
     loadSettlementRiders(),
     loadRiderNotes(),
+    loadRiderMemos(),
   ]);
-  return <DailyTabs data={data} today={kstToday()} riders={riders} notes={notes} />;
+  return <DailyTabs data={data} today={kstToday()} riders={riders} notes={notes} memos={memos} />;
 }
