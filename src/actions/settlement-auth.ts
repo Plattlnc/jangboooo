@@ -18,8 +18,8 @@ type HashedAccount = { id: string; salt: string; hash: string }
 const HASHED_ACCOUNTS: HashedAccount[] = [
   {
     id: 'gs01310',
-    salt: 'db1688495b8a9838ba641ae1ae86685b',
-    hash: '4763ddff4ecb1cd31d1781e15f6a011c16f245bad5693a423e8fb856e3d8d519',
+    salt: 'df1ec5f7211815eb3d67520761a3b1f7',
+    hash: '7ae6c61ffb7dd4abc36e585fb67e1ac7fdf14047706baacb14e6166881c6f1a9',
   },
 ]
 
