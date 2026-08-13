@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, ListChecks, FileSpreadsheet, LogOut, type LucideIcon } from "lucide-react";
+import { Home, ListChecks, Building2, Megaphone, FileSpreadsheet, LogOut, type LucideIcon } from "lucide-react";
 import { BrandLogo } from "@/components/ui/brand-logo";
 import { signOutSettlement } from "@/actions/settlement-auth";
 import { cn } from "@/lib/cn";
@@ -18,6 +18,8 @@ interface NavItem {
 const NAV: NavItem[] = [
   { href: "/settlement", label: "홈", icon: Home, exact: true },
   { href: "/settlement/daily", label: "일일 정산", icon: ListChecks, exact: false },
+  { href: "/settlement/mission", label: "본사 미션", icon: Building2, exact: false },
+  { href: "/settlement/promo", label: "자사 프로모션", icon: Megaphone, exact: false },
   { href: "/settlement/weekly", label: "주정산서", icon: FileSpreadsheet, exact: false },
 ];
 
