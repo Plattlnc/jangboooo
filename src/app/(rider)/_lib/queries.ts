@@ -112,16 +112,64 @@ async function getCenterGoals(adminRiderId: string): Promise<CenterGoalRow[]> {
       );
       return [];
     }
-    // 데이터는 4행을 반환하나 전부 null 이면 미수집(스크래퍼/센터 매핑) 신호 — 가시화.
+    // 데이터는 4행을 반환하나 전부 null 이면 라이더 center_id 미매핑(배달현황↔Looker center-id 불일치)
+    // 또는 미적재 → 최신 공동목표(어느 센터든)로 폴백해 그래도 노출.
     const filled = (data ?? []).filter((g) => g.pct != null).length;
     if (filled === 0) {
       console.warn(
-        `[center-goals] rider=${adminRiderId}: RPC 4행 반환했으나 유효값 0 — center_peak_goals 미적재 또는 center_id 미매핑 의심`,
+        `[center-goals] rider=${adminRiderId}: RPC 유효값 0 — center_id 미매핑 의심, 최신 공동목표로 폴백`,
       );
+      const fb = await latestCenterGoalsFallback();
+      if (fb.some((g) => g.pct != null)) return fb;
     }
     return data ?? [];
   } catch (e) {
     console.error("[center-goals] 예기치 못한 예외:", e);
+    return [];
+  }
+}
+
+// 공동목표 4피크 순서/라벨(RPC 와 동일).
+const GOAL_PEAK_KEYS = [
+  { peak_key: "ml", peak_order: 0, label: "아침점심" },
+  { peak_key: "pl", peak_order: 1, label: "오후논피크" },
+  { peak_key: "d", peak_order: 2, label: "저녁피크" },
+  { peak_key: "pd", peak_order: 3, label: "심야논피크" },
+] as const;
+
+/** 라이더 center_id 미매핑 시 폴백 — 최신 snapshot_date 의 공동목표(어느 센터든)를 4피크로 구성. */
+async function latestCenterGoalsFallback(): Promise<CenterGoalRow[]> {
+  try {
+    const { createAdminClient } = await import("@/lib/supabase/admin");
+    const admin = createAdminClient();
+    const { data: latest } = await admin
+      .from("center_peak_goals")
+      .select("snapshot_date")
+      .order("snapshot_date", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const sdate = latest?.snapshot_date ?? null;
+    if (!sdate) return [];
+    const { data: rows } = await admin
+      .from("center_peak_goals")
+      .select("peak_key, current, goal, pct, center_id")
+      .eq("snapshot_date", sdate);
+    const byKey = new Map((rows ?? []).map((r) => [r.peak_key, r]));
+    return GOAL_PEAK_KEYS.map(({ peak_key, peak_order, label }) => {
+      const g = byKey.get(peak_key);
+      return {
+        peak_key,
+        peak_order,
+        label,
+        current: g?.current ?? null,
+        goal: g?.goal ?? null,
+        pct: g?.pct ?? null,
+        snapshot_date: sdate,
+        center_id: g?.center_id ?? null,
+      };
+    });
+  } catch (e) {
+    console.error("[center-goals] 폴백 예외:", e);
     return [];
   }
 }
