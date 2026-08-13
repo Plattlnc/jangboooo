@@ -6,12 +6,15 @@ import { createAdminClient } from "@/lib/supabase/admin";
 const OPS_BUCKET = "ops";
 const WORKING_STATUS_PATH = "working-status.json";
 
+export type WorkingRider = { id: string; name: string | null; status: string | null };
+
 export type WorkingStatus = {
   working: number; // 운행 종료(READY)가 아닌 라이더 수 = 현재 출근 인원
   total: number; // status 판별 가능한 라이더 수
   snapshotDate: string | null;
   capturedAt: string | null;
   byStatus: Record<string, number>;
+  riders: WorkingRider[]; // 현재 근무중 라이더 목록
 };
 
 export async function getWorkingStatus(): Promise<WorkingStatus | null> {
@@ -20,12 +23,21 @@ export async function getWorkingStatus(): Promise<WorkingStatus | null> {
     const { data, error } = await supabase.storage.from(OPS_BUCKET).download(WORKING_STATUS_PATH);
     if (error || !data) return null;
     const json = JSON.parse(await data.text()) as Record<string, unknown>;
+    const rawRiders = Array.isArray(json.riders) ? (json.riders as Record<string, unknown>[]) : [];
+    const riders: WorkingRider[] = rawRiders
+      .filter((r) => typeof r.admin_rider_id === "string")
+      .map((r) => ({
+        id: r.admin_rider_id as string,
+        name: typeof r.name === "string" ? r.name : null,
+        status: typeof r.status === "string" ? r.status : null,
+      }));
     return {
       working: Number(json.working ?? 0),
       total: Number(json.total ?? 0),
       snapshotDate: typeof json.snapshot_date === "string" ? json.snapshot_date : null,
       capturedAt: typeof json.captured_at === "string" ? json.captured_at : null,
       byStatus: (json.by_status as Record<string, number>) ?? {},
+      riders,
     };
   } catch {
     return null;

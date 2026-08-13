@@ -18,6 +18,7 @@ import type {
   ScrapeResult,
   SlaCategoryBreakdown,
   SlaSnapshotUpsert,
+  WorkingRider,
   WorkingStatusSummary,
 } from '../types'
 
@@ -99,8 +100,8 @@ export function mapDeliveryStatus(
 
   // 실시간 근무 인원 집계(status.code 기준).
   let workingTotal = 0
-  let working = 0
   const byStatus: Record<string, number> = {}
+  const workingRiders: WorkingRider[] = []
 
   for (const row of rows) {
     if (!row.userId) continue // 식별키 없으면 적재 불가 — 스킵
@@ -110,7 +111,13 @@ export function mapDeliveryStatus(
       workingTotal += 1
       const label = row.status?.desc ?? code
       byStatus[label] = (byStatus[label] ?? 0) + 1
-      if (code !== OFF_DUTY_CODE) working += 1
+      if (code !== OFF_DUTY_CODE) {
+        workingRiders.push({
+          admin_rider_id: row.userId,
+          name: row.name ?? null,
+          status: row.status?.desc ?? null,
+        })
+      }
     }
 
     riders.push({
@@ -150,12 +157,14 @@ export function mapDeliveryStatus(
       }))
     : undefined
 
+  workingRiders.sort((a, b) => (a.name ?? a.admin_rider_id).localeCompare(b.name ?? b.admin_rider_id, 'ko'))
   const workingStatus: WorkingStatusSummary = {
     snapshot_date: snapshotDate,
     center_id: centerId ?? null,
     total: workingTotal,
-    working,
+    working: workingRiders.length,
     by_status: byStatus,
+    riders: workingRiders,
   }
 
   return {

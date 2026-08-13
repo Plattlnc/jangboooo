@@ -119,12 +119,20 @@ export type DeliveryFeeDetail = {
  * status.code === 'READY'(운행 종료) 는 오프. 그 외 코드는 출근/근무중으로 간주.
  * DDL 없이 Supabase Storage(ops/working-status.json)에 라이브 스냅샷으로 적재.
  */
+/** 현재 근무중(출근) 라이더 1명. */
+export type WorkingRider = {
+  admin_rider_id: string
+  name: string | null
+  status: string | null // status.desc (운행중/배차대기 등)
+}
+
 export type WorkingStatusSummary = {
   snapshot_date: string
   center_id: string | null
   total: number // status 판별 가능한 라이더 수
   working: number // 운행 종료(READY)가 아닌 라이더 수 = 현재 출근 인원
   by_status: Record<string, number> // desc → count (진단/향후 세분화용)
+  riders: WorkingRider[] // 현재 근무중 라이더 목록(이름/ID/상태)
 }
 
 /** 한 번의 수집 사이클 파싱 결과. */

@@ -39,6 +39,7 @@ export default async function AdminHomePage({
     workingStatus.capturedAt != null &&
     Date.now() - new Date(workingStatus.capturedAt).getTime() < 20 * 60 * 1000;
   const working = wsFresh ? workingStatus!.working : null;
+  const workingRiders = wsFresh ? workingStatus!.riders : [];
 
   // 오늘 공동목표 4피크(항상 당일 실시간).
   const centerGoals = GOAL_PEAKS.map(({ key, label }) => {
@@ -79,6 +80,7 @@ export default async function AdminHomePage({
       selectedMonth={mo ?? monthRaw[0].value}
       centerGoals={centerGoals}
       working={working}
+      workingRiders={workingRiders}
     />
   );
 }

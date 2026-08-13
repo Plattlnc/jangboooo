@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { AdminHomeVM } from "./home-vm";
@@ -23,6 +23,12 @@ interface CenterGoalVM {
   pct: number | null;
 }
 
+interface WorkingRiderVM {
+  id: string;
+  name: string | null;
+  status: string | null;
+}
+
 export function AdminHome({
   view,
   activePeriod,
@@ -32,6 +38,7 @@ export function AdminHome({
   selectedMonth,
   centerGoals,
   working,
+  workingRiders,
 }: {
   view: AdminHomeVM;
   activePeriod: ActivePeriod;
@@ -41,8 +48,10 @@ export function AdminHome({
   selectedMonth: string;
   centerGoals: CenterGoalVM[];
   working: number | null;
+  workingRiders: WorkingRiderVM[];
 }) {
   const router = useRouter();
+  const [showWorking, setShowWorking] = useState(false);
 
   // 60s 폴링(스크래퍼 1분 주기 — 탭 숨김 시 중단).
   useEffect(() => {
@@ -162,11 +171,18 @@ export function AdminHome({
               오늘 공동목표 <span className="text-jb-indigo">· 협력사 4피크</span>
             </span>
             {working != null ? (
-              <span className="flex items-baseline gap-1">
+              <button
+                type="button"
+                onClick={() => setShowWorking(true)}
+                className="flex items-baseline gap-1"
+                aria-label="현재 출근 라이더 목록 보기"
+              >
                 <span className="text-[15px] font-bold text-jb-ink-mute">· 출근</span>
-                <span className="tnum text-[15px] font-black text-jb-green">{working.toLocaleString()}</span>
+                <span className="tnum text-[15px] font-black text-jb-green underline decoration-jb-green/30 underline-offset-[3px]">
+                  {working.toLocaleString()}
+                </span>
                 <span className="text-[15px] font-bold text-jb-ink-mute">명</span>
-              </span>
+              </button>
             ) : null}
           </span>
           <Link href="/admin/goals" className="text-[11px] font-bold text-jb-indigo">
@@ -313,6 +329,58 @@ export function AdminHome({
       <div className="mt-3 pb-0.5 text-center text-[11px] text-jb-ink-mute">
         수락률은 배민 공식 산식(푸드 기준)이며 B마트·스토어 건은 포함되지 않습니다.
       </div>
+
+      {/* 현재 출근 라이더 목록 — 출근 N명 클릭 시 */}
+      {showWorking && working != null ? (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4"
+          onClick={() => setShowWorking(false)}
+        >
+          <div
+            className="flex max-h-[78vh] w-full max-w-md flex-col overflow-hidden rounded-t-2xl bg-jb-card shadow-xl sm:rounded-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-jb-line-soft px-4 py-3">
+              <span className="text-[15px] font-black text-jb-ink">
+                현재 출근 <span className="tnum text-jb-green">{working.toLocaleString()}</span>명
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowWorking(false)}
+                className="rounded-[10px] bg-jb-surface px-3 py-1 text-[12.5px] font-bold text-jb-ink-soft"
+              >
+                닫기
+              </button>
+            </div>
+            <div className="overflow-y-auto">
+              {workingRiders.length === 0 ? (
+                <div className="px-4 py-8 text-center text-[12.5px] font-bold text-jb-ink-mute">
+                  근무 중인 라이더 정보가 없어요
+                </div>
+              ) : (
+                workingRiders.map((r, i) => (
+                  <Link
+                    key={r.id}
+                    href={`/admin/riders/${encodeURIComponent(r.id)}`}
+                    className={"flex items-center gap-2.5 px-4 py-2.5 " + (i > 0 ? "border-t border-jb-line-soft" : "")}
+                  >
+                    <span className="tnum w-5 shrink-0 text-[12px] font-black text-jb-ink-mute">{i + 1}</span>
+                    <span className="min-w-0 flex-1 truncate text-[13px] font-bold text-jb-ink">
+                      {r.name ?? r.id}
+                      <span className="tnum ml-1.5 text-[10.5px] font-semibold text-jb-ink-mute">{r.id}</span>
+                    </span>
+                    {r.status ? (
+                      <span className="shrink-0 rounded-full bg-jb-green-tint px-2 py-0.5 text-[10px] font-black text-jb-green">
+                        {r.status}
+                      </span>
+                    ) : null}
+                  </Link>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
