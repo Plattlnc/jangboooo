@@ -13,6 +13,7 @@ interface NavItem {
   label: string;
   icon: LucideIcon;
   exact: boolean;
+  badge?: string;
 }
 
 const NAV: NavItem[] = [
@@ -20,7 +21,7 @@ const NAV: NavItem[] = [
   { href: "/settlement/daily", label: "일일 정산", icon: ListChecks, exact: false },
   { href: "/settlement/mission", label: "본사 미션", icon: Building2, exact: false },
   { href: "/settlement/promo", label: "자사 프로모션", icon: Megaphone, exact: false },
-  { href: "/settlement/weekly", label: "주정산서", icon: FileSpreadsheet, exact: false },
+  { href: "/settlement/weekly", label: "정산서", icon: FileSpreadsheet, exact: false, badge: "세무사용" },
   { href: "/settlement/riders", label: "라이더 설정", icon: IdCard, exact: false },
 ];
 
@@ -73,6 +74,11 @@ export function SettlementSidebar() {
               >
                 <Icon size={18} strokeWidth={active ? 2.4 : 2} />
                 {it.label}
+                {it.badge ? (
+                  <span className="ml-auto rounded-[6px] bg-jb-indigo-tint px-1.5 py-[3px] text-[10px] font-bold leading-none text-jb-indigo">
+                    {it.badge}
+                  </span>
+                ) : null}
               </Link>
             );
           })}

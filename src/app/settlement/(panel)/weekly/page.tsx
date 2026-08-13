@@ -15,7 +15,10 @@ export default function WeeklySettlementPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-jb-ink">주정산서</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-jb-ink">정산서</h1>
+          <span className="rounded-[6px] bg-jb-indigo-tint px-1.5 py-[3px] text-[11px] font-bold leading-none text-jb-indigo">세무사용</span>
+        </div>
         <p className="mt-1 text-[13px] text-jb-ink-mute">
           수~화 주간 라이더별 배달처리비 + 기타비용 합산 → 세무사 제출용 정산서
         </p>
