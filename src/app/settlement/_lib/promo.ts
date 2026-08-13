@@ -1,10 +1,11 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { PROMO_WEEKLY_THRESHOLD, PROMO_UNIT_KRW } from "@/lib/promo";
+import { applyDeductions } from "@/app/settlement/_lib/rates";
 
 // 자사 프로모션 정산 — SLA 운영시간(09:00~00:00 = hour 9~23) 완료건을 프로모션 개수로 인정.
-// 주간(수~화) 100건 초과분(101건째부터) 건당 2,000원 지급. 일일 탭은 그날의 개수만(지급은 주간 기준).
-// 원천: rider_hourly_stats(시간대별 완료). 시간 외(0~8시) 제외.
+// 주간(수~화) 100건 초과분(101건째부터) 건당 2,000원(세전). 원천세(3.3%)·고용산재(1.8%) 공제 후 지급액.
+// 수수료(완료건당 100원)는 미적용. 원천: rider_hourly_stats(시간대별 완료). 시간 외(0~8시) 제외.
 
 const IN_HOURS_FROM = 9; // 09:00~ (hour 9 이상 = 운영시간, 0~8 제외)
 
@@ -16,7 +17,11 @@ export interface PromoSettlementRow {
   promoCount: number;
   /** 100건 초과분(주간만, 일일은 0) */
   over: number;
-  /** 지급액 = 초과분 × 2,000 (주간만) */
+  /** 프로모션 세전 = 초과분 × 2,000 */
+  gross: number;
+  wht: number;
+  ins: number;
+  /** 지급액 = 세전 − 원천세 − 고용산재 */
   payout: number;
 }
 
@@ -24,6 +29,9 @@ export interface PromoTotals {
   riders: number;
   promoCount: number;
   over: number;
+  gross: number;
+  wht: number;
+  ins: number;
   payout: number;
 }
 
@@ -89,6 +97,8 @@ export async function fetchPromoSettlement(start: string, end: string, weekly: b
   const rows: PromoSettlementRow[] = ids.map((id) => {
     const promoCount = byRider.get(id)!;
     const over = weekly ? Math.max(0, promoCount - PROMO_WEEKLY_THRESHOLD) : 0;
+    const gross = over * PROMO_UNIT_KRW; // 세전
+    const d = applyDeductions(gross, 0); // 원천세·고용산재만(수수료 미적용)
     const meta = info.get(id);
     return {
       riderId: id,
@@ -96,15 +106,21 @@ export async function fetchPromoSettlement(start: string, end: string, weekly: b
       phone: meta?.phone ?? null,
       promoCount,
       over,
-      payout: over * PROMO_UNIT_KRW,
+      gross,
+      wht: d.wht,
+      ins: d.ins,
+      payout: d.payout,
     };
   });
   rows.sort((a, b) => b.payout - a.payout || b.promoCount - a.promoCount || a.name.localeCompare(b.name, "ko"));
 
-  const totals: PromoTotals = { riders: rows.length, promoCount: 0, over: 0, payout: 0 };
+  const totals: PromoTotals = { riders: rows.length, promoCount: 0, over: 0, gross: 0, wht: 0, ins: 0, payout: 0 };
   for (const r of rows) {
     totals.promoCount += r.promoCount;
     totals.over += r.over;
+    totals.gross += r.gross;
+    totals.wht += r.wht;
+    totals.ins += r.ins;
     totals.payout += r.payout;
   }
 

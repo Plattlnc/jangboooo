@@ -5,16 +5,20 @@ import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, Download, Search, ArrowUp, ArrowDown } from "lucide-react";
 import type { PromoSettlement, PromoSettlementRow, PromoTotals } from "@/app/settlement/_lib/promo";
 import { PROMO_WEEKLY_THRESHOLD, PROMO_UNIT_KRW } from "@/lib/promo";
+import { WITHHOLDING_RATE, INSURANCE_RATE } from "@/app/settlement/_lib/rates";
 import { ymdAdd } from "@/app/settlement/_lib/dates";
 import { NotesSaveButton, type NotesApi } from "./notes-api";
 
 // 자사 프로모션 정산(주간 전용, 수~화) — 09:00~00:00 완료건을 프로모션 개수로 인정.
-// 주간 100건 초과분(101건째부터) 건당 2,000원 지급.
+// 주간 100건 초과분 건당 2,000원(세전) → 원천세·고용산재 공제 후 지급액. 수수료(100원) 미적용.
 
 type SortKey = "name" | "promoCount" | "payout";
 type SortDir = "asc" | "desc";
 
 const won = (n: number) => n.toLocaleString("ko-KR");
+const ded = (n: number) => (n > 0 ? `−${won(n)}` : "0");
+const WHT_PCT = `${(WITHHOLDING_RATE * 100).toFixed(1)}%`; // 3.3%
+const INS_PCT = `${(INSURANCE_RATE * 100).toFixed(1)}%`; // 1.8%
 
 export function PromoSettlementView({
   data,
@@ -59,12 +63,18 @@ export function PromoSettlementView({
   }
 
   function exportCsv() {
-    const head = ["번호", "라이더", "메모", "라이더ID", "완료(09~00시)", "100초과", "지급액", "특이사항"];
+    const head = [
+      "번호", "라이더", "메모", "라이더ID", "완료(09~00시)", "100초과",
+      "프로모션(세전)", `원천세(${WHT_PCT})`, `고용산재(${INS_PCT})`, "지급액", "특이사항",
+    ];
     const body = view.map((r, i) => [
-      i + 1, r.name, notesApi.memos[r.riderId] ?? "", r.riderId, r.promoCount, r.over, r.payout,
-      notesApi.notes[r.riderId] ?? "",
+      i + 1, r.name, notesApi.memos[r.riderId] ?? "", r.riderId, r.promoCount, r.over,
+      r.gross, r.wht, r.ins, r.payout, notesApi.notes[r.riderId] ?? "",
     ]);
-    const foot = ["합계", "", "", "", vTotals.promoCount, vTotals.over, vTotals.payout, ""];
+    const foot = [
+      "합계", "", "", "", vTotals.promoCount, vTotals.over,
+      vTotals.gross, vTotals.wht, vTotals.ins, vTotals.payout, "",
+    ];
     const csv = [head, ...body, foot]
       .map((row) => row.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","))
       .join("\r\n");
@@ -82,7 +92,7 @@ export function PromoSettlementView({
       {/* 주 네비게이션(수~화) */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-[13px] text-jb-ink-mute">
-          운영시간 <span className="font-semibold text-jb-ink-soft">09:00~00:00</span> 완료건을 프로모션 개수로 집계 · 주간(수~화) {won(PROMO_WEEKLY_THRESHOLD)}건 초과분 건당 {won(PROMO_UNIT_KRW)}원 지급
+          운영시간 <span className="font-semibold text-jb-ink-soft">09:00~00:00</span> 완료건 집계 · 주간(수~화) {won(PROMO_WEEKLY_THRESHOLD)}건 초과분 건당 {won(PROMO_UNIT_KRW)}원(세전) · 원천세 {WHT_PCT} · 고용산재 {INS_PCT} 공제 후 지급
         </p>
         <div className="flex items-center rounded-[10px] border border-jb-line bg-jb-card shadow-[var(--toss-shadow)]">
           <button
@@ -110,10 +120,10 @@ export function PromoSettlementView({
 
       {/* 요약 카드 */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <SummaryCard label="대상 라이더" value={`${won(view.length)}명`} />
-        <SummaryCard label="총 완료" value={`${won(vTotals.promoCount)}건`} sub="09~00시" />
         <SummaryCard label="지급 라이더" value={`${won(paidCount)}명`} sub="100건 초과" />
-        <SummaryCard label="총 지급액" value={`${won(vTotals.payout)}원`} accent />
+        <SummaryCard label="총 완료" value={`${won(vTotals.promoCount)}건`} sub="09~00시" />
+        <SummaryCard label="총 프로모션" value={`${won(vTotals.gross)}원`} sub="세전" />
+        <SummaryCard label="총 지급액" value={`${won(vTotals.payout)}원`} sub="공제 후" accent />
       </div>
 
       {/* 테이블 카드 */}
@@ -153,7 +163,7 @@ export function PromoSettlementView({
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[1040px] border-collapse text-[13px]">
+            <table className="w-full min-w-[1240px] border-collapse text-[13px]">
               <thead className="text-jb-ink-mute">
                 <tr className="bg-jb-surface text-[12px] font-medium">
                   <th className="border-b border-jb-line px-3 py-2.5 text-right">#</th>
@@ -162,6 +172,9 @@ export function PromoSettlementView({
                   <th className="border-b border-jb-line px-3 py-2.5 text-left">라이더 ID</th>
                   <SortableTh label="완료 09~00시" onClick={() => toggleSort("promoCount")} active={sortKey === "promoCount"} dir={sortDir} align="right" className="border-l border-jb-line" />
                   <th className="border-b border-jb-line px-3 py-2.5 text-right">100 초과</th>
+                  <th className="border-b border-l border-jb-line px-3 py-2.5 text-right">프로모션(세전)</th>
+                  <th className="border-b border-jb-line px-3 py-2.5 text-right">원천세 {WHT_PCT}</th>
+                  <th className="border-b border-jb-line px-3 py-2.5 text-right">고용산재 {INS_PCT}</th>
                   <SortableTh label="지급액" onClick={() => toggleSort("payout")} active={sortKey === "payout"} dir={sortDir} align="right" className="border-l border-jb-line font-semibold text-jb-ink" />
                   <th className="w-[240px] border-b border-l border-jb-line px-3 py-2.5 text-left">특이사항</th>
                 </tr>
@@ -184,6 +197,9 @@ export function PromoSettlementView({
                   <td className="px-3 py-3 text-right text-jb-ink-mute" colSpan={4}>합계 · {won(view.length)}명</td>
                   <td className="border-l border-jb-line px-3 py-3 text-right font-mono tabular-nums">{won(vTotals.promoCount)}</td>
                   <td className="px-3 py-3 text-right font-mono tabular-nums text-jb-ink-soft">{won(vTotals.over)}</td>
+                  <td className="border-l border-jb-line px-3 py-3 text-right font-mono tabular-nums">{won(vTotals.gross)}</td>
+                  <td className="px-3 py-3 text-right font-mono tabular-nums text-jb-red">{ded(vTotals.wht)}</td>
+                  <td className="px-3 py-3 text-right font-mono tabular-nums text-jb-red">{ded(vTotals.ins)}</td>
                   <td className="border-l border-jb-line px-3 py-3 text-right font-mono tabular-nums text-jb-indigo">{won(vTotals.payout)}</td>
                   <td className="border-l border-jb-line-soft" />
                 </tr>
@@ -197,10 +213,13 @@ export function PromoSettlementView({
 }
 
 function sumRows(rows: PromoSettlementRow[]): PromoTotals {
-  const t: PromoTotals = { riders: rows.length, promoCount: 0, over: 0, payout: 0 };
+  const t: PromoTotals = { riders: rows.length, promoCount: 0, over: 0, gross: 0, wht: 0, ins: 0, payout: 0 };
   for (const r of rows) {
     t.promoCount += r.promoCount;
     t.over += r.over;
+    t.gross += r.gross;
+    t.wht += r.wht;
+    t.ins += r.ins;
     t.payout += r.payout;
   }
   return t;
@@ -274,6 +293,9 @@ const Row = memo(function Row({
       <td className="px-3 py-2.5 font-mono text-[12px] text-jb-ink-mute">{row.riderId}</td>
       <td className="border-l border-jb-line-soft px-3 py-2.5 text-right font-mono tabular-nums text-jb-ink">{won(row.promoCount)}</td>
       <td className="px-3 py-2.5 text-right font-mono tabular-nums text-jb-ink-soft">{won(row.over)}</td>
+      <td className="border-l border-jb-line-soft px-3 py-2.5 text-right font-mono tabular-nums text-jb-ink">{won(row.gross)}</td>
+      <td className="px-3 py-2.5 text-right font-mono tabular-nums text-jb-red">{ded(row.wht)}</td>
+      <td className="px-3 py-2.5 text-right font-mono tabular-nums text-jb-red">{ded(row.ins)}</td>
       <td className="border-l border-jb-line-soft px-3 py-2.5 text-right font-mono font-bold tabular-nums text-jb-indigo">{won(row.payout)}</td>
       <td className="border-l border-jb-line-soft px-2 py-1.5">
         <input
