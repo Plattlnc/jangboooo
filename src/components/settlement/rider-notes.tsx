@@ -43,7 +43,7 @@ export function RiderNotes({
     [riders, notes, memos, rrns],
   );
 
-  const colCount = showRrn ? 5 : 4;
+  const colCount = showRrn ? 6 : 5;
 
   return (
     <div className="overflow-hidden rounded-[12px] border border-jb-line bg-jb-card shadow-[var(--toss-shadow)]">
@@ -76,6 +76,7 @@ export function RiderNotes({
         <table className="w-full border-collapse text-[13px]">
           <thead className="sticky top-0 z-10 bg-jb-surface text-[12px] font-medium text-jb-ink-mute">
             <tr>
+              <th className="w-[44px] border-b border-jb-line px-3 py-2.5 text-right">#</th>
               <th className="border-b border-jb-line px-4 py-2.5 text-left">라이더</th>
               <th className="w-[32%] border-b border-jb-line px-3 py-2.5 text-left">메모</th>
               <th className="border-b border-jb-line px-3 py-2.5 text-left">라이더 ID</th>
@@ -84,9 +85,10 @@ export function RiderNotes({
             </tr>
           </thead>
           <tbody>
-            {view.map((r) => (
+            {view.map((r, i) => (
               <NoteRow
                 key={r.id}
+                index={i + 1}
                 id={r.id}
                 name={r.name}
                 memoValue={memos[r.id] ?? ""}
@@ -112,6 +114,7 @@ export function RiderNotes({
 }
 
 const NoteRow = memo(function NoteRow({
+  index,
   id,
   name,
   memoValue,
@@ -121,6 +124,7 @@ const NoteRow = memo(function NoteRow({
   onNote,
   onRrn,
 }: {
+  index: number;
   id: string;
   name: string;
   memoValue: string;
@@ -134,6 +138,7 @@ const NoteRow = memo(function NoteRow({
     "w-full rounded-[8px] border border-transparent bg-transparent px-2 py-1.5 text-[13px] text-jb-ink outline-none hover:border-jb-line focus:border-jb-indigo/50 focus:bg-jb-surface placeholder:text-jb-ink-mute";
   return (
     <tr className="border-b border-jb-line-soft">
+      <td className="px-3 py-1.5 text-right font-mono text-[12px] tabular-nums text-jb-ink-mute">{index}</td>
       <td className="whitespace-nowrap px-4 py-1.5 font-medium text-jb-ink">{name}</td>
       <td className="px-3 py-1.5">
         <input value={memoValue} onChange={(e) => onMemo(id, e.target.value)} placeholder="메모 입력…" className={cell} />
