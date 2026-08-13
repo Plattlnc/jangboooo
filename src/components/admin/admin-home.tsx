@@ -53,6 +53,15 @@ export function AdminHome({
 }) {
   const router = useRouter();
   const [showWorking, setShowWorking] = useState(false);
+  const [workingQuery, setWorkingQuery] = useState("");
+
+  // 출근 인원 검색 — 이름·라이더 ID 부분 일치(대소문자 무시).
+  const workingFilter = workingQuery.trim().toLowerCase();
+  const filteredWorkingRiders = workingFilter
+    ? workingRiders.filter(
+        (r) => (r.name ?? "").toLowerCase().includes(workingFilter) || r.id.toLowerCase().includes(workingFilter),
+      )
+    : workingRiders;
 
   // 60s 폴링(스크래퍼 1분 주기 — 탭 숨김 시 중단).
   useEffect(() => {
@@ -174,7 +183,10 @@ export function AdminHome({
             {working != null ? (
               <button
                 type="button"
-                onClick={() => setShowWorking(true)}
+                onClick={() => {
+                  setWorkingQuery("");
+                  setShowWorking(true);
+                }}
                 className="flex items-baseline gap-1"
                 aria-label="현재 출근 라이더 목록 보기"
               >
@@ -353,13 +365,29 @@ export function AdminHome({
                 닫기
               </button>
             </div>
+            {workingRiders.length > 0 ? (
+              <div className="border-b border-jb-line-soft px-4 py-2.5">
+                <input
+                  type="search"
+                  value={workingQuery}
+                  onChange={(e) => setWorkingQuery(e.target.value)}
+                  placeholder="이름·라이더 ID 검색"
+                  aria-label="출근 라이더 검색"
+                  className="w-full rounded-[12px] border border-jb-line bg-jb-surface px-3.5 py-2 text-[13px] font-bold text-jb-ink outline-none placeholder:font-medium placeholder:text-jb-ink-mute focus:border-jb-indigo"
+                />
+              </div>
+            ) : null}
             <div className="overflow-y-auto">
               {workingRiders.length === 0 ? (
                 <div className="px-4 py-8 text-center text-[12.5px] font-bold text-jb-ink-mute">
                   근무 중인 라이더 정보가 없어요
                 </div>
+              ) : filteredWorkingRiders.length === 0 ? (
+                <div className="px-4 py-8 text-center text-[12.5px] font-bold text-jb-ink-mute">
+                  ‘{workingQuery.trim()}’ 검색 결과가 없어요
+                </div>
               ) : (
-                workingRiders.map((r, i) => (
+                filteredWorkingRiders.map((r, i) => (
                   <Link
                     key={r.id}
                     href={`/admin/riders/${encodeURIComponent(r.id)}`}
