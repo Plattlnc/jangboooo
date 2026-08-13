@@ -84,12 +84,17 @@ export function MonthlyStatementView({
         </div>
       </div>
 
-      {/* 요약 */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <SummaryCard label="대상 라이더" value={`${view.length.toLocaleString("ko-KR")}명`} />
-        <SummaryCard label="주차" value={`${weeks.length}주 (수~화)`} />
+      {/* 요약 — 배달처리비 / 본사미션 / 자사프로모션 분리 + 소득합계 */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        <SummaryCard label="대상 라이더" value={`${view.length.toLocaleString("ko-KR")}명`} sub={`${weeks.length}주`} />
+        <SummaryCard label="배달처리비" value={`${totals.delivery.toLocaleString("ko-KR")}원`} sub="세전" />
+        <SummaryCard label="본사미션" value={`${totals.mission.toLocaleString("ko-KR")}원`} sub="세전" />
+        <SummaryCard label="자사프로모션" value={`${totals.promo.toLocaleString("ko-KR")}원`} sub="세전" />
         <SummaryCard label="총 소득합계" value={`${totals.total.toLocaleString("ko-KR")}원`} sub="세전" accent />
       </div>
+      <p className="-mt-2 text-[12px] text-jb-ink-mute">
+        표의 <span className="font-semibold text-jb-ink-soft">기타/인센티브</span> = 본사미션 + 자사프로모션(세전). 소득합계 = 배달처리비 + 기타/인센티브.
+      </p>
 
       {/* 정산서 테이블 */}
       <div className="overflow-hidden rounded-[12px] border border-jb-line bg-jb-card shadow-[var(--toss-shadow)]">

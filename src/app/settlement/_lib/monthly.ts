@@ -27,7 +27,13 @@ export interface MonthlySettlement {
   ym: string;
   weeks: { start: string; end: string }[];
   rows: MonthlyRow[];
-  totals: { perWeek: MonthlyWeekCell[]; total: number };
+  totals: {
+    perWeek: MonthlyWeekCell[];
+    delivery: number; // 총 배달처리비(세전)
+    mission: number; // 총 본사미션(세전)
+    promo: number; // 총 자사프로모션(세전)
+    total: number; // 소득합계 = delivery + mission + promo
+  };
 }
 
 function dayNum(ymd: string): number {
@@ -60,8 +66,9 @@ async function paginate<T>(makeBase: () => PromiseLike<{ data: T[] | null; error
 
 export async function fetchMonthlySettlement(ym: string): Promise<MonthlySettlement> {
   const weeks = monthWeeks(ym);
-  const empty: MonthlySettlement = { ym, weeks, rows: [], totals: { perWeek: weeks.map(() => ({ delivery: 0, etc: 0 })), total: 0 } };
-  if (weeks.length === 0) return empty;
+  if (weeks.length === 0) {
+    return { ym, weeks, rows: [], totals: { perWeek: [], delivery: 0, mission: 0, promo: 0, total: 0 } };
+  }
 
   const start = weeks[0].start;
   const end = weeks[weeks.length - 1].end;
@@ -145,15 +152,26 @@ export async function fetchMonthlySettlement(ym: string): Promise<MonthlySettlem
   }
   const rrns = await loadRiderRrns();
 
+  let gDelivery = 0;
+  let gMission = 0;
+  let gPromo = 0;
   const rows: MonthlyRow[] = ids
     .map((id) => {
       const a = agg.get(id)!;
       const cells: MonthlyWeekCell[] = weeks.map((_, i) => {
         const delivery = a.fee[i];
+        const mission = a.mission[i];
         const promo = Math.max(0, a.inHours[i] - PROMO_WEEKLY_THRESHOLD) * PROMO_UNIT_KRW;
-        return { delivery, etc: a.mission[i] + promo };
+        return { delivery, etc: mission + promo };
       });
       const total = cells.reduce((s, c) => s + c.delivery + c.etc, 0);
+      if (total > 0) {
+        for (let i = 0; i < weeks.length; i++) {
+          gDelivery += a.fee[i];
+          gMission += a.mission[i];
+          gPromo += Math.max(0, a.inHours[i] - PROMO_WEEKLY_THRESHOLD) * PROMO_UNIT_KRW;
+        }
+      }
       return { riderId: id, name: info.get(id) ?? id, rrn: rrns[id] ?? "", weeks: cells, total };
     })
     .filter((r) => r.total > 0);
@@ -163,7 +181,11 @@ export async function fetchMonthlySettlement(ym: string): Promise<MonthlySettlem
     delivery: rows.reduce((s, r) => s + r.weeks[i].delivery, 0),
     etc: rows.reduce((s, r) => s + r.weeks[i].etc, 0),
   }));
-  const total = rows.reduce((s, r) => s + r.total, 0);
 
-  return { ym, weeks, rows, totals: { perWeek, total } };
+  return {
+    ym,
+    weeks,
+    rows,
+    totals: { perWeek, delivery: gDelivery, mission: gMission, promo: gPromo, total: gDelivery + gMission + gPromo },
+  };
 }
