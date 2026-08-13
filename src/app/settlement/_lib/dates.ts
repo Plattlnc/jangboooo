@@ -78,19 +78,16 @@ export function ymAdd(ym: string, months: number): string {
 }
 
 /**
- * 월(YYYY-MM)에 속한 주(수~화) 목록 — 1일이 포함된 주가 1주차, 다음 달 1일 포함 주 직전까지.
- * (첫 주는 전월 말에 걸칠 수 있음.) 보통 4~5주.
+ * 월(YYYY-MM)에 속한 주(수~화) 목록 — 주의 시작(수요일)이 그 달에 속하면 그 달 주차.
+ * (월 경계를 넘는 주는 시작 수요일이 있는 '전달'의 마지막 주차로 귀속. 예: 7/29~8/4 = 7월 5주차.) 보통 4~5주.
  */
 export function monthWeeks(ym: string): { start: string; end: string }[] {
-  const [y, m] = ym.split("-").map(Number);
   const first = `${ym}-01`;
-  const nextFirst =
-    m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, "0")}-01`;
-  const startWed = weekStartOf(first);
-  const stopWed = weekStartOf(nextFirst);
+  let w = weekStartOf(first); // 1일이 속한 주의 수요일(전월일 수 있음)
+  if (w < first) w = ymdAdd(w, 7); // 시작 수요일이 전월이면 그 달 첫 수요일로
   const weeks: { start: string; end: string }[] = [];
-  let w = startWed;
-  while (w < stopWed) {
+  while (w.slice(0, 7) === ym) {
+    // 시작 수요일이 이 달에 속하는 동안
     weeks.push({ start: w, end: ymdAdd(w, 6) });
     w = ymdAdd(w, 7);
   }
