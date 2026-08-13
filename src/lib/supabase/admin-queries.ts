@@ -388,5 +388,29 @@ export async function getAdminGoalsData(fromRaw?: unknown, toRaw?: unknown, ref?
   )
 
   const [todayData, historyData] = await Promise.all([todayRows, historyRows])
-  return { businessToday, today: todayData, history: historyData, range }
+
+  // goal 폴백: 오늘 goal 이 null(실시간 current 만 적재 + Looker 목표 스크랩 지연/실패)인 피크는
+  // 최근 수집된 non-null 목표로 채우고 pct 재계산. (메모 배열 불변 — 새 객체로 반환)
+  let today = todayData
+  if (todayData.some((r) => r.goal == null)) {
+    const supabase = createAdminClient()
+    const { data: recent } = await supabase
+      .from('center_peak_goals')
+      .select('peak_key, goal')
+      .not('goal', 'is', null)
+      .order('snapshot_date', { ascending: false })
+      .limit(400)
+    const latestGoal = new Map<string, number>()
+    for (const r of recent ?? []) {
+      if (r.goal != null && !latestGoal.has(r.peak_key)) latestGoal.set(r.peak_key, r.goal)
+    }
+    today = todayData.map((r) => {
+      if (r.goal != null) return r
+      const g = latestGoal.get(r.peak_key)
+      if (g == null) return r
+      return { ...r, goal: g, pct: r.current != null && g > 0 ? Math.min(100, Math.round((r.current / g) * 100)) : r.pct }
+    })
+  }
+
+  return { businessToday, today, history: historyData, range }
 }
