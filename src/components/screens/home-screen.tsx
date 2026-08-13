@@ -300,9 +300,10 @@ export function HomeScreen({
         </div>
       </div>
 
-      {/* 자사 프로모션 (주간 보너스) — 종료(PROMO_WEEKLY_ACTIVE=false) 시 숨김. 시간 외(0~8시) 완료 제외. */}
+      {/* 자사 프로모션 (주간 보너스) — 종료(PROMO_WEEKLY_ACTIVE=false) 시 숨김.
+          weekM.count 는 이미 시간 외(0~8시) 제외 완료건 — 추가 차감 금지(이중 차감 방지). */}
       {PROMO_WEEKLY_ACTIVE && (() => {
-        const promo = weeklyPromo(Math.max(0, weekM.count - weekM.offHours));
+        const promo = weeklyPromo(weekM.count);
         const barColor = promo.reached ? "var(--jb-green)" : "var(--jb-indigo)";
         return (
           <div className={cardCls + " mt-3 px-[18px] py-[15px]"}>
