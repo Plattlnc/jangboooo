@@ -52,7 +52,7 @@ export function RiderNotes({
           <h2 className="text-[15px] font-semibold text-jb-ink">{heading}</h2>
           <p className="mt-0.5 text-[12.5px] text-jb-ink-mute">{subtitle} · 기록 {notedCount}명</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
           <label className="flex items-center gap-1.5 text-[12.5px] text-jb-ink-soft">
             <input type="checkbox" checked={onlyNoted} onChange={(e) => setOnlyNoted(e.target.checked)} className="accent-jb-indigo" />
             기록된 라이더만
@@ -72,8 +72,8 @@ export function RiderNotes({
 
       {api.error ? <p className="border-b border-jb-line px-4 py-2 text-[12.5px] font-medium text-jb-red">{api.error}</p> : null}
 
-      <div className="max-h-[calc(100dvh-320px)] overflow-y-auto">
-        <table className="w-full border-collapse text-[13px]">
+      <div className="max-h-[calc(100dvh-320px)] overflow-auto">
+        <table className="w-full min-w-[760px] border-collapse text-[13px]">
           <thead className="sticky top-0 z-10 bg-jb-surface text-[12px] font-medium text-jb-ink-mute">
             <tr>
               <th className="w-[44px] border-b border-jb-line px-3 py-2.5 text-right">#</th>

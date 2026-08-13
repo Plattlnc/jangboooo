@@ -23,7 +23,7 @@ export default async function SettlementHome() {
 
       {/* 어제 정산 요약 */}
       <div className="rounded-[16px] border border-jb-line bg-jb-card p-5 shadow-[var(--toss-shadow)] md:p-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="text-[13px] font-medium text-jb-ink-mute">어제 정산 요약</div>
             <div className="mt-0.5 text-[15px] font-semibold text-jb-ink">{formatKoreanDate(yesterday)}</div>
@@ -61,7 +61,7 @@ export default async function SettlementHome() {
         <TaskCard
           href="/settlement/weekly"
           icon={<FileSpreadsheet size={20} />}
-          title="주정산서"
+          title="정산서"
           desc="라이더별 수~화 주간 배달처리비 + 프로모션(기타비용)을 합산해 세무사 제출용 정산서를 만듭니다."
         />
       </div>
@@ -74,7 +74,7 @@ function Stat({ label, value, accent }: { label: string; value: string; accent?:
     <div>
       <div className="text-[12.5px] text-jb-ink-mute">{label}</div>
       <div
-        className={`mt-1 font-mono text-[22px] font-semibold tabular-nums tracking-[-0.01em] ${accent ? "text-jb-indigo" : "text-jb-ink"}`}
+        className={`mt-1 break-keep font-mono text-[19px] font-semibold tabular-nums tracking-[-0.01em] sm:text-[22px] ${accent ? "text-jb-indigo" : "text-jb-ink"}`}
       >
         {value}
       </div>

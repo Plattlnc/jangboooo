@@ -152,7 +152,7 @@ export function MissionSettlementView({
             <span className="text-[14px] font-semibold text-jb-ink">{rangeLabel}</span>
             <span className="text-[12.5px] text-jb-ink-mute">{view.length}명 표시</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2">
             <div className="flex items-center gap-1.5 rounded-[10px] border border-jb-line bg-jb-surface px-2.5 py-1.5">
               <Search size={15} className="text-jb-ink-mute" />
               <input
@@ -266,7 +266,7 @@ function SummaryCard({ label, value, sub, accent }: { label: string; value: stri
         <span className="text-[12.5px] text-jb-ink-mute">{label}</span>
         {sub ? <span className="rounded-[5px] bg-jb-surface px-1 py-0.5 text-[10px] font-medium text-jb-ink-mute">{sub}</span> : null}
       </div>
-      <div className={`mt-1 font-mono text-[20px] font-semibold tabular-nums tracking-[-0.01em] ${accent ? "text-jb-indigo" : "text-jb-ink"}`}>
+      <div className={`mt-1 break-keep font-mono text-[17px] font-semibold tabular-nums tracking-[-0.01em] sm:text-[20px] ${accent ? "text-jb-indigo" : "text-jb-ink"}`}>
         {value}
       </div>
     </div>
