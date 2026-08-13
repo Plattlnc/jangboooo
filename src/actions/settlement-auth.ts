@@ -2,41 +2,51 @@
 
 import { redirect } from 'next/navigation'
 import { z } from 'zod'
+import { scryptSync, timingSafeEqual } from 'node:crypto'
 import { setSettlementSession, clearSettlementSession } from '@/lib/auth/settlement-cookies'
 import { constantTimeEqual } from '@/lib/auth/session'
 
 /**
  * 정산팀 로그인 — 정산 담당 계정. 관리자/라이더와 완전 분리.
- * 크리덴셜은 env(SETTLEMENT_ACCOUNTS="id:pw,id2:pw2")로 오버라이드 권장,
- * 미설정 시 아래 기본 계정. 실패 사유 미구분(계정 열거 방지) — 상수시간 비교.
+ * 비밀번호는 소스에 평문 저장하지 않고 scrypt(salt+hash)로만 보관 → 원문 노출 방지.
+ * 계정 추가/변경은 아래 목록(해시) 또는 env SETTLEMENT_ACCOUNTS="id:pw,id2:pw2"(평문, 미커밋).
+ * 실패 사유 미구분(계정 열거 방지) — 상수시간 비교.
  */
 
-type SettlementAccount = { id: string; password: string }
-
-// 기본 정산 계정(코드). 추가/변경은 여기 또는 env SETTLEMENT_ACCOUNTS 로.
-const DEFAULT_ACCOUNTS: SettlementAccount[] = [
-  { id: 'gs01310', password: '***REMOVED***' },
+// 코드 기본 계정 — 비밀번호는 scrypt 해시(salt/hash 는 hex). 원문 비노출.
+type HashedAccount = { id: string; salt: string; hash: string }
+const HASHED_ACCOUNTS: HashedAccount[] = [
+  {
+    id: 'gs01310',
+    salt: 'db1688495b8a9838ba641ae1ae86685b',
+    hash: '4763ddff4ecb1cd31d1781e15f6a011c16f245bad5693a423e8fb856e3d8d519',
+  },
 ]
 
-/** env SETTLEMENT_ACCOUNTS("id:pw,id2:pw2") → 계정 목록. 하위호환: SETTLEMENT_LOGIN_ID/PASSWORD. */
-function loadAccounts(): SettlementAccount[] {
-  const raw = process.env.SETTLEMENT_ACCOUNTS
-  if (raw) {
-    const parsed = raw
-      .split(',')
-      .map((s) => s.trim())
-      .filter(Boolean)
-      .map((pair) => {
-        const i = pair.indexOf(':')
-        return i > 0 ? { id: pair.slice(0, i), password: pair.slice(i + 1) } : null
-      })
-      .filter((a): a is SettlementAccount => a != null)
-    if (parsed.length) return parsed
+/** scrypt(비밀번호, salt) === 저장 해시 (상수시간 비교). */
+function verifyHashed(password: string, salt: string, expectedHex: string): boolean {
+  try {
+    const expected = Buffer.from(expectedHex, 'hex')
+    const actual = scryptSync(password, Buffer.from(salt, 'hex'), expected.length)
+    return actual.length === expected.length && timingSafeEqual(actual, expected)
+  } catch {
+    return false
   }
-  const id = process.env.SETTLEMENT_LOGIN_ID
-  const pw = process.env.SETTLEMENT_LOGIN_PASSWORD
-  if (id && pw) return [{ id, password: pw }]
-  return DEFAULT_ACCOUNTS
+}
+
+/** env SETTLEMENT_ACCOUNTS("id:pw,id2:pw2") → 평문 계정 목록(미설정 시 빈 배열). */
+function envAccounts(): { id: string; password: string }[] {
+  const raw = process.env.SETTLEMENT_ACCOUNTS
+  if (!raw) return []
+  return raw
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .map((pair) => {
+      const i = pair.indexOf(':')
+      return i > 0 ? { id: pair.slice(0, i), password: pair.slice(i + 1) } : null
+    })
+    .filter((a): a is { id: string; password: string } => a != null)
 }
 
 const signInSettlementSchema = z.object({
@@ -51,13 +61,21 @@ export async function signInSettlement(input: unknown): Promise<SettlementSignIn
   if (!parsed.success) {
     return { ok: false, message: '아이디와 비밀번호를 입력해 주세요.' }
   }
-  // 모든 계정을 검사(조기 반환 없이) — 계정 존재/타이밍 노출 방지.
+  const { id, password } = parsed.data
+
+  // 조기 반환 없이 전 계정 검사 — 계정 존재/타이밍 노출 방지.
   let match = false
-  for (const acc of loadAccounts()) {
-    const idOk = constantTimeEqual(parsed.data.id, acc.id)
-    const pwOk = constantTimeEqual(parsed.data.password, acc.password)
+  // env 오버라이드(있으면) — 평문 상수시간 비교.
+  for (const acc of envAccounts()) {
+    if (constantTimeEqual(id, acc.id) && constantTimeEqual(password, acc.password)) match = true
+  }
+  // 코드 기본 계정 — scrypt 해시 검증.
+  for (const acc of HASHED_ACCOUNTS) {
+    const idOk = constantTimeEqual(id, acc.id)
+    const pwOk = verifyHashed(password, acc.salt, acc.hash)
     if (idOk && pwOk) match = true
   }
+
   if (!match) {
     return { ok: false, message: '아이디 또는 비밀번호가 올바르지 않습니다.' }
   }
