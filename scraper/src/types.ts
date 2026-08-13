@@ -124,6 +124,7 @@ export type WorkingRider = {
   admin_rider_id: string
   name: string | null
   status: string | null // status.desc (운행중/배차대기 등)
+  completed: number // 오늘 완료건수(totalComplete)
 }
 
 export type WorkingStatusSummary = {

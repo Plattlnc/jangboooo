@@ -27,6 +27,7 @@ interface WorkingRiderVM {
   id: string;
   name: string | null;
   status: string | null;
+  completed: number;
 }
 
 export function AdminHome({
@@ -368,6 +369,9 @@ export function AdminHome({
                     <span className="min-w-0 flex-1 truncate text-[13px] font-bold text-jb-ink">
                       {r.name ?? r.id}
                       <span className="tnum ml-1.5 text-[10.5px] font-semibold text-jb-ink-mute">{r.id}</span>
+                    </span>
+                    <span className="tnum shrink-0 text-[12px] font-bold text-jb-ink-soft">
+                      완료 <span className="font-black text-jb-ink">{r.completed.toLocaleString()}</span>건
                     </span>
                     {r.status ? (
                       <span className="shrink-0 rounded-full bg-jb-green-tint px-2 py-0.5 text-[10px] font-black text-jb-green">

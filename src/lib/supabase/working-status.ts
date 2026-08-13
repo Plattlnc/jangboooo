@@ -6,7 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 const OPS_BUCKET = "ops";
 const WORKING_STATUS_PATH = "working-status.json";
 
-export type WorkingRider = { id: string; name: string | null; status: string | null };
+export type WorkingRider = { id: string; name: string | null; status: string | null; completed: number };
 
 export type WorkingStatus = {
   working: number; // 운행 종료(READY)가 아닌 라이더 수 = 현재 출근 인원
@@ -30,6 +30,7 @@ export async function getWorkingStatus(): Promise<WorkingStatus | null> {
         id: r.admin_rider_id as string,
         name: typeof r.name === "string" ? r.name : null,
         status: typeof r.status === "string" ? r.status : null,
+        completed: Number(r.completed ?? 0),
       }));
     return {
       working: Number(json.working ?? 0),

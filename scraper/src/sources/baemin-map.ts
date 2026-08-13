@@ -116,6 +116,7 @@ export function mapDeliveryStatus(
           admin_rider_id: row.userId,
           name: row.name ?? null,
           status: row.status?.desc ?? null,
+          completed: n(row.deliveryAcceptanceCount?.totalComplete),
         })
       }
     }
