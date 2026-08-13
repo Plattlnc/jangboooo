@@ -163,9 +163,9 @@ export function AdminHome({
             </span>
             {working != null ? (
               <span className="flex items-baseline gap-1">
-                <span className="text-[11.5px] font-bold text-jb-ink-mute">· 출근</span>
-                <span className="tnum text-[13px] font-black text-jb-green">{working.toLocaleString()}</span>
-                <span className="text-[11.5px] font-bold text-jb-ink-mute">명</span>
+                <span className="text-[15px] font-bold text-jb-ink-mute">· 출근</span>
+                <span className="tnum text-[15px] font-black text-jb-green">{working.toLocaleString()}</span>
+                <span className="text-[15px] font-bold text-jb-ink-mute">명</span>
               </span>
             ) : null}
           </span>
