@@ -216,12 +216,12 @@ export function HomeScreen({
           <span className="tnum text-[10px] font-semibold text-jb-ink-mute">{dateShort}</span>
         </div>
 
-        {/* 배달 N건 / 수락률 00% */}
+        {/* 배달 N건(전체 = 시간 외 포함) / 수락률 00% */}
         <div className="mt-2.5 flex items-center justify-between">
           <div className="flex items-baseline gap-1.5">
             <span className="text-[15px] font-bold text-jb-ink-soft">배달</span>
             <span className="tnum text-[26px] font-extrabold tracking-[-0.02em] text-jb-ink">
-              <CountUp value={m.count} />
+              <CountUp value={m.count + m.offHours} />
             </span>
             <span className="text-[15px] font-bold text-jb-ink-soft">건</span>
           </div>
