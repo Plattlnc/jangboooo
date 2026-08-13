@@ -137,24 +137,24 @@ export function DailySettlementView({
             <span className="text-[14px] font-semibold text-jb-ink">{formatKoreanDate(date)}</span>
             <span className="text-[12.5px] text-jb-ink-mute">{view.length}명 표시</span>
           </div>
-          <div className="flex flex-wrap items-center justify-end gap-2">
-            <div className="flex items-center gap-1.5 rounded-[10px] border border-jb-line bg-jb-surface px-2.5 py-1.5">
-              <Search size={15} className="text-jb-ink-mute" />
+          <div className="flex w-full items-center gap-2 sm:w-auto">
+            <div className="flex min-w-0 flex-1 items-center gap-1.5 rounded-[10px] border border-jb-line bg-jb-surface px-2.5 py-1.5 sm:flex-none">
+              <Search size={15} className="shrink-0 text-jb-ink-mute" />
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="이름·ID 검색"
-                className="w-[130px] bg-transparent text-[13px] text-jb-ink outline-none placeholder:text-jb-ink-mute"
+                className="w-full min-w-0 bg-transparent text-[13px] text-jb-ink outline-none placeholder:text-jb-ink-mute sm:w-[130px]"
               />
             </div>
             <button
               type="button"
               onClick={exportCsv}
               disabled={view.length === 0}
-              className="flex items-center gap-1.5 rounded-[10px] border border-jb-line bg-jb-card px-3 py-2 text-[13px] font-semibold text-jb-ink-soft transition-colors hover:bg-jb-surface disabled:opacity-40"
+              className="flex shrink-0 items-center gap-1.5 rounded-[10px] border border-jb-line bg-jb-card px-3 py-2 text-[13px] font-semibold text-jb-ink-soft transition-colors hover:bg-jb-surface disabled:opacity-40"
             >
               <Download size={15} />
-              CSV 내보내기
+              CSV<span className="hidden sm:inline"> 내보내기</span>
             </button>
             <NotesSaveButton api={notesApi} />
           </div>

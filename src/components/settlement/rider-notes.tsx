@@ -52,18 +52,19 @@ export function RiderNotes({
           <h2 className="text-[15px] font-semibold text-jb-ink">{heading}</h2>
           <p className="mt-0.5 text-[12.5px] text-jb-ink-mute">{subtitle} · 기록 {notedCount}명</p>
         </div>
-        <div className="flex flex-wrap items-center justify-end gap-2">
-          <label className="flex items-center gap-1.5 text-[12.5px] text-jb-ink-soft">
+        <div className="flex w-full items-center gap-2 sm:w-auto">
+          <label className="flex shrink-0 items-center gap-1.5 text-[12.5px] text-jb-ink-soft">
             <input type="checkbox" checked={onlyNoted} onChange={(e) => setOnlyNoted(e.target.checked)} className="accent-jb-indigo" />
-            기록된 라이더만
+            <span className="hidden sm:inline">기록된 라이더만</span>
+            <span className="sm:hidden">기록만</span>
           </label>
-          <div className="flex items-center gap-1.5 rounded-[10px] border border-jb-line bg-jb-surface px-2.5 py-1.5">
-            <Search size={15} className="text-jb-ink-mute" />
+          <div className="flex min-w-0 flex-1 items-center gap-1.5 rounded-[10px] border border-jb-line bg-jb-surface px-2.5 py-1.5 sm:flex-none">
+            <Search size={15} className="shrink-0 text-jb-ink-mute" />
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="이름·ID 검색"
-              className="w-[130px] bg-transparent text-[13px] text-jb-ink outline-none placeholder:text-jb-ink-mute"
+              className="w-full min-w-0 bg-transparent text-[13px] text-jb-ink outline-none placeholder:text-jb-ink-mute sm:w-[130px]"
             />
           </div>
           <NotesSaveButton api={api} />

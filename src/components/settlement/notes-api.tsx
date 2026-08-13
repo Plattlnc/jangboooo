@@ -106,7 +106,7 @@ export function useRiderNotesApi(
 /** 공유 저장 버튼(+미저장/저장됨 상태) — 어느 탭에서 눌러도 전체 저장. */
 export function NotesSaveButton({ api }: { api: NotesApi }) {
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex shrink-0 items-center gap-2">
       {api.saved && !api.dirty ? (
         <span className="flex items-center gap-1 text-[12px] font-medium text-jb-green">
           <Check size={14} /> 저장됨
