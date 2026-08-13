@@ -18,7 +18,11 @@ import type {
   ScrapeResult,
   SlaCategoryBreakdown,
   SlaSnapshotUpsert,
+  WorkingStatusSummary,
 } from '../types'
+
+// 배민 운행상태 code: 'READY' = 운행 종료(오프). 그 외(운행중/배차대기 등)는 출근/근무중으로 집계.
+const OFF_DUTY_CODE = 'READY'
 
 // 센터별 활동 권역 — delivery-status 응답엔 권역 필드가 없어 센터 단위로 스탬프.
 // (center_id 스탬프와 동일 패턴. 신규 센터 추가 시 여기에 등록.)
@@ -93,8 +97,21 @@ export function mapDeliveryStatus(
   const snapshots: SlaSnapshotUpsert[] = []
   const hourly: HourlyStatUpsert[] = []
 
+  // 실시간 근무 인원 집계(status.code 기준).
+  let workingTotal = 0
+  let working = 0
+  const byStatus: Record<string, number> = {}
+
   for (const row of rows) {
     if (!row.userId) continue // 식별키 없으면 적재 불가 — 스킵
+
+    const code = row.status?.code ?? null
+    if (code) {
+      workingTotal += 1
+      const label = row.status?.desc ?? code
+      byStatus[label] = (byStatus[label] ?? 0) + 1
+      if (code !== OFF_DUTY_CODE) working += 1
+    }
 
     riders.push({
       admin_rider_id: row.userId,
@@ -133,5 +150,19 @@ export function mapDeliveryStatus(
       }))
     : undefined
 
-  return { riders, snapshots, hourly, ...(centerPeakCurrents ? { centerPeakCurrents } : {}) }
+  const workingStatus: WorkingStatusSummary = {
+    snapshot_date: snapshotDate,
+    center_id: centerId ?? null,
+    total: workingTotal,
+    working,
+    by_status: byStatus,
+  }
+
+  return {
+    riders,
+    snapshots,
+    hourly,
+    workingStatus,
+    ...(centerPeakCurrents ? { centerPeakCurrents } : {}),
+  }
 }

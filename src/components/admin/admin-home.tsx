@@ -31,6 +31,7 @@ export function AdminHome({
   selectedWeek,
   selectedMonth,
   centerGoals,
+  working,
 }: {
   view: AdminHomeVM;
   activePeriod: ActivePeriod;
@@ -39,6 +40,7 @@ export function AdminHome({
   selectedWeek: string;
   selectedMonth: string;
   centerGoals: CenterGoalVM[];
+  working: number | null;
 }) {
   const router = useRouter();
 
@@ -104,6 +106,13 @@ export function AdminHome({
             <span className="text-[18px] font-bold text-jb-ink-soft">배달</span>
             <span className="tnum text-[18px] font-black text-jb-ink">{view.hero.completed}</span>
             <span className="text-[18px] font-bold text-jb-ink-soft">건</span>
+            {working != null ? (
+              <span className="ml-1 flex items-baseline gap-1">
+                <span className="text-[13px] font-bold text-jb-ink-mute">· 출근</span>
+                <span className="tnum text-[15px] font-black text-jb-green">{working.toLocaleString()}</span>
+                <span className="text-[13px] font-bold text-jb-ink-mute">명</span>
+              </span>
+            ) : null}
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <span className="flex items-baseline gap-1">

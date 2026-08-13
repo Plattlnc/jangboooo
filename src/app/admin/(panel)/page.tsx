@@ -1,4 +1,5 @@
 import { getAdminCustomView, getAdminDashboardData, getAdminGoalsData } from "@/lib/supabase/admin-queries";
+import { getWorkingStatus } from "@/lib/supabase/working-status";
 import { AdminHome } from "@/components/admin/admin-home";
 import { toAdminHomeVM } from "@/components/admin/home-vm";
 import { isValidIsoDate, buildWeekOptions, buildMonthOptions, weekRangeOf, monthRangeOf } from "@/lib/admin/date-range";
@@ -24,8 +25,20 @@ export default async function AdminHomePage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const sp = await searchParams;
-  const [data, goalsData] = await Promise.all([getAdminDashboardData(), getAdminGoalsData()]);
+  const [data, goalsData, workingStatus] = await Promise.all([
+    getAdminDashboardData(),
+    getAdminGoalsData(),
+    getWorkingStatus(),
+  ]);
   const businessToday = data.today.range.start_date;
+
+  // 현재 출근 인원 — 오늘 스냅샷 + 최근 20분 이내 수집분만 신뢰(스크래퍼 중단 시 stale 숨김).
+  const wsFresh =
+    workingStatus != null &&
+    workingStatus.snapshotDate === businessToday &&
+    workingStatus.capturedAt != null &&
+    Date.now() - new Date(workingStatus.capturedAt).getTime() < 20 * 60 * 1000;
+  const working = wsFresh ? workingStatus!.working : null;
 
   // 오늘 공동목표 4피크(항상 당일 실시간).
   const centerGoals = GOAL_PEAKS.map(({ key, label }) => {
@@ -65,6 +78,7 @@ export default async function AdminHomePage({
       selectedWeek={wk ?? weekRaw[0].value}
       selectedMonth={mo ?? monthRaw[0].value}
       centerGoals={centerGoals}
+      working={working}
     />
   );
 }

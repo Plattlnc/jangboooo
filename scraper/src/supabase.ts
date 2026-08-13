@@ -4,9 +4,13 @@
  */
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import type { Config } from './config'
-import type { CenterCurrentUpsert, CenterGoalUpsert, DeliveryFeeDetail, HourlyStatUpsert, RiderDailyFee, RiderUpsert, SlaSnapshotUpsert } from './types'
+import type { CenterCurrentUpsert, CenterGoalUpsert, DeliveryFeeDetail, HourlyStatUpsert, RiderDailyFee, RiderUpsert, SlaSnapshotUpsert, WorkingStatusSummary } from './types'
 
 export type Db = SupabaseClient
+
+// 실시간 근무 인원 스냅샷 — DDL 없이 Storage 에 단일 JSON 으로 적재(앱이 관리자 홈에서 읽음).
+const OPS_BUCKET = 'ops'
+const WORKING_STATUS_PATH = 'working-status.json'
 
 /** PostgREST 에러를 맥락과 함께 감싼다. */
 export class SupabaseUpsertError extends Error {
@@ -32,6 +36,23 @@ export async function upsertRiders(db: Db, rows: RiderUpsert[]): Promise<number>
   const { error } = await db.from('riders').upsert(rows, { onConflict: 'admin_rider_id' })
   if (error) throw new SupabaseUpsertError('riders', error)
   return rows.length
+}
+
+/**
+ * 실시간 근무 인원 요약을 Storage(ops/working-status.json)에 라이브 스냅샷으로 덮어쓴다.
+ * DDL 불필요. best-effort(호출부에서 실패를 흡수) — SLA 적재에 영향 주지 않는다.
+ */
+export async function upsertWorkingStatus(
+  db: Db,
+  summary: WorkingStatusSummary,
+  capturedAt: string,
+): Promise<void> {
+  await db.storage.createBucket(OPS_BUCKET, { public: false }).catch(() => {})
+  const body = Buffer.from(JSON.stringify({ ...summary, captured_at: capturedAt }), 'utf-8')
+  const { error } = await db.storage
+    .from(OPS_BUCKET)
+    .upload(WORKING_STATUS_PATH, body, { contentType: 'application/json', upsert: true })
+  if (error) throw new Error(`working-status Storage 업로드 실패: ${error.message}`)
 }
 
 /** sla_snapshots 멱등 upsert (키: admin_rider_id, snapshot_date). */

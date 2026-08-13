@@ -8,7 +8,7 @@ import type { Logger } from './logger'
 import { serializeError } from './logger'
 import type { BrowserSession } from './browser'
 import type { Db } from './supabase'
-import { upsertCenterCurrents, upsertDeliveryFeeDetails, upsertHourlyStats, upsertRiderDailyFees, upsertRiders, upsertSlaSnapshots } from './supabase'
+import { upsertCenterCurrents, upsertDeliveryFeeDetails, upsertHourlyStats, upsertRiderDailyFees, upsertRiders, upsertSlaSnapshots, upsertWorkingStatus } from './supabase'
 import { captureApiHeaders, fetchSlaDataWithHeaders, isSessionExpired, mockScrapeResult } from './sources/baemin'
 import { collectDeliveryFees } from './sources/baemin-fees'
 import type { RiderDailyFee, ScrapeResult, UpsertCounts } from './types'
@@ -117,6 +117,15 @@ async function persistResult(db: Db, result: ScrapeResult, log: Logger): Promise
   // 공동목표 current 를 배민 실시간 집계로 갱신(goal 은 Looker 가 별도 소유).
   if (result.centerPeakCurrents?.length) {
     counts.centerCurrents = await upsertCenterCurrents(db, result.centerPeakCurrents, capturedAt)
+  }
+  // 실시간 근무 인원(Storage) — best-effort, 실패해도 SLA 사이클 무영향.
+  if (result.workingStatus) {
+    try {
+      await upsertWorkingStatus(db, result.workingStatus, capturedAt)
+      counts.working = result.workingStatus.working
+    } catch (err) {
+      log.warn('근무 인원 적재 실패(무시)', serializeError(err))
+    }
   }
   log.info('사이클 완료', counts)
   return counts
