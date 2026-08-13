@@ -20,6 +20,10 @@ export const ADMIN_SESSION_TTL_SECONDS = 60 * 60 * 12 // 12시간
 export const SETTLEMENT_SESSION_COOKIE = 'settlement_session'
 export const SETTLEMENT_SESSION_TTL_SECONDS = 60 * 60 * 12 // 12시간
 
+// 라이더 설정(주민번호) 2차 잠금 — 정산 세션 위 추가 게이트. 민감정보 접근이라 TTL 짧게.
+export const RIDERS_UNLOCK_COOKIE = 'settlement_riders_unlock'
+export const RIDERS_UNLOCK_TTL_SECONDS = 60 * 60 * 2 // 2시간
+
 export interface RiderSession {
   adminRiderId: string
   /** 토큰 발급 시각(epoch 초) — 미들웨어 슬라이딩 갱신 판단용. 페이로드에 없으면 0(즉시 갱신 대상). */
@@ -92,6 +96,13 @@ interface AdminTokenPayload {
 /** 정산팀 토큰 페이로드 — stl 플래그(라이더/관리자 토큰과 상호 오인 불가). */
 interface SettlementTokenPayload {
   stl: true
+  iat: number
+  exp: number
+}
+
+/** 라이더 설정 2차 잠금 해제 토큰 페이로드 — rsu 플래그. */
+interface RidersUnlockPayload {
+  rsu: true
   iat: number
   exp: number
 }
@@ -201,6 +212,33 @@ export async function verifySettlementSessionToken(token: string | undefined | n
   try {
     const payload = JSON.parse(new TextDecoder().decode(b64urlToBytes(body))) as Partial<SettlementTokenPayload>
     if (payload.stl !== true || typeof payload.exp !== 'number') return false
+    return Math.floor(Date.now() / 1000) < payload.exp
+  } catch {
+    return false
+  }
+}
+
+/** 라이더 설정 2차 잠금 해제 토큰 생성. */
+export async function createRidersUnlockToken(): Promise<string> {
+  const now = Math.floor(Date.now() / 1000)
+  const payload: RidersUnlockPayload = { rsu: true, iat: now, exp: now + RIDERS_UNLOCK_TTL_SECONDS }
+  const body = bytesToB64url(enc.encode(JSON.stringify(payload)))
+  const sig = bytesToB64url(await hmac(body))
+  return `${body}.${sig}`
+}
+
+/** 라이더 설정 2차 잠금 해제 토큰 검증. */
+export async function verifyRidersUnlockToken(token: string | undefined | null): Promise<boolean> {
+  if (!token) return false
+  const dot = token.indexOf('.')
+  if (dot <= 0) return false
+  const body = token.slice(0, dot)
+  const sig = token.slice(dot + 1)
+  const expected = bytesToB64url(await hmac(body))
+  if (!constantTimeEqual(sig, expected)) return false
+  try {
+    const payload = JSON.parse(new TextDecoder().decode(b64urlToBytes(body))) as Partial<RidersUnlockPayload>
+    if (payload.rsu !== true || typeof payload.exp !== 'number') return false
     return Math.floor(Date.now() / 1000) < payload.exp
   } catch {
     return false

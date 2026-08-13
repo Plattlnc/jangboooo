@@ -3,8 +3,12 @@ import { cookies } from 'next/headers'
 import {
   SETTLEMENT_SESSION_COOKIE,
   SETTLEMENT_SESSION_TTL_SECONDS,
+  RIDERS_UNLOCK_COOKIE,
+  RIDERS_UNLOCK_TTL_SECONDS,
   createSettlementSessionToken,
   verifySettlementSessionToken,
+  createRidersUnlockToken,
+  verifyRidersUnlockToken,
 } from '@/lib/auth/session'
 
 /**
@@ -42,4 +46,38 @@ export async function clearSettlementSession(): Promise<void> {
     maxAge: 0,
   })
   store.delete({ name: SETTLEMENT_SESSION_COOKIE, path: '/' })
+}
+
+// ── 라이더 설정 2차 잠금 ──────────────────────────────────────
+
+/** 현재 요청이 라이더 설정 2차 잠금을 해제한 상태인지. */
+export async function isRidersUnlocked(): Promise<boolean> {
+  const store = await cookies()
+  return verifyRidersUnlockToken(store.get(RIDERS_UNLOCK_COOKIE)?.value)
+}
+
+/** 2차 비밀번호 검증 성공 시 잠금 해제 쿠키 설정(TTL 후 자동 재잠금). */
+export async function setRidersUnlock(): Promise<void> {
+  const token = await createRidersUnlockToken()
+  const store = await cookies()
+  store.set(RIDERS_UNLOCK_COOKIE, token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: RIDERS_UNLOCK_TTL_SECONDS,
+  })
+}
+
+/** 라이더 설정 재잠금(쿠키 삭제). */
+export async function clearRidersUnlock(): Promise<void> {
+  const store = await cookies()
+  store.set(RIDERS_UNLOCK_COOKIE, '', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 0,
+  })
+  store.delete({ name: RIDERS_UNLOCK_COOKIE, path: '/' })
 }
