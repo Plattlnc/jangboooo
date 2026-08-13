@@ -106,13 +106,6 @@ export function AdminHome({
             <span className="text-[18px] font-bold text-jb-ink-soft">배달</span>
             <span className="tnum text-[18px] font-black text-jb-ink">{view.hero.completed}</span>
             <span className="text-[18px] font-bold text-jb-ink-soft">건</span>
-            {working != null ? (
-              <span className="ml-1 flex items-baseline gap-1">
-                <span className="text-[13px] font-bold text-jb-ink-mute">· 출근</span>
-                <span className="tnum text-[15px] font-black text-jb-green">{working.toLocaleString()}</span>
-                <span className="text-[13px] font-bold text-jb-ink-mute">명</span>
-              </span>
-            ) : null}
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <span className="flex items-baseline gap-1">
@@ -164,8 +157,17 @@ export function AdminHome({
       {/* 오늘 공동목표(협력사 4피크) — 항상 당일 실시간 */}
       <div className="mt-3">
         <div className="mb-1.5 flex items-center justify-between px-0.5">
-          <span className="text-[15px] font-black text-jb-ink">
-            오늘 공동목표 <span className="text-jb-indigo">· 협력사 4피크</span>
+          <span className="flex items-baseline gap-1.5">
+            <span className="text-[15px] font-black text-jb-ink">
+              오늘 공동목표 <span className="text-jb-indigo">· 협력사 4피크</span>
+            </span>
+            {working != null ? (
+              <span className="flex items-baseline gap-1">
+                <span className="text-[11.5px] font-bold text-jb-ink-mute">· 출근</span>
+                <span className="tnum text-[13px] font-black text-jb-green">{working.toLocaleString()}</span>
+                <span className="text-[11.5px] font-bold text-jb-ink-mute">명</span>
+              </span>
+            ) : null}
           </span>
           <Link href="/admin/goals" className="text-[11px] font-bold text-jb-indigo">
             이력 보기
