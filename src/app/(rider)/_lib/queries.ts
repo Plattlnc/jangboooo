@@ -155,15 +155,38 @@ async function latestCenterGoalsFallback(): Promise<CenterGoalRow[]> {
       .select("peak_key, current, goal, pct, center_id")
       .eq("snapshot_date", sdate);
     const byKey = new Map((rows ?? []).map((r) => [r.peak_key, r]));
+
+    // 최신 snapshot 에 goal 이 비어있는 피크(실시간 current 만 적재 + Looker 목표 미수집)는
+    // 최근 수집된 non-null 목표로 채우고 pct 재계산 — 목표건수/달성률이 그래도 뜨게.
+    const needGoal = GOAL_PEAK_KEYS.some(({ peak_key }) => (byKey.get(peak_key)?.goal ?? null) == null);
+    const latestGoal = new Map<string, number>();
+    if (needGoal) {
+      const { data: recent } = await admin
+        .from("center_peak_goals")
+        .select("peak_key, goal")
+        .not("goal", "is", null)
+        .order("snapshot_date", { ascending: false })
+        .limit(400);
+      for (const r of recent ?? []) {
+        if (r.goal != null && !latestGoal.has(r.peak_key)) latestGoal.set(r.peak_key, r.goal);
+      }
+    }
+
     return GOAL_PEAK_KEYS.map(({ peak_key, peak_order, label }) => {
       const g = byKey.get(peak_key);
+      const current = g?.current ?? null;
+      const goal = g?.goal ?? latestGoal.get(peak_key) ?? null;
+      const pct =
+        goal != null && goal > 0 && current != null
+          ? Math.min(100, Math.round((current / goal) * 100))
+          : g?.pct ?? null;
       return {
         peak_key,
         peak_order,
         label,
-        current: g?.current ?? null,
-        goal: g?.goal ?? null,
-        pct: g?.pct ?? null,
+        current,
+        goal,
+        pct,
         snapshot_date: sdate,
         center_id: g?.center_id ?? null,
       };
