@@ -42,3 +42,18 @@ export function formatKoreanDate(ymd: string): string {
 export function isValidYmd(v: string | undefined | null): v is string {
   return !!v && /^\d{4}-\d{2}-\d{2}$/.test(v);
 }
+
+/** YYYY-MM-DD 가 속한 주(수~화)의 수요일(주 시작). */
+export function weekStartOf(ymd: string): string {
+  const [y, m, d] = ymd.split("-").map(Number);
+  const dow = new Date(Date.UTC(y, m - 1, d)).getUTCDay(); // 일0..토6
+  const isodow = ((dow + 6) % 7) + 1; // 월1..일7
+  const offset = (isodow - 3 + 7) % 7; // 수요일(3)까지 뒤로
+  return ymdAdd(ymd, -offset);
+}
+
+/** YYYY-MM-DD 가 속한 주(수~화) 범위. */
+export function weekRangeOf(ymd: string): { start: string; end: string } {
+  const start = weekStartOf(ymd);
+  return { start, end: ymdAdd(start, 6) };
+}

@@ -8,9 +8,10 @@ import { WITHHOLDING_RATE, INSURANCE_RATE, PER_COMPLETED_FEE } from "@/app/settl
 import { ymdAdd, formatKoreanDate } from "@/app/settlement/_lib/dates";
 import { NotesSaveButton, type NotesApi } from "./notes-api";
 
-// 본사 미션 정산 뷰 — 선택일 라이더별 본사 미션(세전)에서 원천세·고용산재 + 수수료(완료건당 100원)
-// 공제 → 지급액. 메모·특이사항은 일일정산과 동일 저장 데이터(라이더 귀속).
+// 본사 미션 정산 뷰 — 상단 [일일/주간] 선택. 라이더별 본사 미션(세전)에서 원천세·고용산재 +
+// 수수료(완료건당 100원) 공제 → 지급액. 주간은 수~화 기간 합산. 메모·특이사항은 라이더 설정과 공유.
 
+type Period = "daily" | "weekly";
 type SortKey = "name" | "completed" | "mission" | "payout";
 type SortDir = "asc" | "desc";
 
@@ -21,22 +22,24 @@ const INS_PCT = `${(INSURANCE_RATE * 100).toFixed(1)}%`; // 1.8%
 
 export function MissionSettlementView({
   data,
+  period,
   today,
   notesApi,
 }: {
   data: MissionSettlement;
+  period: Period;
   today: string;
   notesApi: NotesApi;
 }) {
   const router = useRouter();
-  const { date, rows } = data;
+  const { start, end, rows } = data;
 
   const [q, setQ] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("payout");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
 
-  const goDate = (d: string) => router.push(`/settlement/mission?date=${d}`);
-  const canNext = date < today;
+  const go = (p: Period, ref: string) => router.push(`/settlement/mission?period=${p}&date=${ref}`);
+  const canNext = period === "weekly" ? end < today : start < today;
 
   const view = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -60,6 +63,8 @@ export function MissionSettlementView({
     }
   }
 
+  const rangeLabel = period === "weekly" ? `${start} ~ ${end}` : formatKoreanDate(start);
+
   function exportCsv() {
     const head = [
       "번호", "라이더", "메모", "라이더ID", "완료건수",
@@ -80,45 +85,57 @@ export function MissionSettlementView({
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `슬라이더_본사미션_${date}.csv`;
+    a.download = `슬라이더_본사미션_${period === "weekly" ? `${start}_${end}` : start}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   }
 
   return (
     <div className="flex flex-col gap-5">
-      {/* 설명 + 날짜 이동 */}
+      {/* 기간 선택(일일/주간) + 네비게이션 */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-[13px] text-jb-ink-mute">
-          본사 미션 지급액(세전)에서 원천세 {WHT_PCT} · 고용산재 {INS_PCT} · 수수료(완료건당 {won(PER_COMPLETED_FEE)}원) 공제 후 지급액.
-        </p>
+        <div className="flex items-center gap-1.5">
+          <PeriodBtn label="일일" active={period === "daily"} onClick={() => go("daily", start)} />
+          <PeriodBtn label="주간" active={period === "weekly"} onClick={() => go("weekly", start)} />
+        </div>
+
         <div className="flex items-center rounded-[10px] border border-jb-line bg-jb-card shadow-[var(--toss-shadow)]">
           <button
             type="button"
-            onClick={() => goDate(ymdAdd(date, -1))}
-            aria-label="이전 날짜"
+            onClick={() => go(period, ymdAdd(start, period === "weekly" ? -7 : -1))}
+            aria-label={period === "weekly" ? "이전 주" : "이전 날짜"}
             className="grid size-9 place-items-center rounded-l-[10px] text-jb-ink-soft hover:bg-jb-surface"
           >
             <ChevronLeft size={18} />
           </button>
-          <input
-            type="date"
-            value={date}
-            max={today}
-            onChange={(e) => e.target.value && goDate(e.target.value)}
-            className="border-x border-jb-line bg-transparent px-3 py-2 text-[13.5px] font-medium text-jb-ink outline-none"
-          />
+          {period === "weekly" ? (
+            <span className="tnum border-x border-jb-line px-3.5 py-2 text-[13px] font-semibold text-jb-ink">
+              {start} ~ {end}
+            </span>
+          ) : (
+            <input
+              type="date"
+              value={start}
+              max={today}
+              onChange={(e) => e.target.value && go("daily", e.target.value)}
+              className="border-x border-jb-line bg-transparent px-3 py-2 text-[13.5px] font-medium text-jb-ink outline-none"
+            />
+          )}
           <button
             type="button"
-            onClick={() => canNext && goDate(ymdAdd(date, 1))}
+            onClick={() => canNext && go(period, ymdAdd(start, period === "weekly" ? 7 : 1))}
             disabled={!canNext}
-            aria-label="다음 날짜"
+            aria-label={period === "weekly" ? "다음 주" : "다음 날짜"}
             className="grid size-9 place-items-center rounded-r-[10px] text-jb-ink-soft hover:bg-jb-surface disabled:opacity-30"
           >
             <ChevronRight size={18} />
           </button>
         </div>
       </div>
+
+      <p className="text-[13px] text-jb-ink-mute">
+        {period === "weekly" ? "주간(수~화) 합산 " : ""}본사 미션 지급액(세전)에서 원천세 {WHT_PCT} · 고용산재 {INS_PCT} · 수수료(완료건당 {won(PER_COMPLETED_FEE)}원) 공제 후 지급액{period === "weekly" ? " (기간 합산 기준 공제)" : ""}.
+      </p>
 
       {/* 최상위 요약 카드 */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -132,7 +149,7 @@ export function MissionSettlementView({
       <div className="overflow-hidden rounded-[12px] border border-jb-line bg-jb-card shadow-[var(--toss-shadow)]">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-jb-line px-4 py-3">
           <div className="flex items-center gap-2">
-            <span className="text-[14px] font-semibold text-jb-ink">{formatKoreanDate(date)}</span>
+            <span className="text-[14px] font-semibold text-jb-ink">{rangeLabel}</span>
             <span className="text-[12.5px] text-jb-ink-mute">{view.length}명 표시</span>
           </div>
           <div className="flex items-center gap-2">
@@ -160,8 +177,8 @@ export function MissionSettlementView({
 
         {view.length === 0 ? (
           <div className="px-4 py-16 text-center">
-            <p className="text-[14px] font-medium text-jb-ink">해당 날짜의 본사 미션 지급 내역이 없습니다.</p>
-            <p className="mt-1 text-[13px] text-jb-ink-mute">미션 지급이 있는 날짜를 선택해 주세요.</p>
+            <p className="text-[14px] font-medium text-jb-ink">해당 기간의 본사 미션 지급 내역이 없습니다.</p>
+            <p className="mt-1 text-[13px] text-jb-ink-mute">미션 지급이 있는 기간을 선택해 주세요.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -211,6 +228,21 @@ export function MissionSettlementView({
         )}
       </div>
     </div>
+  );
+}
+
+function PeriodBtn({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={
+        "rounded-[10px] border px-3.5 py-1.5 text-[13px] font-semibold transition-colors " +
+        (active ? "border-jb-indigo bg-jb-indigo-tint text-jb-indigo" : "border-jb-line bg-jb-card text-jb-ink-mute hover:bg-jb-surface")
+      }
+    >
+      {label}
+    </button>
   );
 }
 
