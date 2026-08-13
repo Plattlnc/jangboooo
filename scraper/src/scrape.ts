@@ -8,7 +8,7 @@ import type { Logger } from './logger'
 import { serializeError } from './logger'
 import type { BrowserSession } from './browser'
 import type { Db } from './supabase'
-import { upsertCenterCurrents, upsertDeliveryFeeDetails, upsertHourlyStats, upsertRiderDailyFees, upsertRiders, upsertSlaSnapshots, upsertWorkingStatus } from './supabase'
+import { upsertCenterCurrents, upsertDeliveryFeeDetails, upsertHourlyStats, upsertInsurance, upsertRiderDailyFees, upsertRiders, upsertSlaSnapshots, upsertWorkingStatus } from './supabase'
 import { captureApiHeaders, fetchSlaDataWithHeaders, isSessionExpired, mockScrapeResult } from './sources/baemin'
 import { collectDeliveryFees } from './sources/baemin-fees'
 import type { RiderDailyFee, ScrapeResult, UpsertCounts } from './types'
@@ -191,8 +191,17 @@ async function maybeCollectFees(deps: CycleDeps, api: ApiSession): Promise<void>
     const capturedAt = trustedNow().toISOString()
     const n = await upsertRiderDailyFees(db, parsed.daily.map((r) => ({ ...r, captured_at: capturedAt })))
     const nd = await upsertDeliveryFeeDetails(db, parsed.details.map((r) => ({ ...r, captured_at: capturedAt })))
+    // 시간제보험료(있으면) Storage 적재 — best-effort, 실패해도 배달처리비 적재엔 영향 없음.
+    let ni = 0
+    if (parsed.insurance.length) {
+      try {
+        ni = await upsertInsurance(db, parsed.insurance)
+      } catch (e) {
+        log.warn('시간제보험료 적재 실패(무시)', serializeError(e))
+      }
+    }
     lastFeeDay = target
-    log.info('배달처리비 적재 완료', { day: target, daily: n, details: nd })
+    log.info('배달처리비 적재 완료', { day: target, daily: n, details: nd, insurance: ni })
     await reconcileFees(db, target, parsed.daily, log)
   } catch (err) {
     if (isSessionExpired(err)) {

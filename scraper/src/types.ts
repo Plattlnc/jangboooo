@@ -82,6 +82,13 @@ export type HourlyStatUpsert = {
   captured_at?: string
 }
 
+/** 라이더 × 일자 시간제보험료 차감액(배달처리비 xlsx '보험' 시트에서 자동 추출). */
+export type RiderInsurance = {
+  admin_rider_id: string
+  snapshot_date: string
+  amount: number
+}
+
 /** rider_daily_fees upsert: 라이더 × 영업일 배달처리비(세전 수입) + 본사미션. */
 export type RiderDailyFee = {
   admin_rider_id: string

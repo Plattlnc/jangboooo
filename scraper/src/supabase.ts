@@ -4,7 +4,7 @@
  */
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import type { Config } from './config'
-import type { CenterCurrentUpsert, CenterGoalUpsert, DeliveryFeeDetail, HourlyStatUpsert, RiderDailyFee, RiderUpsert, SlaSnapshotUpsert, WorkingStatusSummary } from './types'
+import type { CenterCurrentUpsert, CenterGoalUpsert, DeliveryFeeDetail, HourlyStatUpsert, RiderDailyFee, RiderInsurance, RiderUpsert, SlaSnapshotUpsert, WorkingStatusSummary } from './types'
 
 export type Db = SupabaseClient
 
@@ -35,6 +35,37 @@ export async function upsertRiders(db: Db, rows: RiderUpsert[]): Promise<number>
   if (rows.length === 0) return 0
   const { error } = await db.from('riders').upsert(rows, { onConflict: 'admin_rider_id' })
   if (error) throw new SupabaseUpsertError('riders', error)
+  return rows.length
+}
+
+/**
+ * 시간제보험료(배달처리비 xlsx ‘보험’ 시트)를 Storage(settlement/rider-insurance.json)에 적재.
+ * 구조: { 'YYYY-MM-DD': { riderId: amount } }. 이번 파싱에 포함된 날짜는 재작성(멱등). DDL 불필요.
+ */
+export async function upsertInsurance(db: Db, rows: RiderInsurance[]): Promise<number> {
+  if (rows.length === 0) return 0
+  await db.storage.createBucket('settlement', { public: false }).catch(() => {})
+  let existing: Record<string, Record<string, number>> = {}
+  const dl = await db.storage.from('settlement').download('rider-insurance.json')
+  if (dl.data) {
+    try {
+      const parsed = JSON.parse(await dl.data.text())
+      if (parsed && typeof parsed === 'object') existing = parsed
+    } catch {
+      /* 무시 */
+    }
+  }
+  const byDate: Record<string, Record<string, number>> = { ...existing }
+  for (const d of new Set(rows.map((r) => r.snapshot_date))) byDate[d] = {} // 포함된 날짜는 재작성(멱등)
+  for (const r of rows) {
+    const m = (byDate[r.snapshot_date] ??= {})
+    m[r.admin_rider_id] = (m[r.admin_rider_id] ?? 0) + r.amount
+  }
+  const body = Buffer.from(JSON.stringify(byDate), 'utf-8')
+  const { error } = await db.storage
+    .from('settlement')
+    .upload('rider-insurance.json', body, { upsert: true, contentType: 'application/json; charset=utf-8' })
+  if (error) throw new Error(`시간제보험료 Storage 업로드 실패: ${error.message}`)
   return rows.length
 }
 

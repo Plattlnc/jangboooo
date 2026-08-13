@@ -11,9 +11,13 @@ const won = (n: number) => n.toLocaleString("ko-KR");
 export function DeductionView({
   riders,
   deductions,
+  scraped,
+  latestDate,
 }: {
   riders: SettlementRider[];
   deductions: Record<string, number>;
+  scraped: Record<string, number>;
+  latestDate: string | null;
 }) {
   // 입력 편의를 위해 문자열 맵으로 보관(빈칸 허용).
   const initial = useMemo(() => {
@@ -30,7 +34,13 @@ export function DeductionView({
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string>();
 
-  const amount = (id: string) => Math.max(0, Math.floor(Number((map[id] ?? "").replace(/[^0-9]/g, "")) || 0));
+  const manualAmt = (id: string) => Math.max(0, Math.floor(Number((map[id] ?? "").replace(/[^0-9]/g, "")) || 0));
+  const scrapedAmt = (id: string) => Math.max(0, Math.floor(Number(scraped[id] ?? 0)));
+  // 적용 차감액 = 수동 조정값이 있으면 그것, 없으면 스크래핑 자동값.
+  const amount = (id: string) => {
+    const m = manualAmt(id);
+    return m > 0 ? m : scrapedAmt(id);
+  };
 
   const dirty = useMemo(() => {
     const keys = new Set([...Object.keys(map), ...Object.keys(baseline)]);
@@ -84,7 +94,7 @@ export function DeductionView({
       <div>
         <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-jb-ink">차감 정산</h1>
         <p className="mt-1 text-[13px] text-jb-ink-mute">
-          라이더별 <span className="font-semibold text-jb-ink-soft">시간제보험료</span> 차감액을 입력해 두면 금요일 정산 시 별도 차감 대상으로 확인할 수 있습니다.
+          <span className="font-semibold text-jb-ink-soft">시간제보험료</span>는 배달처리비 파일에서 <span className="font-semibold text-jb-ink-soft">자동 스크래핑</span>되어 표기됩니다{latestDate ? ` (최근 반영: ${latestDate})` : " (아직 스크래핑된 보험료 없음)"}. 필요 시 수동 조정 가능 · 금요일 정산 시 별도 차감.
         </p>
       </div>
 
@@ -131,13 +141,15 @@ export function DeductionView({
         {error ? <p className="border-b border-jb-line px-4 py-2 text-[12.5px] font-medium text-jb-red">{error}</p> : null}
 
         <div className="max-h-[calc(100dvh-360px)] overflow-auto">
-          <table className="w-full min-w-[560px] border-collapse text-[13px]">
+          <table className="w-full min-w-[720px] border-collapse text-[13px]">
             <thead className="sticky top-0 z-10 bg-jb-surface text-[12px] font-medium text-jb-ink-mute">
               <tr>
                 <th className="w-[44px] border-b border-jb-line px-3 py-2.5 text-right">#</th>
                 <th className="border-b border-jb-line px-4 py-2.5 text-left">라이더</th>
                 <th className="border-b border-jb-line px-3 py-2.5 text-left">라이더 ID</th>
-                <th className="w-[200px] border-b border-jb-line px-3 py-2.5 text-right">시간제보험료(원)</th>
+                <th className="w-[160px] border-b border-l border-jb-line px-3 py-2.5 text-right">시간제보험료<span className="font-normal text-jb-ink-mute"> 자동</span></th>
+                <th className="w-[150px] border-b border-jb-line px-3 py-2.5 text-right">수동 조정</th>
+                <th className="w-[150px] border-b border-l border-jb-line px-3 py-2.5 text-right font-semibold text-jb-ink">적용 차감액</th>
               </tr>
             </thead>
             <tbody>
@@ -146,20 +158,26 @@ export function DeductionView({
                   <td className="px-3 py-2 text-right font-mono text-[12px] tabular-nums text-jb-ink-mute">{i + 1}</td>
                   <td className="whitespace-nowrap px-4 py-2 font-medium text-jb-ink">{r.name}</td>
                   <td className="whitespace-nowrap px-3 py-2 font-mono text-[12px] text-jb-ink-mute">{r.id}</td>
+                  <td className="border-l border-jb-line-soft px-3 py-2 text-right font-mono tabular-nums text-jb-ink-soft">
+                    {scrapedAmt(r.id) > 0 ? won(scrapedAmt(r.id)) : "-"}
+                  </td>
                   <td className="px-3 py-1.5">
                     <input
                       inputMode="numeric"
                       value={map[r.id] ?? ""}
                       onChange={(e) => setAmount(r.id, e.target.value)}
-                      placeholder="0"
+                      placeholder="자동값 사용"
                       className="w-full rounded-[8px] border border-transparent bg-transparent px-2.5 py-1.5 text-right font-mono text-[13px] text-jb-ink outline-none hover:border-jb-line focus:border-jb-indigo/50 focus:bg-jb-surface placeholder:text-jb-ink-mute"
                     />
+                  </td>
+                  <td className="border-l border-jb-line-soft px-3 py-2 text-right font-mono font-bold tabular-nums text-jb-indigo">
+                    {amount(r.id) > 0 ? won(amount(r.id)) : "-"}
                   </td>
                 </tr>
               ))}
               {view.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-4 py-12 text-center text-[13px] text-jb-ink-mute">해당하는 라이더가 없습니다.</td>
+                  <td colSpan={6} className="px-4 py-12 text-center text-[13px] text-jb-ink-mute">해당하는 라이더가 없습니다.</td>
                 </tr>
               ) : null}
             </tbody>

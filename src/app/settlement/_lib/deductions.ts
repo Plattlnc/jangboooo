@@ -26,6 +26,30 @@ export async function loadRiderDeductions(): Promise<Record<string, number>> {
   }
 }
 
+/**
+ * 스크래퍼가 배달처리비 xlsx '보험' 시트에서 자동 추출한 시간제보험료(settlement/rider-insurance.json).
+ * 구조: { 'YYYY-MM-DD': { riderId: amount } }. 최근 스크래핑(가장 늦은 날짜) 기준 라이더별 금액 반환.
+ */
+export async function loadScrapedInsurance(): Promise<{ byRider: Record<string, number>; latestDate: string | null; dates: string[] }> {
+  try {
+    const supabase = createAdminClient();
+    const { data, error } = await supabase.storage.from(BUCKET).download("rider-insurance.json");
+    if (error || !data) return { byRider: {}, latestDate: null, dates: [] };
+    const parsed = JSON.parse(await data.text()) as Record<string, Record<string, number>>;
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return { byRider: {}, latestDate: null, dates: [] };
+    const dates = Object.keys(parsed).sort();
+    const latest = dates.length ? dates[dates.length - 1] : null;
+    const byRider: Record<string, number> = {};
+    if (latest) for (const [id, v] of Object.entries(parsed[latest] ?? {})) {
+      const n = Math.floor(Number(v));
+      if (Number.isFinite(n) && n > 0) byRider[id] = n;
+    }
+    return { byRider, latestDate: latest, dates };
+  } catch {
+    return { byRider: {}, latestDate: null, dates: [] };
+  }
+}
+
 /** 라이더별 시간제보험료 차감액 맵 저장(덮어쓰기). 버킷 없으면 생성. */
 export async function saveRiderDeductionsMap(map: Record<string, number>): Promise<void> {
   const supabase = createAdminClient();
