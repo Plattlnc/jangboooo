@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, Download, Search } from "lucide-react";
 import type { MonthlySettlement } from "@/app/settlement/_lib/monthly";
 import { ymAdd, mdShort } from "@/app/settlement/_lib/dates";
+import { DualScrollX } from "./dual-scroll";
 
 // 월 소득정산서(세무사용) — 라이더별 × 주차별 세전 소득(배달처리비 + 기타/인센티브) 통합. 소득합계 = 월 지급 세전 총액.
 const won = (n: number) => (n ? n.toLocaleString("ko-KR") : "-");
@@ -104,12 +105,12 @@ export function MonthlyStatementView({
             <p className="mt-1 text-[13px] text-jb-ink-mute">배달처리비는 익일 반영됩니다. 다른 달을 선택해 주세요.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <DualScrollX>
             <table className="w-full border-collapse text-[12.5px]" style={{ minWidth: 700 + weeks.length * 220 }}>
               <thead className="text-jb-ink-mute">
                 <tr className="bg-jb-surface text-[11.5px] font-semibold">
-                  <th rowSpan={2} className="border-b border-r border-jb-line px-2 py-2 text-right">No</th>
-                  <th rowSpan={2} className="border-b border-r border-jb-line px-3 py-2 text-left">라이더명</th>
+                  <th rowSpan={2} className="sticky left-0 z-10 w-[40px] min-w-[40px] max-w-[40px] border-b border-r border-jb-line bg-jb-surface px-2 py-2 text-right">No</th>
+                  <th rowSpan={2} className="sticky left-[40px] z-10 border-b border-r border-jb-line bg-jb-surface px-3 py-2 text-left">라이더명</th>
                   <th rowSpan={2} className="border-b border-r border-jb-line px-3 py-2 text-left">주민등록번호</th>
                   {weeks.map((w, i) => (
                     <th key={i} colSpan={2} className="border-b border-r border-jb-line px-3 py-2 text-center">
@@ -132,8 +133,8 @@ export function MonthlyStatementView({
               <tbody>
                 {view.map((r, i) => (
                   <tr key={r.riderId} className="border-b border-jb-line-soft hover:bg-jb-surface/50">
-                    <td className="border-r border-jb-line-soft px-2 py-2 text-right font-mono text-[11.5px] tabular-nums text-jb-ink-mute">{i + 1}</td>
-                    <td className="whitespace-nowrap border-r border-jb-line-soft px-3 py-2 font-medium text-jb-ink">{r.name}</td>
+                    <td className="sticky left-0 z-10 w-[40px] min-w-[40px] max-w-[40px] border-r border-jb-line-soft bg-jb-card px-2 py-2 text-right font-mono text-[11.5px] tabular-nums text-jb-ink-mute">{i + 1}</td>
+                    <td className="sticky left-[40px] z-10 whitespace-nowrap border-r border-jb-line-soft bg-jb-card px-3 py-2 font-medium text-jb-ink">{r.name}</td>
                     <td className="whitespace-nowrap border-r border-jb-line-soft px-3 py-2 font-mono text-[11.5px] text-jb-ink-soft">{r.rrn || "—"}</td>
                     {r.weeks.map((c, wi) => (
                       <Fragment key={wi}>
@@ -149,7 +150,7 @@ export function MonthlyStatementView({
               </tbody>
               <tfoot>
                 <tr className="border-t-2 border-jb-line bg-jb-surface text-[12.5px] font-semibold text-jb-ink">
-                  <td className="border-r border-jb-line px-3 py-2.5 text-right text-jb-ink-mute" colSpan={3}>합계 · {view.length}명</td>
+                  <td className="sticky left-0 z-10 border-r border-jb-line bg-jb-surface px-3 py-2.5 text-right text-jb-ink-mute" colSpan={3}>합계 · {view.length}명</td>
                   {totals.perWeek.map((c, wi) => (
                     <Fragment key={wi}>
                       <td className="px-3 py-2.5 text-right font-mono tabular-nums">{won(c.delivery)}</td>
@@ -162,7 +163,7 @@ export function MonthlyStatementView({
                 </tr>
               </tfoot>
             </table>
-          </div>
+          </DualScrollX>
         )}
       </div>
     </div>

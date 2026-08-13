@@ -7,6 +7,7 @@ import type { MissionSettlement, MissionSettlementRow, MissionTotals } from "@/a
 import { WITHHOLDING_RATE, INSURANCE_RATE } from "@/app/settlement/_lib/rates";
 import { ymdAdd, formatKoreanDate } from "@/app/settlement/_lib/dates";
 import { NotesSaveButton, type NotesApi } from "./notes-api";
+import { DualScrollX } from "./dual-scroll";
 
 // 본사 미션 정산 뷰 — 상단 [일일/주간]. 라이더별 본사 미션(세전)에서 원천세·고용산재 공제 → 지급액.
 // 수수료(완료건당 100원) 미적용. 주간은 수~화 기간 합산. 메모·특이사항은 라이더 설정과 공유.
@@ -175,12 +176,12 @@ export function MissionSettlementView({
             <p className="mt-1 text-[13px] text-jb-ink-mute">미션 지급이 있는 기간을 선택해 주세요.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <DualScrollX>
             <table className="w-full min-w-[1000px] border-collapse text-[13px]">
               <thead className="text-jb-ink-mute">
                 <tr className="bg-jb-surface text-[12px] font-medium">
-                  <th className="border-b border-jb-line px-3 py-2.5 text-right">#</th>
-                  <SortableTh label="라이더" onClick={() => toggleSort("name")} active={sortKey === "name"} dir={sortDir} align="left" />
+                  <th className="sticky left-0 z-10 w-[48px] min-w-[48px] max-w-[48px] border-b border-jb-line bg-jb-surface px-3 py-2.5 text-right">#</th>
+                  <SortableTh label="라이더" onClick={() => toggleSort("name")} active={sortKey === "name"} dir={sortDir} align="left" className="sticky left-[48px] z-10 bg-jb-surface" />
                   <th className="w-[200px] border-b border-jb-line px-3 py-2.5 text-left">메모</th>
                   <th className="border-b border-jb-line px-3 py-2.5 text-left">라이더 ID</th>
                   <SortableTh label="본사미션(세전)" onClick={() => toggleSort("mission")} active={sortKey === "mission"} dir={sortDir} align="right" className="border-l border-jb-line" />
@@ -205,7 +206,7 @@ export function MissionSettlementView({
               </tbody>
               <tfoot>
                 <tr className="border-t-2 border-jb-line bg-jb-surface text-[13px] font-semibold text-jb-ink">
-                  <td className="px-3 py-3 text-right text-jb-ink-mute" colSpan={4}>합계 · {won(view.length)}명</td>
+                  <td className="sticky left-0 z-10 bg-jb-surface px-3 py-3 text-right text-jb-ink-mute" colSpan={4}>합계 · {won(view.length)}명</td>
                   <Num v={vTotals.mission} className="border-l border-jb-line" />
                   <Num v={vTotals.wht} deduct />
                   <Num v={vTotals.ins} deduct />
@@ -214,7 +215,7 @@ export function MissionSettlementView({
                 </tr>
               </tfoot>
             </table>
-          </div>
+          </DualScrollX>
         )}
       </div>
     </div>
@@ -310,8 +311,8 @@ const Row = memo(function Row({
 }) {
   return (
     <tr className="border-b border-jb-line-soft transition-colors hover:bg-jb-surface/60">
-      <td className="px-3 py-2.5 text-right font-mono text-[12px] tabular-nums text-jb-ink-mute">{index}</td>
-      <td className="px-3 py-2.5 font-medium text-jb-ink">{row.name}</td>
+      <td className="sticky left-0 z-10 w-[48px] min-w-[48px] max-w-[48px] bg-jb-card px-3 py-2.5 text-right font-mono text-[12px] tabular-nums text-jb-ink-mute">{index}</td>
+      <td className="sticky left-[48px] z-10 bg-jb-card px-3 py-2.5 font-medium text-jb-ink">{row.name}</td>
       <td className="px-2 py-1.5">
         <input
           value={memoVal}

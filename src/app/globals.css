@@ -252,3 +252,13 @@
   }
   .notice-prose hr { border: 0; border-top: 1px solid var(--jb-line); margin: 1em 0; }
 }
+
+/* 상·하단 가로 스크롤바 — 맥 오버레이에서도 항상 보이게 */
+.dscroll-bar {
+  scrollbar-width: thin;
+  scrollbar-color: #c8ccd2 transparent;
+}
+.dscroll-bar::-webkit-scrollbar { height: 10px; }
+.dscroll-bar::-webkit-scrollbar-track { background: transparent; }
+.dscroll-bar::-webkit-scrollbar-thumb { background: #c8ccd2; border-radius: 6px; }
+.dscroll-bar::-webkit-scrollbar-thumb:hover { background: #aeb4bd; }

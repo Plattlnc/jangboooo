@@ -7,6 +7,7 @@ import type { PromoSettlement, PromoSettlementRow, PromoTotals } from "@/app/set
 import { WITHHOLDING_RATE, INSURANCE_RATE } from "@/app/settlement/_lib/rates";
 import { ymdAdd } from "@/app/settlement/_lib/dates";
 import { NotesSaveButton, type NotesApi } from "./notes-api";
+import { DualScrollX } from "./dual-scroll";
 
 // 자사 프로모션 정산(주간 전용, 수~화) — 09:00~00:00 완료건을 프로모션 개수로 인정.
 // 주간 100건 초과분 건당 2,000원(세전) → 원천세·고용산재 공제 후 지급액. 수수료(100원) 미적용.
@@ -166,12 +167,12 @@ export function PromoSettlementView({
             <p className="mt-1 text-[13px] text-jb-ink-mute">09~00시 완료가 있는 주를 선택해 주세요.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <DualScrollX>
             <table className="w-full min-w-[1240px] border-collapse text-[13px]">
               <thead className="text-jb-ink-mute">
                 <tr className="bg-jb-surface text-[12px] font-medium">
-                  <th className="border-b border-jb-line px-3 py-2.5 text-right">#</th>
-                  <SortableTh label="라이더" onClick={() => toggleSort("name")} active={sortKey === "name"} dir={sortDir} align="left" />
+                  <th className="sticky left-0 z-10 w-[48px] min-w-[48px] max-w-[48px] border-b border-jb-line bg-jb-surface px-3 py-2.5 text-right">#</th>
+                  <SortableTh label="라이더" onClick={() => toggleSort("name")} active={sortKey === "name"} dir={sortDir} align="left" className="sticky left-[48px] z-10 bg-jb-surface" />
                   <th className="w-[200px] border-b border-jb-line px-3 py-2.5 text-left">메모</th>
                   <th className="border-b border-jb-line px-3 py-2.5 text-left">라이더 ID</th>
                   <SortableTh label="완료 09~00시" onClick={() => toggleSort("promoCount")} active={sortKey === "promoCount"} dir={sortDir} align="right" className="border-l border-jb-line" />
@@ -198,7 +199,7 @@ export function PromoSettlementView({
               </tbody>
               <tfoot>
                 <tr className="border-t-2 border-jb-line bg-jb-surface text-[13px] font-semibold text-jb-ink">
-                  <td className="px-3 py-3 text-right text-jb-ink-mute" colSpan={4}>합계 · {won(view.length)}명</td>
+                  <td className="sticky left-0 z-10 bg-jb-surface px-3 py-3 text-right text-jb-ink-mute" colSpan={4}>합계 · {won(view.length)}명</td>
                   <td className="border-l border-jb-line px-3 py-3 text-right font-mono tabular-nums">{won(vTotals.promoCount)}</td>
                   <td className="px-3 py-3 text-right font-mono tabular-nums text-jb-ink-soft">{won(vTotals.over)}</td>
                   <td className="border-l border-jb-line px-3 py-3 text-right font-mono tabular-nums">{won(vTotals.gross)}</td>
@@ -209,7 +210,7 @@ export function PromoSettlementView({
                 </tr>
               </tfoot>
             </table>
-          </div>
+          </DualScrollX>
         )}
       </div>
     </div>
@@ -284,8 +285,8 @@ const Row = memo(function Row({
 }) {
   return (
     <tr className="border-b border-jb-line-soft transition-colors hover:bg-jb-surface/60">
-      <td className="px-3 py-2.5 text-right font-mono text-[12px] tabular-nums text-jb-ink-mute">{index}</td>
-      <td className="px-3 py-2.5 font-medium text-jb-ink">{row.name}</td>
+      <td className="sticky left-0 z-10 w-[48px] min-w-[48px] max-w-[48px] bg-jb-card px-3 py-2.5 text-right font-mono text-[12px] tabular-nums text-jb-ink-mute">{index}</td>
+      <td className="sticky left-[48px] z-10 bg-jb-card px-3 py-2.5 font-medium text-jb-ink">{row.name}</td>
       <td className="px-2 py-1.5">
         <input
           value={memoVal}
