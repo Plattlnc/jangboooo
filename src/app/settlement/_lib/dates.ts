@@ -57,3 +57,48 @@ export function weekRangeOf(ymd: string): { start: string; end: string } {
   const start = weekStartOf(ymd);
   return { start, end: ymdAdd(start, 6) };
 }
+
+/** 오늘(KST) 기준 YYYY-MM. */
+export function kstMonth(): string {
+  return kstToday().slice(0, 7);
+}
+
+/** YYYY-MM 유효성. */
+export function isValidYm(v: string | undefined | null): v is string {
+  return !!v && /^\d{4}-\d{2}$/.test(v);
+}
+
+/** YYYY-MM 에 months 를 더한 월(음수 가능). */
+export function ymAdd(ym: string, months: number): string {
+  const [y, m] = ym.split("-").map(Number);
+  const total = (y * 12 + (m - 1)) + months;
+  const ny = Math.floor(total / 12);
+  const nm = (total % 12) + 1;
+  return `${ny}-${String(nm).padStart(2, "0")}`;
+}
+
+/**
+ * 월(YYYY-MM)에 속한 주(수~화) 목록 — 1일이 포함된 주가 1주차, 다음 달 1일 포함 주 직전까지.
+ * (첫 주는 전월 말에 걸칠 수 있음.) 보통 4~5주.
+ */
+export function monthWeeks(ym: string): { start: string; end: string }[] {
+  const [y, m] = ym.split("-").map(Number);
+  const first = `${ym}-01`;
+  const nextFirst =
+    m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, "0")}-01`;
+  const startWed = weekStartOf(first);
+  const stopWed = weekStartOf(nextFirst);
+  const weeks: { start: string; end: string }[] = [];
+  let w = startWed;
+  while (w < stopWed) {
+    weeks.push({ start: w, end: ymdAdd(w, 6) });
+    w = ymdAdd(w, 7);
+  }
+  return weeks;
+}
+
+/** YYYY-MM-DD → "M/D" (양식 기간 표기). */
+export function mdShort(ymd: string): string {
+  const [, m, d] = ymd.split("-").map(Number);
+  return `${m}/${d}`;
+}

@@ -1,0 +1,169 @@
+import "server-only";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { PROMO_WEEKLY_THRESHOLD, PROMO_UNIT_KRW } from "@/lib/promo";
+import { loadRiderRrns } from "@/app/settlement/_lib/notes";
+import { monthWeeks } from "@/app/settlement/_lib/dates";
+
+// 월 소득정산서(세무사용) — 라이더별 × 주차별(수~화) 세전 소득 통합.
+//   배달처리비(세전) = 주간 fee_krw 합
+//   기타/인센티브(세전) = 본사미션(mission_krw) + 자사프로모션(주간 09~00시 100건 초과분 × 2,000)
+//   소득합계 = Σ(배달처리비 + 기타/인센티브)
+// 주차: dates.monthWeeks(1일 포함 주=1주차). 원천세 등 공제 전(세전) 금액.
+
+export interface MonthlyWeekCell {
+  delivery: number; // 배달처리비(세전)
+  etc: number; // 기타/인센티브(세전) = 미션 + 프로모션
+}
+
+export interface MonthlyRow {
+  riderId: string;
+  name: string;
+  rrn: string; // 주민등록번호(평문, 복호화)
+  weeks: MonthlyWeekCell[]; // length = weeks.length
+  total: number; // 소득합계금액
+}
+
+export interface MonthlySettlement {
+  ym: string;
+  weeks: { start: string; end: string }[];
+  rows: MonthlyRow[];
+  totals: { perWeek: MonthlyWeekCell[]; total: number };
+}
+
+function dayNum(ymd: string): number {
+  const [y, m, d] = ymd.split("-").map(Number);
+  return Math.floor(Date.UTC(y, m - 1, d) / 86400000);
+}
+
+/** 카운트 기반 페이지드 fetch(동시성 제한). */
+async function paginate<T>(makeBase: () => PromiseLike<{ data: T[] | null; error: unknown }>, makeCount: () => PromiseLike<{ count: number | null; error: unknown }>): Promise<T[]> {
+  const BATCH = 1000;
+  const CONC = 8;
+  const { count, error } = await makeCount();
+  if (error) throw new Error(String((error as { message?: string }).message ?? error));
+  const pages = Math.max(1, Math.ceil((count ?? 0) / BATCH));
+  const out: T[] = [];
+  for (let i = 0; i < pages; i += CONC) {
+    const slice = Array.from({ length: Math.min(CONC, pages - i) }, (_, j) => {
+      const p = i + j;
+      // makeBase() 는 range 를 붙일 수 있는 쿼리 빌더를 반환.
+      return (makeBase() as unknown as { range: (a: number, b: number) => PromiseLike<{ data: T[] | null; error: unknown }> }).range(p * BATCH, (p + 1) * BATCH - 1);
+    });
+    const results = await Promise.all(slice);
+    for (const r of results) {
+      if (r.error) throw new Error(String((r.error as { message?: string }).message ?? r.error));
+      out.push(...(r.data ?? []));
+    }
+  }
+  return out;
+}
+
+export async function fetchMonthlySettlement(ym: string): Promise<MonthlySettlement> {
+  const weeks = monthWeeks(ym);
+  const empty: MonthlySettlement = { ym, weeks, rows: [], totals: { perWeek: weeks.map(() => ({ delivery: 0, etc: 0 })), total: 0 } };
+  if (weeks.length === 0) return empty;
+
+  const start = weeks[0].start;
+  const end = weeks[weeks.length - 1].end;
+  const base = dayNum(start);
+  const widx = (date: string): number => {
+    const i = Math.floor((dayNum(date) - base) / 7);
+    return i >= 0 && i < weeks.length ? i : -1;
+  };
+
+  const supabase = createAdminClient();
+
+  // 배달처리비 + 본사미션(rider_daily_fees)
+  const feeRows = await paginate<{ admin_rider_id: string; snapshot_date: string; fee_krw: number; mission_krw: number }>(
+    () =>
+      supabase
+        .from("rider_daily_fees")
+        .select("admin_rider_id, snapshot_date, fee_krw, mission_krw")
+        .gte("snapshot_date", start)
+        .lte("snapshot_date", end)
+        .order("snapshot_date", { ascending: true })
+        .order("admin_rider_id", { ascending: true }) as never,
+    () =>
+      supabase
+        .from("rider_daily_fees")
+        .select("admin_rider_id", { count: "exact", head: true })
+        .gte("snapshot_date", start)
+        .lte("snapshot_date", end) as never,
+  );
+
+  // 자사 프로모션 개수(09~00시 완료, rider_hourly_stats)
+  const hourRows = await paginate<{ admin_rider_id: string; snapshot_date: string; completed: number }>(
+    () =>
+      supabase
+        .from("rider_hourly_stats")
+        .select("admin_rider_id, snapshot_date, completed")
+        .gte("snapshot_date", start)
+        .lte("snapshot_date", end)
+        .gte("hour", 9)
+        .gt("completed", 0)
+        .order("snapshot_date", { ascending: true })
+        .order("admin_rider_id", { ascending: true })
+        .order("hour", { ascending: true }) as never,
+    () =>
+      supabase
+        .from("rider_hourly_stats")
+        .select("admin_rider_id", { count: "exact", head: true })
+        .gte("snapshot_date", start)
+        .lte("snapshot_date", end)
+        .gte("hour", 9)
+        .gt("completed", 0) as never,
+  );
+
+  type Agg = { fee: number[]; mission: number[]; inHours: number[] };
+  const agg = new Map<string, Agg>();
+  const ensure = (id: string): Agg => {
+    let a = agg.get(id);
+    if (!a) {
+      a = { fee: Array(weeks.length).fill(0), mission: Array(weeks.length).fill(0), inHours: Array(weeks.length).fill(0) };
+      agg.set(id, a);
+    }
+    return a;
+  };
+  for (const r of feeRows) {
+    const i = widx(r.snapshot_date);
+    if (i < 0) continue;
+    const a = ensure(r.admin_rider_id);
+    a.fee[i] += r.fee_krw ?? 0;
+    a.mission[i] += r.mission_krw ?? 0;
+  }
+  for (const r of hourRows) {
+    const i = widx(r.snapshot_date);
+    if (i < 0) continue;
+    ensure(r.admin_rider_id).inHours[i] += r.completed ?? 0;
+  }
+
+  const ids = [...agg.keys()];
+  const info = new Map<string, string | null>();
+  if (ids.length > 0) {
+    const { data: riders } = await supabase.from("riders").select("admin_rider_id, name").in("admin_rider_id", ids);
+    for (const r of riders ?? []) info.set(r.admin_rider_id, r.name);
+  }
+  const rrns = await loadRiderRrns();
+
+  const rows: MonthlyRow[] = ids
+    .map((id) => {
+      const a = agg.get(id)!;
+      const cells: MonthlyWeekCell[] = weeks.map((_, i) => {
+        const delivery = a.fee[i];
+        const promo = Math.max(0, a.inHours[i] - PROMO_WEEKLY_THRESHOLD) * PROMO_UNIT_KRW;
+        return { delivery, etc: a.mission[i] + promo };
+      });
+      const total = cells.reduce((s, c) => s + c.delivery + c.etc, 0);
+      return { riderId: id, name: info.get(id) ?? id, rrn: rrns[id] ?? "", weeks: cells, total };
+    })
+    .filter((r) => r.total > 0);
+  rows.sort((a, b) => a.name.localeCompare(b.name, "ko") || a.riderId.localeCompare(b.riderId));
+
+  const perWeek: MonthlyWeekCell[] = weeks.map((_, i) => ({
+    delivery: rows.reduce((s, r) => s + r.weeks[i].delivery, 0),
+    etc: rows.reduce((s, r) => s + r.weeks[i].etc, 0),
+  }));
+  const total = rows.reduce((s, r) => s + r.total, 0);
+
+  return { ym, weeks, rows, totals: { perWeek, total } };
+}

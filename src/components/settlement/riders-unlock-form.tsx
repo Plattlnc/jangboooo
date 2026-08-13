@@ -5,8 +5,14 @@ import { useRouter } from "next/navigation";
 import { Lock } from "lucide-react";
 import { unlockRiderSettings } from "@/actions/settlement-riders-auth";
 
-// 라이더 설정 2차 잠금 화면 — 정산 세션 위에 추가 비밀번호 게이트(주민번호 등 민감정보 접근).
-export function RidersUnlockForm() {
+// 라이더 설정/정산서 2차 잠금 화면 — 정산 세션 위에 추가 비밀번호 게이트(주민번호 등 민감정보 접근).
+export function RidersUnlockForm({
+  title = "라이더 설정",
+  subtitle = "주민등록번호 등 민감정보가 포함되어 2차 비밀번호가 필요합니다.",
+}: {
+  title?: string;
+  subtitle?: string;
+} = {}) {
   const router = useRouter();
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string>();
@@ -33,8 +39,8 @@ export function RidersUnlockForm() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-jb-ink">라이더 설정</h1>
-        <p className="mt-1 text-[13px] text-jb-ink-mute">주민등록번호 등 민감정보가 포함되어 2차 비밀번호가 필요합니다.</p>
+        <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-jb-ink">{title}</h1>
+        <p className="mt-1 text-[13px] text-jb-ink-mute">{subtitle}</p>
       </div>
 
       <div className="mx-auto mt-6 w-full max-w-[380px] rounded-[16px] border border-jb-line bg-jb-card p-7 shadow-[var(--toss-shadow)]">
