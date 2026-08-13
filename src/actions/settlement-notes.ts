@@ -1,7 +1,7 @@
 "use server";
 
 import { isSettlementSession } from "@/lib/auth/settlement-cookies";
-import { saveRiderNotesMap, saveRiderMemosMap } from "@/app/settlement/_lib/notes";
+import { saveRiderNotesMap, saveRiderMemosMap, saveRiderRrnsMap } from "@/app/settlement/_lib/notes";
 
 export type SaveNotesResult = { ok: true } | { ok: false; message: string };
 
@@ -43,6 +43,36 @@ export async function saveRiderMemos(memos: unknown): Promise<SaveNotesResult> {
   if (!clean) return { ok: false, message: "잘못된 데이터입니다." };
   try {
     await saveRiderMemosMap(clean);
+    return { ok: true };
+  } catch {
+    return { ok: false, message: "저장 중 문제가 생겼어요. 잠시 후 다시 시도해 주세요." };
+  }
+}
+
+/** {riderId: 주민번호} 정제 — 숫자·하이픈만, 14자 상한. */
+function sanitizeRrnMap(input: unknown): Record<string, string> | null {
+  if (input == null || typeof input !== "object" || Array.isArray(input)) return null;
+  const clean: Record<string, string> = {};
+  let count = 0;
+  for (const [id, v] of Object.entries(input as Record<string, unknown>)) {
+    if (typeof v === "string") {
+      const norm = v.replace(/[^0-9-]/g, "").slice(0, 14);
+      if (norm) clean[id] = norm;
+      if (++count > 5000) break;
+    }
+  }
+  return clean;
+}
+
+/** 라이더별 주민번호 저장 — 정산 세션 필요. AES-256-GCM 암호화 저장(notes.ts). */
+export async function saveRiderRrns(rrns: unknown): Promise<SaveNotesResult> {
+  if (!(await isSettlementSession())) {
+    return { ok: false, message: "세션이 만료되었습니다. 다시 로그인해 주세요." };
+  }
+  const clean = sanitizeRrnMap(rrns);
+  if (!clean) return { ok: false, message: "잘못된 데이터입니다." };
+  try {
+    await saveRiderRrnsMap(clean);
     return { ok: true };
   } catch {
     return { ok: false, message: "저장 중 문제가 생겼어요. 잠시 후 다시 시도해 주세요." };
