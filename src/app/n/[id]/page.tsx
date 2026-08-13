@@ -24,8 +24,20 @@ function fmtFull(n: NoticeRow): string {
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
   const n = await getPublishedNotice(id);
-  // 비공개(로그인 필요) 공지는 크롤러/미리보기에 내용 비노출.
-  if (!n || !n.is_public) return { title: "공지사항 · 슬라이더" };
+  const ogImage = { url: "/og-notice.png", width: 1200, height: 630, alt: "슬라이더 공지사항" };
+  // 비공개(로그인 필요) 공지는 크롤러/미리보기에 내용 비노출 — 공지사항 OG 이미지만 노출.
+  if (!n || !n.is_public) {
+    return {
+      title: "공지사항 · 슬라이더",
+      openGraph: {
+        type: "article",
+        siteName: "슬라이더",
+        title: "공지사항",
+        locale: "ko_KR",
+        images: [ogImage],
+      },
+    };
+  }
   const desc = n.excerpt || noticePlainText(n.body).slice(0, 120) || "슬라이더 공지사항";
   return {
     title: `${n.title} · 슬라이더 공지`,
@@ -36,7 +48,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
       title: n.title,
       description: desc,
       locale: "ko_KR",
-      images: [{ url: "/og-slider-v2.png", width: 1200, height: 630, alt: "슬라이더" }],
+      images: [ogImage],
     },
   };
 }
