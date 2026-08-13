@@ -1,7 +1,7 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { PROMO_WEEKLY_THRESHOLD, PROMO_UNIT_KRW } from "@/lib/promo";
 import { applyDeductions } from "@/app/settlement/_lib/rates";
+import { loadPromoRules } from "@/app/settlement/_lib/promo-rules";
 
 // 자사 프로모션 정산 — SLA 운영시간(09:00~00:00 = hour 9~23) 완료건을 프로모션 개수로 인정.
 // 주간(수~화) 100건 초과분(101건째부터) 건당 2,000원(세전). 원천세(3.3%)·고용산재(1.8%) 공제 후 지급액.
@@ -38,6 +38,8 @@ export interface PromoTotals {
 export interface PromoSettlement {
   start: string;
   end: string;
+  threshold: number; // 이 주 초과 기준(건)
+  unit: number; // 이 주 건당 단가(원)
   rows: PromoSettlementRow[];
   totals: PromoTotals;
 }
@@ -94,10 +96,12 @@ export async function fetchPromoSettlement(start: string, end: string, weekly: b
     for (const r of riders ?? []) info.set(r.admin_rider_id, { name: r.name, phone: r.phone });
   }
 
+  const rules = await loadPromoRules();
+  const rule = rules[start] ?? { threshold: 0, unit: 0 }; // 이 주 규칙(없으면 프로모션 0)
   const rows: PromoSettlementRow[] = ids.map((id) => {
     const promoCount = byRider.get(id)!;
-    const over = weekly ? Math.max(0, promoCount - PROMO_WEEKLY_THRESHOLD) : 0;
-    const gross = over * PROMO_UNIT_KRW; // 세전
+    const over = weekly && rule.unit > 0 ? Math.max(0, promoCount - rule.threshold) : 0;
+    const gross = over * rule.unit; // 세전
     const d = applyDeductions(gross, 0); // 원천세·고용산재만(수수료 미적용)
     const meta = info.get(id);
     return {
@@ -124,5 +128,5 @@ export async function fetchPromoSettlement(start: string, end: string, weekly: b
     totals.payout += r.payout;
   }
 
-  return { start, end, rows, totals };
+  return { start, end, threshold: rule.threshold, unit: rule.unit, rows, totals };
 }

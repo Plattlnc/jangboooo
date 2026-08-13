@@ -93,7 +93,7 @@ export function MonthlyStatementView({
         <SummaryCard label="총 소득합계" value={`${totals.total.toLocaleString("ko-KR")}원`} sub="세전" accent />
       </div>
       <p className="-mt-2 text-[12px] text-jb-ink-mute">
-        표의 <span className="font-semibold text-jb-ink-soft">기타/인센티브</span> = 본사미션 + 자사프로모션(세전). 소득합계 = 배달처리비 + 기타/인센티브.
+        표의 <span className="font-semibold text-jb-ink-soft">배달처리비</span> = 배달처리비 + 본사미션, <span className="font-semibold text-jb-ink-soft">기타/인센티브</span> = 자사프로모션(세전). 소득합계 = 배달처리비 + 기타/인센티브.
       </p>
 
       {/* 정산서 테이블 */}
@@ -123,8 +123,8 @@ export function MonthlyStatementView({
                 <tr className="bg-jb-surface text-[11px] font-medium">
                   {weeks.map((_, i) => (
                     <Fragment key={i}>
-                      <th className="border-b border-jb-line px-3 py-1.5 text-right">배달처리비</th>
-                      <th className="border-b border-r border-jb-line px-3 py-1.5 text-right">기타/인센티브</th>
+                      <th className="border-b border-jb-line px-3 py-1.5 text-right">배달처리비<span className="font-normal text-jb-ink-mute"> +본사미션</span></th>
+                      <th className="border-b border-r border-jb-line px-3 py-1.5 text-right">기타/인센티브<span className="font-normal text-jb-ink-mute"> (프로모션)</span></th>
                     </Fragment>
                   ))}
                 </tr>

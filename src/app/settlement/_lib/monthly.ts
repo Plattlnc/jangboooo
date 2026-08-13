@@ -1,7 +1,7 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { PROMO_WEEKLY_THRESHOLD, PROMO_UNIT_KRW } from "@/lib/promo";
 import { loadRiderRrns } from "@/app/settlement/_lib/notes";
+import { loadPromoRules, promoForWeek } from "@/app/settlement/_lib/promo-rules";
 import { monthWeeks } from "@/app/settlement/_lib/dates";
 
 // 월 소득정산서(세무사용) — 라이더별 × 주차별(수~화) 세전 소득 통합.
@@ -152,24 +152,24 @@ export async function fetchMonthlySettlement(ym: string): Promise<MonthlySettlem
   }
   const rrns = await loadRiderRrns();
 
-  let gDelivery = 0;
-  let gMission = 0;
-  let gPromo = 0;
+  const rules = await loadPromoRules();
+  let gDelivery = 0; // 배달처리비(fee)
+  let gMission = 0; // 본사미션
+  let gPromo = 0; // 자사프로모션
   const rows: MonthlyRow[] = ids
     .map((id) => {
       const a = agg.get(id)!;
-      const cells: MonthlyWeekCell[] = weeks.map((_, i) => {
-        const delivery = a.fee[i];
-        const mission = a.mission[i];
-        const promo = Math.max(0, a.inHours[i] - PROMO_WEEKLY_THRESHOLD) * PROMO_UNIT_KRW;
-        return { delivery, etc: mission + promo };
+      const cells: MonthlyWeekCell[] = weeks.map((w, i) => {
+        const delivery = a.fee[i] + a.mission[i]; // 배달처리비 = 배달처리비 + 본사미션
+        const promo = promoForWeek(rules, w.start, a.inHours[i]); // 기타/인센티브 = 자사프로모션(주차 규칙)
+        return { delivery, etc: promo };
       });
       const total = cells.reduce((s, c) => s + c.delivery + c.etc, 0);
       if (total > 0) {
         for (let i = 0; i < weeks.length; i++) {
           gDelivery += a.fee[i];
           gMission += a.mission[i];
-          gPromo += Math.max(0, a.inHours[i] - PROMO_WEEKLY_THRESHOLD) * PROMO_UNIT_KRW;
+          gPromo += promoForWeek(rules, weeks[i].start, a.inHours[i]);
         }
       }
       return { riderId: id, name: info.get(id) ?? id, rrn: rrns[id] ?? "", weeks: cells, total };
