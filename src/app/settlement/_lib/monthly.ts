@@ -8,7 +8,7 @@ import { monthWeeks } from "@/app/settlement/_lib/dates";
 //   배달처리비(세전) = 주간 fee_krw 합
 //   기타/인센티브(세전) = 본사미션(mission_krw) + 자사프로모션(주간 09~00시 100건 초과분 × 2,000)
 //   소득합계 = Σ(배달처리비 + 기타/인센티브)
-// 주차: dates.monthWeeks(1일 포함 주=1주차). 원천세 등 공제 전(세전) 금액.
+// 주차: dates.monthWeeks — 주 시작(수요일)이 속한 달로 귀속(1일이 있어도 수요일이 전월이면 전월 주차). 원천세 등 공제 전(세전) 금액.
 
 export interface MonthlyWeekCell {
   delivery: number; // 배달처리비(세전)
@@ -41,8 +41,8 @@ function dayNum(ymd: string): number {
   return Math.floor(Date.UTC(y, m - 1, d) / 86400000);
 }
 
-/** 카운트 기반 페이지드 fetch(동시성 제한). */
-async function paginate<T>(makeBase: () => PromiseLike<{ data: T[] | null; error: unknown }>, makeCount: () => PromiseLike<{ count: number | null; error: unknown }>): Promise<T[]> {
+/** 카운트 기반 페이지드 fetch(동시성 제한). PostgREST 1,000행 제한 방어 — 정산 소스 공용. */
+export async function paginate<T>(makeBase: () => PromiseLike<{ data: T[] | null; error: unknown }>, makeCount: () => PromiseLike<{ count: number | null; error: unknown }>): Promise<T[]> {
   const BATCH = 1000;
   const CONC = 8;
   const { count, error } = await makeCount();

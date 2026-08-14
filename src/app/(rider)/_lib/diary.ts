@@ -309,13 +309,28 @@ export async function getDeliveryDiary(month: string): Promise<DiaryMonth> {
       }
     }
     // 총 이동거리·시급용 — delivery_fee_details 에서 일자별 총이동거리(전달완료)·근무시간(첫픽업~마지막전달) 집계.
+    // 페이지드 fetch — 월 1,000건 초과 라이더도 PostgREST 1,000행 컷 없이 전량(절단 시 거리·근무시간이 조용히 축소됨).
     const metrics: MetricMap = new Map();
-    const { data: detRows, error: detErr } = await admin
-      .from("delivery_fee_details")
-      .select("snapshot_date, status, distance_m, pickup_at, delivered_at")
-      .eq("admin_rider_id", session.adminRiderId)
-      .gte("snapshot_date", `${month}-01`)
-      .lte("snapshot_date", `${month}-${String(lastDay).padStart(2, "0")}`);
+    type DetRow = { snapshot_date: string; status: string | null; distance_m: number | null; pickup_at: string | null; delivered_at: string | null };
+    const detRows: DetRow[] = [];
+    let detErr: { code?: string; message: string } | null = null;
+    const BATCH = 1000;
+    for (let page = 0; page < 10; page++) {
+      const { data, error } = await admin
+        .from("delivery_fee_details")
+        .select("snapshot_date, status, distance_m, pickup_at, delivered_at")
+        .eq("admin_rider_id", session.adminRiderId)
+        .gte("snapshot_date", `${month}-01`)
+        .lte("snapshot_date", `${month}-${String(lastDay).padStart(2, "0")}`)
+        .order("delivery_no")
+        .range(page * BATCH, (page + 1) * BATCH - 1);
+      if (error) {
+        detErr = error;
+        break;
+      }
+      detRows.push(...((data ?? []) as DetRow[]));
+      if ((data ?? []).length < BATCH) break;
+    }
     if (detErr) {
       console.error("[diary] delivery_fee_details 집계 실패(지표 미표시):", detErr.code, detErr.message);
     } else {

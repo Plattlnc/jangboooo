@@ -1,6 +1,7 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { applyDeductions } from "@/app/settlement/_lib/rates";
+import { paginate } from "@/app/settlement/_lib/monthly";
 
 // 본사 미션 정산 데이터 — 선택 기간의 라이더별 본사 미션 지급액(세전, mission_krw)에서
 // 원천세(3.3%)·고용산재(1.8%) 공제 후 지급액. 수수료(완료건당 100원)는 미적용.
@@ -43,16 +44,27 @@ const NUMERIC_KEYS: (keyof MissionTotals & keyof MissionSettlementRow)[] = ["mis
 export async function fetchMissionSettlement(start: string, end: string = start): Promise<MissionSettlement> {
   const supabase = createAdminClient();
 
-  const { data: fees, error } = await supabase
-    .from("rider_daily_fees")
-    .select("admin_rider_id, mission_krw")
-    .gte("snapshot_date", start)
-    .lte("snapshot_date", end);
-  if (error) throw new Error(`rider_daily_fees 조회 실패: ${error.message}`);
+  // 페이지드 fetch — 기간×라이더 행이 PostgREST 1,000행 제한을 넘어도 절단 없이 전량 수집(세무 정합).
+  const fees = await paginate<{ admin_rider_id: string; mission_krw: number | null }>(
+    () =>
+      supabase
+        .from("rider_daily_fees")
+        .select("admin_rider_id, mission_krw")
+        .gte("snapshot_date", start)
+        .lte("snapshot_date", end)
+        .order("admin_rider_id")
+        .order("snapshot_date"),
+    () =>
+      supabase
+        .from("rider_daily_fees")
+        .select("admin_rider_id", { count: "exact", head: true })
+        .gte("snapshot_date", start)
+        .lte("snapshot_date", end),
+  );
 
   // 라이더별 기간 미션 합산.
   const agg = new Map<string, number>();
-  for (const f of fees ?? []) {
+  for (const f of fees) {
     agg.set(f.admin_rider_id, (agg.get(f.admin_rider_id) ?? 0) + (f.mission_krw ?? 0));
   }
   const ids = [...agg.entries()].filter(([, m]) => m > 0).map(([id]) => id); // 미션 지급분만
