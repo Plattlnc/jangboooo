@@ -41,16 +41,6 @@ function assertSession(page: Page): void {
   }
 }
 
-/**
- * 세션 유효성 확인(데이터 화면 진입 시도). 만료면 SessionExpiredError.
- * fetchSlaData 가 첫 페이지에서 어차피 확인하지만, 명시적 사전 점검도 제공.
- */
-export async function ensureSession(page: Page, cfg: Config, log: Logger): Promise<void> {
-  await page.goto(`${baseUrl(cfg)}${HISTORY_PATH}`, { waitUntil: 'domcontentloaded' })
-  assertSession(page)
-  log.debug('세션 유효(데이터 화면 진입)')
-}
-
 /** 배달현황 화면 기본 쿼리(실 UI 와 동일하게 빈 필터까지 포함 — SPA 파라미터 파싱 안전). */
 function historyQuery(pageNum: number, size: number): string {
   return new URLSearchParams({
@@ -101,7 +91,10 @@ export async function captureApiHeaders(page: Page, cfg: Config, log: Logger): P
   }
   if (!headers) {
     assertSession(page)
-    throw new Error('delivery-status 요청 미발생 — SPA 가 API 미호출(스텔스/세션 점검 필요)')
+    // soft-expire: 죽은 세션이 로그인 리다이렉트 없이 빈 화면만 주면 API 가 영영 안 불린다.
+    // 일반 Error 로 두면 매 사이클 재시도→5연속 실패→exit(1)→Railway 재시작 소진(7/12 배포 사망 사고).
+    // 재시도 무의미(무인 복구 불가)는 401 과 동일하므로 세션만료로 분류해 스킵시킨다.
+    throw new SessionExpiredError('delivery-status 요청 미발생 — SPA 미호출(soft-expire/스텔스 의심)')
   }
   return headers
 }
@@ -270,16 +263,6 @@ export async function fetchHistoryDay(
   const result = mapDeliveryStatus(rows, day, headers['center-id'] ?? null)
   log.info('과거 백필 1일', { day, total, riders: result.riders.length, snapshots: result.snapshots.length })
   return result
-}
-
-/**
- * 협력사 전체 라이더 배달현황을 수집해 ScrapeResult 로 매핑.
- * size 크게(기본 200) 1콜 시도 → 서버 상한이면 페이지 루프 폴백.
- * 세션 만료 시 SessionExpiredError 를 던진다(호출부에서 스킵 처리).
- */
-export async function fetchSlaData(page: Page, cfg: Config, log: Logger): Promise<ScrapeResult> {
-  const headers = await captureApiHeaders(page, cfg, log)
-  return fetchSlaDataWithHeaders(page, headers, cfg, log)
 }
 
 /**

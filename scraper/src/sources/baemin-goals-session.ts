@@ -9,6 +9,7 @@
 import { access, mkdir, writeFile } from 'node:fs/promises'
 import { dirname } from 'node:path'
 import { chromium, type BrowserContextOptions } from 'playwright'
+import { TRAFFIC_ARGS } from '../browser'
 import type { Config } from '../config'
 import type { Logger } from '../logger'
 import { serializeError } from '../logger'
@@ -59,7 +60,8 @@ export async function collectCenterGoals(cfg: Config, log: Logger): Promise<Cent
 
   // launch 무한 행 방지 — 메인 브라우저와 동일 상한(2026-07-09 9a63a28 과 같은 결함이
   // 이 자체-launch 경로엔 누락돼 goal 루프가 통째로 멈춘 사고: 2026-07-16~17 goal null).
-  const browser = await chromium.launch({ headless: cfg.headless, timeout: 60_000 })
+  // 이미지·원격폰트 차단(TRAFFIC_ARGS) — 10분마다 뜨는 자체 브라우저의 불필요 다운로드 절감.
+  const browser = await chromium.launch({ headless: cfg.headless, timeout: 60_000, args: [...TRAFFIC_ARGS] })
   try {
     const opts: BrowserContextOptions = { userAgent: GOOGLE_UA, locale: 'ko-KR' }
     if (await fileExists(cfg.goals.googleStorageStatePath)) {

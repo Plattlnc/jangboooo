@@ -1,9 +1,9 @@
 /**
  * Playwright 세션 관리. 워커 수명 동안 브라우저/컨텍스트를 1개 유지하고,
  * 로그인 쿠키를 storageState 파일로 영속화해 사이클·재시작 간 세션을 재사용한다.
- * (grider 는 PHP 폼 로그인 → 세션 쿠키 기반이므로 storageState 로 유지 가능.)
+ * (배민 biz-member 로그인 세션은 쿠키 기반이라 storageState 로 유지 가능.)
  */
-import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { mkdir, readFile } from 'node:fs/promises'
 import { dirname } from 'node:path'
 import { chromium, type Browser, type BrowserContext, type Page } from 'playwright'
 import type { Config } from './config'
@@ -20,7 +20,7 @@ const STEALTH_UA =
 const STEALTH_ARGS = ['--disable-blink-features=AutomationControlled']
 // 프록시 트래픽 절감: 수집은 JSON API 만 쓰므로 이미지/원격폰트는 대역폭 낭비(2026-07-11 5GB 소진 원인 일부).
 // route() 인터셉트는 Chromium HTTP 캐시를 꺼 JS 번들이 매번 재다운로드되므로 반드시 launch args 로 차단.
-const TRAFFIC_ARGS = ['--blink-settings=imagesEnabled=false', '--disable-remote-fonts']
+export const TRAFFIC_ARGS = ['--blink-settings=imagesEnabled=false', '--disable-remote-fonts']
 const STEALTH_CONTEXT = {
   userAgent: STEALTH_UA,
   viewport: { width: 1440, height: 900 },
@@ -111,20 +111,6 @@ export class BrowserSession {
     } catch {
       return undefined
     }
-  }
-
-  /** 손상된 세션 초기화: storageState 비우고 컨텍스트 재생성. */
-  async resetContext(): Promise<void> {
-    if (!this.browser) return
-    if (this.context) await this.context.close().catch(() => {})
-    try {
-      await writeFile(this.cfg.storageStatePath, JSON.stringify({ cookies: [], origins: [] }))
-    } catch {
-      /* 파일 없을 수 있음 — 무시 */
-    }
-    this.context = await this.browser.newContext({ ...STEALTH_CONTEXT })
-    await this.applyStealth(this.context)
-    this.log.info('브라우저 컨텍스트 재생성(세션 초기화)')
   }
 
   async close(): Promise<void> {
