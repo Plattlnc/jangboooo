@@ -239,3 +239,43 @@ test('날짜 컬럼 없는 동일센터 다행 테이블(주간 분할 청크) �
   assert.ok(c)
   assert.equal(c.peaks.find((p) => p.peak_key === 'ml')?.goal, 589)
 })
+
+// ── 2026-08-12 리포트 개편 대응(날짜 YYYY-MM-DD·pct 100 초과) ────────────────
+const weeklyNew = readFileSync(join(here, 'fixtures', 'looker-batched-weekly-2026-08.txt'), 'utf8')
+const todayNew = readFileSync(join(here, 'fixtures', 'looker-batched-today-2026-08.txt'), 'utf8')
+
+test('개편 실응답(주간): YYYY-MM-DD 날짜 컬럼 + targetDate(YYYY) → 해당 행 채택', () => {
+  const [c] = parseLookerGoals([weeklyNew], '2026-08-14')
+  assert.ok(c)
+  assert.equal(c.center_id, 'DP2504250236')
+  // 8/14 행 실값: ml 1/336, pl 0/336, d 0/512, pd 0/416
+  assert.deepEqual(
+    c.peaks.map((p) => [p.peak_key, p.goal]),
+    [['ml', 336], ['pl', 336], ['d', 512], ['pd', 416]],
+  )
+})
+
+test('개편 실응답(주간): 과거 호환 — targetDate 를 구형(YY-MM-DD)으로 줘도 매칭', () => {
+  const [c] = parseLookerGoals([weeklyNew], '26-08-13')
+  assert.ok(c)
+  // 8/13 행 실값: 431/304 (141%) — pct 100 초과 표기도 파싱됨
+  const ml = c.peaks.find((p) => p.peak_key === 'ml')!
+  assert.deepEqual([ml.current, ml.goal, ml.pct], [431, 304, 141])
+})
+
+test('개편 실응답(오늘 테이블): 날짜 컬럼 없음 + 센터당 1행 → targetDate 지정에도 채택', () => {
+  const [c] = parseLookerGoals([todayNew], '2026-08-14')
+  assert.ok(c)
+  assert.equal(c.center_id, 'DP2504250236')
+  assert.equal(c.peaks.find((p) => p.peak_key === 'ml')?.goal, 336)
+})
+
+test('구형(YY-MM-DD) 셀 + 신형(YYYY) targetDate 도 정규화 매칭', () => {
+  const weekly = makeWeeklyBody('표준인천서B - DP2504250236', [
+    { date: '26-07-17', cells: ['0/589 (0%)', '0/418 (0%)', '0/684 (0%)', '0/589 (0%)'] },
+    { date: '26-07-20', cells: ['0/399 (0%)', '0/380 (0%)', '0/570 (0%)', '0/551 (0%)'] },
+  ])
+  const [c] = parseLookerGoals([weekly], '2026-07-17')
+  assert.ok(c)
+  assert.equal(c.peaks.find((p) => p.peak_key === 'ml')?.goal, 589)
+})

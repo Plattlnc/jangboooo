@@ -60,6 +60,29 @@ export function businessDayInTz(timeZone = 'Asia/Seoul', d: Date = trustedNow())
   return dateStringInTz(timeZone, new Date(d.getTime() - 6 * 60 * 60 * 1000))
 }
 
+/**
+ * 영업일 전환(06:00) 직후 그레이스 구간 여부. 배민 API 카운터가 서버측에서 리셋되기 전의
+ * 전일 누적치가 새 영업일 키로 오염 적재되는 것을 막는다. (2026-08-14 사고: 06:00 사이클이
+ * 전일 최종 피크값을 새 날짜에 시드 → current 단조 가드가 이후 실값 갱신을 하루 종일 차단.)
+ */
+export function isBusinessDayRollover(
+  timeZone = 'Asia/Seoul',
+  d: Date = trustedNow(),
+  graceMinutes = 10,
+): boolean {
+  // 영업일 앵커(-6h)로 정렬하면 06:00 경계가 자정이 된다 → 자정으로부터 경과 분만 보면 됨.
+  const shifted = new Date(d.getTime() - 6 * 60 * 60 * 1000)
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone,
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(shifted)
+  const h = Number(parts.find((p) => p.type === 'hour')?.value ?? 'NaN')
+  const m = Number(parts.find((p) => p.type === 'minute')?.value ?? 'NaN')
+  return h === 0 && m < graceMinutes
+}
+
 /** 주어진 예산(ms) 초과 시 reject. 사이클 시간 상한(다음 틱 스킵)에 사용. */
 export class TimeoutError extends Error {
   constructor(ms: number, label: string) {

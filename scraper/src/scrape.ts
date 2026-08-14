@@ -12,7 +12,7 @@ import { upsertCenterCurrents, upsertDeliveryFeeDetails, upsertHourlyStats, upse
 import { captureApiHeaders, fetchSlaDataWithHeaders, isSessionExpired, mockScrapeResult } from './sources/baemin'
 import { collectDeliveryFees } from './sources/baemin-fees'
 import type { RiderDailyFee, ScrapeResult, UpsertCounts } from './types'
-import { trustedNow } from './util'
+import { isBusinessDayRollover, trustedNow } from './util'
 
 /** trustedNow 기준 KST 달력일(YYYY-MM-DD)+시(0~23). */
 function kstDateHour(now: Date): { date: string; hour: number } {
@@ -103,7 +103,7 @@ async function fetchWithParkedSession(deps: CycleDeps): Promise<ScrapeResult> {
 }
 
 /** 파싱 결과를 멱등 upsert. captured_at 미지정 행엔 적재 시점을 일괄 부여. */
-async function persistResult(db: Db, result: ScrapeResult, log: Logger): Promise<UpsertCounts> {
+async function persistResult(db: Db, result: ScrapeResult, log: Logger, timezone = 'Asia/Seoul'): Promise<UpsertCounts> {
   const capturedAt = trustedNow().toISOString()
   const snapshots = result.snapshots.map((s) => ({ captured_at: capturedAt, ...s }))
   const hourly = result.hourly.map((h) => ({ captured_at: capturedAt, ...h }))
@@ -115,8 +115,14 @@ async function persistResult(db: Db, result: ScrapeResult, log: Logger): Promise
     hourly: await upsertHourlyStats(db, hourly),
   }
   // 공동목표 current 를 배민 실시간 집계로 갱신(goal 은 Looker 가 별도 소유).
+  // 영업일 전환(06:00) 직후 그레이스 구간엔 스킵 — 배민 카운터 리셋 전의 전일 누적치가
+  // 새 날짜에 시드되면 단조 가드가 실값 갱신을 하루 종일 차단한다(2026-08-14 사고).
   if (result.centerPeakCurrents?.length) {
-    counts.centerCurrents = await upsertCenterCurrents(db, result.centerPeakCurrents, capturedAt)
+    if (isBusinessDayRollover(timezone)) {
+      log.info('영업일 전환 그레이스 — 피크 current 적재 스킵(전일 누적 오염 방지)')
+    } else {
+      counts.centerCurrents = await upsertCenterCurrents(db, result.centerPeakCurrents, capturedAt)
+    }
   }
   // 실시간 근무 인원(Storage) — best-effort, 실패해도 SLA 사이클 무영향.
   if (result.workingStatus) {
@@ -223,7 +229,7 @@ export async function runScrapeCycle(deps: CycleDeps): Promise<UpsertCounts | nu
   // MOCK 모드: 배민 미접속, mock 파서 → 적재 파이프라인만 검증(브라우저 불필요).
   if (cfg.mock) {
     log.warn('MOCK 모드 — 가짜 데이터 적재(운영 금지). 배민 미접속.')
-    return persistResult(db, mockScrapeResult(cfg), log)
+    return persistResult(db, mockScrapeResult(cfg), log, cfg.timezone)
   }
 
   if (!cfg.portal.configured) {
@@ -232,7 +238,7 @@ export async function runScrapeCycle(deps: CycleDeps): Promise<UpsertCounts | nu
   }
 
   try {
-    const settled = await persistResult(db, await fetchWithParkedSession(deps), log)
+    const settled = await persistResult(db, await fetchWithParkedSession(deps), log, cfg.timezone)
     // 배달처리비: SLA 수집 성공 후 같은 파킹 세션으로 8시·전일 1회 수집(best-effort, SLA 무영향).
     if (apiSession) await maybeCollectFees(deps, apiSession)
     return settled

@@ -45,6 +45,8 @@ export type CenterGoals = {
 /** Looker batchedDataV2 응답(최소 형태). 안전 파싱을 위해 모두 optional. */
 export type LookerColumn = {
   stringColumn?: { values?: string[] }
+  /** 2026-08-12 리포트 개편 후 주간 테이블 날짜가 dateColumn('YYYY-MM-DD')으로 옴. */
+  dateColumn?: { values?: string[] }
 }
 export type LookerTableDataset = {
   column?: LookerColumn[]

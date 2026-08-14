@@ -81,10 +81,13 @@ export async function collectCenterGoals(cfg: Config, log: Logger): Promise<Cent
     await page.goto(cfg.goals.reportUrl, { waitUntil: 'networkidle' }).catch((err) => {
       log.warn('Looker 리포트 네비 경고(계속 시도)', serializeError(err))
     })
+    // 2026-08-12 리포트 개편: 랜딩이 '공지' 탭으로 바뀌어 데이터 테이블이 기본 로드되지 않는다.
+    // '달성현황' 탭을 클릭해야 batchedDataV2 가 발사됨. 클릭 실패는 무시(구 리포트/탭 기본 활성 호환).
+    await page.click('text=달성현황', { timeout: 10_000 }).catch(() => {})
     // 데이터가 렌더된 "유효 목표(goal>0)" 응답이 올 때까지 대기(최대 ~30s).
     // 로딩 중에는 "0/0 (0%)" 플레이스홀더가 오므로, 패턴만 보지 말고 파싱 결과의 유효성으로 판단.
-    // 주간 테이블(수~화 7행)에서 오늘 영업일 행만 채택 — 'YYYY-MM-DD' → 'YY-MM-DD'(리포트 표기).
-    const targetDate = businessDayInTz(cfg.timezone).slice(2)
+    // 주간 테이블(수~화 7행)에서 오늘 영업일 행만 채택 — 날짜 정규화는 파서가 담당(YY/YYYY 겸용).
+    const targetDate = businessDayInTz(cfg.timezone)
     let centers = parseLookerGoals(bodies, targetDate)
     for (let i = 0; i < 60 && !centers.some(isValidCenterGoals); i++) {
       await page.waitForTimeout(500)

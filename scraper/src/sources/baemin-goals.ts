@@ -12,7 +12,7 @@ import {
   type PeakGoal,
 } from './baemin-goals-types'
 
-/** 피크 셀: "현재/목표 (퍼센트%)" 예 "810/528 (100%)". 퍼센트는 소스값(100 상한 반영). */
+/** 피크 셀: "현재/목표 (퍼센트%)" 예 "810/528 (100%)". 2026-08-12 개편 후 100 초과 표기(예 141%)도 옴. */
 const PEAK_CELL_RE = /^(\d+)\s*\/\s*(\d+)\s*\((\d+)%\)$/
 /** 센터 라벨에서 협력사 ID(DP…) 추출. 예 "표준인천서B - DP2504250236". */
 const CENTER_ID_RE = /(DP\w+)/
@@ -66,12 +66,29 @@ export function isValidCenterGoals(c: CenterGoals): boolean {
   return c.peaks.some((p) => p.goal != null && p.goal > 0)
 }
 
-/** 주간 테이블의 날짜 셀 형식: "26-07-17" (YY-MM-DD). */
-const DATE_CELL_RE = /^\d{2}-\d{2}-\d{2}$/
+/**
+ * 주간 테이블의 날짜 셀 형식: 구 리포트 "26-07-17"(YY-MM-DD), 2026-08-12 개편 후
+ * "2026-08-12"(YYYY-MM-DD) — 둘 다 수용한다.
+ */
+const DATE_CELL_RE = /^(?:\d{2}|\d{4})-\d{2}-\d{2}$/
+
+/** 날짜 문자열 정규화: 'YY-MM-DD' → 'YYYY-MM-DD'(20xx 가정). 이미 YYYY 면 그대로. */
+function normalizeDateCell(s: string): string {
+  const t = s.trim()
+  return /^\d{2}-\d{2}-\d{2}$/.test(t) ? `20${t}` : t
+}
+
+/**
+ * 날짜 컬럼 값 추출: 개편 후 dateColumn('YYYY-MM-DD') 우선, 구형은 stringColumn('YY-MM-DD').
+ */
+function dateColumnValues(col: LookerColumn): string[] {
+  const dv = col.dateColumn?.values
+  return dv && dv.length > 0 ? dv : columnValues(col)
+}
 
 /** 값이 전부 날짜 셀인 컬럼(주간 테이블 식별자). */
 function isDateColumn(col: LookerColumn): boolean {
-  const vals = columnValues(col).filter((v) => v != null && v !== '')
+  const vals = dateColumnValues(col).filter((v) => v != null && v !== '')
   return vals.length > 0 && vals.every((v) => DATE_CELL_RE.test(v.trim()))
 }
 
@@ -118,7 +135,7 @@ export function parseLookerGoals(bodies: Array<string | unknown>, targetDate?: s
       if (peakCols.length !== 4 || !centerCol) continue
 
       const dateCol = targetDate ? cols.find(isDateColumn) : undefined
-      const dateVals = dateCol ? columnValues(dateCol) : []
+      const dateVals = dateCol ? dateColumnValues(dateCol) : []
       const centerVals = columnValues(centerCol)
       // 주간 테이블이 날짜 컬럼 없이 분할 청크로 오는 경우(Looker 응답 분할은 로드마다 다름):
       // 같은 센터가 여러 행이면 요일별 행 = 어느 행이 오늘인지 식별 불가 → 테이블 통째로 거부.
@@ -129,10 +146,12 @@ export function parseLookerGoals(bodies: Array<string | unknown>, targetDate?: s
           .filter((v): v is string => Boolean(v))
         if (new Set(ids).size < ids.length) continue
       }
+      const normTarget = targetDate ? normalizeDateCell(targetDate) : undefined
       const rowCount = Math.max(...peakCols.map((c) => columnValues(c).length), centerVals.length)
       for (let r = 0; r < rowCount; r++) {
         // 주간(날짜 컬럼 보유) 테이블은 대상 날짜 행만 — 다른 요일 goal 채택 금지.
-        if (dateCol && dateVals[r]?.trim() !== targetDate) continue
+        // 날짜는 양쪽 다 정규화해 비교(리포트 표기가 YY↔YYYY 로 바뀌어도 견딤).
+        if (dateCol && normTarget && normalizeDateCell(dateVals[r] ?? '') !== normTarget) continue
         const label = centerVals[r]
         if (!label) continue
         const idMatch = CENTER_ID_RE.exec(label)
