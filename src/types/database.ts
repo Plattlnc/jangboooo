@@ -138,6 +138,10 @@ export type RiderDirectoryRow = {
   total_completed: number
 }
 
+// 0029: 대시보드 집계
+export type DailyCompletedRow = { day: string; completed: number; riders: number }
+export type WeekSettlementTotalsRow = { fee_total: number; mission_total: number; completed_total: number; active_riders: number }
+
 export type RiderDailyFeeRow = {
   admin_rider_id: string
   snapshot_date: string
@@ -442,6 +446,8 @@ export type Database = {
       // 앱 사용 현황(0017): KST 일별 방문·활성 라이더. service_role 전용.
       get_app_usage: { Args: { p_days?: number }; Returns: AppUsageRow[] }
       get_rider_directory: { Args: Empty; Returns: RiderDirectoryRow[] }
+      get_daily_completed: { Args: { p_days?: number }; Returns: DailyCompletedRow[] }
+      get_week_settlement_totals: { Args: { p_start: string; p_end: string }; Returns: WeekSettlementTotalsRow[] }
       // 공지 고유 조회 기록(0022): 뷰어당 1회 dedupe + view_count 유지. service_role 전용.
       record_notice_view: {
         Args: { p_notice_id: string; p_viewer_id: string }
