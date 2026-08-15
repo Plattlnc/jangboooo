@@ -164,8 +164,8 @@ export function ExtraPaymentsView({ data }: { data: ExtraPayments }) {
             <thead>
               <tr className="border-b border-jb-line bg-jb-surface text-left text-[12px] text-jb-ink-mute">
                 <th className="px-3 py-2.5 font-medium">번호</th>
-                <th className="w-full px-4 py-2.5 font-medium">라이더</th>
-                <th className="px-4 py-2.5 font-medium">라이더ID</th>
+                <th className="min-w-[96px] px-4 py-2.5 font-medium">라이더</th>
+                <th className="w-full px-4 py-2.5 font-medium">라이더ID</th>
                 <th className="px-4 py-2.5 text-right font-medium">건수</th>
                 <th className="px-4 py-2.5 text-right font-medium">합계 (세전)</th>
                 <th className="w-10 px-2 py-2.5" />

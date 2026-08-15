@@ -78,11 +78,11 @@ export function RiderNotes({
           <thead className="sticky top-0 z-10 bg-jb-surface text-[12px] font-medium text-jb-ink-mute">
             <tr>
               <th className="border-b border-jb-line px-2 py-2.5 text-right">#</th>
-              <th className="border-b border-jb-line px-4 py-2.5 text-left">라이더</th>
-              <th className="w-[32%] border-b border-jb-line px-3 py-2.5 text-left">메모</th>
+              <th className="min-w-[96px] border-b border-jb-line px-4 py-2.5 text-left">라이더</th>
+              <th className="w-[240px] min-w-[240px] border-b border-jb-line px-3 py-2.5 text-left">메모</th>
               <th className="border-b border-jb-line px-3 py-2.5 text-left">라이더 ID</th>
               {showRrn ? <th className="w-[190px] border-b border-jb-line px-3 py-2.5 text-left">주민등록번호</th> : null}
-              <th className="w-[32%] border-b border-jb-line px-3 py-2.5 text-left">특이사항</th>
+              <th className="w-full min-w-[240px] border-b border-jb-line px-3 py-2.5 text-left">특이사항</th>
             </tr>
           </thead>
           <tbody>

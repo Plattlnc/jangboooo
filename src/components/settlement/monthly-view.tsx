@@ -110,7 +110,7 @@ export function MonthlyStatementView({
               <thead className="text-jb-ink-mute">
                 <tr className="bg-jb-surface text-[11.5px] font-semibold">
                   <th rowSpan={2} className="sticky left-0 z-10 w-[40px] min-w-[40px] max-w-[40px] border-b border-r border-jb-line bg-jb-surface px-2 py-2 text-right">No</th>
-                  <th rowSpan={2} className="sticky left-[40px] z-10 border-b border-r border-jb-line bg-jb-surface px-3 py-2 text-left">라이더명</th>
+                  <th rowSpan={2} className="sticky left-[40px] z-10 min-w-[96px] border-b border-r border-jb-line bg-jb-surface px-3 py-2 text-left">라이더명</th>
                   <th rowSpan={2} className="border-b border-r border-jb-line px-3 py-2 text-left">주민등록번호</th>
                   {weeks.map((w, i) => (
                     <th key={i} colSpan={2} className="border-b border-r border-jb-line px-3 py-2 text-center">
@@ -118,8 +118,9 @@ export function MonthlyStatementView({
                     </th>
                   ))}
                   <th rowSpan={2} className="border-b border-r border-jb-line px-3 py-2 text-right text-jb-ink">소득합계금액</th>
-                  <th rowSpan={2} className="w-full min-w-[160px] border-b border-r border-jb-line px-3 py-2 text-left">비고</th>
+                  <th rowSpan={2} className="w-[240px] min-w-[240px] border-b border-r border-jb-line px-3 py-2 text-left">비고</th>
                   <th rowSpan={2} className="border-b border-jb-line px-3 py-2 text-left">참고(UID)</th>
+                  <th rowSpan={2} className="w-full border-b border-jb-line p-0" aria-hidden />
                 </tr>
                 <tr className="bg-jb-surface text-[11px] font-medium">
                   {weeks.map((_, i) => (
@@ -143,8 +144,9 @@ export function MonthlyStatementView({
                       </Fragment>
                     ))}
                     <td className="border-r border-jb-line-soft px-3 py-2 text-right font-mono font-bold tabular-nums text-jb-indigo">{won(r.total)}</td>
-                    <td className="whitespace-nowrap border-r border-jb-line-soft px-3 py-2 text-jb-ink-soft">{notes[r.riderId] ?? ""}</td>
+                    <td className="border-r border-jb-line-soft px-3 py-2 text-jb-ink-soft"><div className="max-w-[240px] truncate" title={notes[r.riderId] ?? undefined}>{notes[r.riderId] ?? ""}</div></td>
                     <td className="whitespace-nowrap px-3 py-2 font-mono text-[11px] text-jb-ink-mute">{r.riderId}</td>
+                    <td className="p-0" aria-hidden />
                   </tr>
                 ))}
               </tbody>
@@ -160,6 +162,7 @@ export function MonthlyStatementView({
                   <td className="border-r border-jb-line px-3 py-2.5 text-right font-mono tabular-nums text-jb-indigo">{won(totals.total)}</td>
                   <td className="border-r border-jb-line-soft" />
                   <td />
+                  <td className="p-0" aria-hidden />
                 </tr>
               </tfoot>
             </table>

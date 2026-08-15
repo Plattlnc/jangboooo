@@ -174,7 +174,7 @@ export function DailySettlementView({
               <thead className="text-jb-ink-mute">
                 <tr className="bg-jb-surface text-[12px] font-medium">
                   <th className="sticky left-0 z-10 w-[40px] min-w-[40px] max-w-[40px] border-b border-jb-line bg-jb-surface px-2 py-2.5 text-right">#</th>
-                  <SortableTh label="라이더" onClick={() => toggleSort("name")} active={sortKey === "name"} dir={sortDir} align="left" className="sticky left-[40px] z-10 bg-jb-surface" />
+                  <SortableTh label="라이더" onClick={() => toggleSort("name")} active={sortKey === "name"} dir={sortDir} align="left" className="sticky left-[40px] z-10 min-w-[96px] bg-jb-surface" />
                   <th className="w-[200px] border-b border-jb-line px-3 py-2.5 text-left">메모</th>
                   <th className="border-b border-jb-line px-3 py-2.5 text-left">라이더 ID</th>
                   <SortableTh label="완료" onClick={() => toggleSort("completed")} active={sortKey === "completed"} dir={sortDir} align="right" />
@@ -183,7 +183,8 @@ export function DailySettlementView({
                   <th className="border-b border-jb-line px-3 py-2.5 text-right">고용산재 {INS_PCT}</th>
                   <th className="border-b border-jb-line px-3 py-2.5 text-right">수수료 <span className="font-normal text-jb-ink-mute">건당 {won(PER_COMPLETED_FEE)}</span></th>
                   <SortableTh label="지급액" onClick={() => toggleSort("total")} active={sortKey === "total"} dir={sortDir} align="right" className="border-l border-jb-line font-semibold text-jb-ink" />
-                  <th className="w-full min-w-[240px] border-b border-l border-jb-line px-3 py-2.5 text-left">특이사항</th>
+                  <th className="w-[240px] min-w-[240px] border-b border-l border-jb-line px-3 py-2.5 text-left">특이사항</th>
+                  <th className="w-full border-b border-jb-line p-0" aria-hidden />
                 </tr>
               </thead>
               <tbody>
@@ -209,6 +210,7 @@ export function DailySettlementView({
                   <Num v={vTotals.feeFee} deduct />
                   <Num v={vTotals.total} className="border-l border-jb-line text-jb-indigo" />
                   <td className="border-l border-jb-line-soft" />
+                  <td className="p-0" aria-hidden />
                 </tr>
               </tfoot>
             </table>
@@ -317,6 +319,7 @@ const Row = memo(function Row({
           className="w-full rounded-[8px] border border-transparent bg-transparent px-2 py-1.5 text-[13px] text-jb-ink outline-none hover:border-jb-line focus:border-jb-indigo/50 focus:bg-jb-surface placeholder:text-jb-ink-mute"
         />
       </td>
+      <td className="p-0" aria-hidden />
     </tr>
   );
 });
