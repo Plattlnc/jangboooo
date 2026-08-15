@@ -106,7 +106,7 @@ export function MonthlyStatementView({
           </div>
         ) : (
           <DualScrollX>
-            <table className="w-full border-collapse text-[12.5px]" style={{ minWidth: 700 + weeks.length * 220 }}>
+            <table className="w-full whitespace-nowrap border-collapse text-[12.5px]">
               <thead className="text-jb-ink-mute">
                 <tr className="bg-jb-surface text-[11.5px] font-semibold">
                   <th rowSpan={2} className="sticky left-0 z-10 w-[40px] min-w-[40px] max-w-[40px] border-b border-r border-jb-line bg-jb-surface px-2 py-2 text-right">No</th>
@@ -118,7 +118,7 @@ export function MonthlyStatementView({
                     </th>
                   ))}
                   <th rowSpan={2} className="border-b border-r border-jb-line px-3 py-2 text-right text-jb-ink">소득합계금액</th>
-                  <th rowSpan={2} className="border-b border-r border-jb-line px-3 py-2 text-left">비고</th>
+                  <th rowSpan={2} className="w-full min-w-[160px] border-b border-r border-jb-line px-3 py-2 text-left">비고</th>
                   <th rowSpan={2} className="border-b border-jb-line px-3 py-2 text-left">참고(UID)</th>
                 </tr>
                 <tr className="bg-jb-surface text-[11px] font-medium">

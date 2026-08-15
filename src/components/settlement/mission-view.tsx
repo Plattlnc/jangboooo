@@ -177,18 +177,18 @@ export function MissionSettlementView({
           </div>
         ) : (
           <DualScrollX>
-            <table className="w-full min-w-[1000px] border-collapse text-[13px]">
+            <table className="w-full whitespace-nowrap border-collapse text-[13px]">
               <thead className="text-jb-ink-mute">
                 <tr className="bg-jb-surface text-[12px] font-medium">
-                  <th className="sticky left-0 z-10 w-[48px] min-w-[48px] max-w-[48px] border-b border-jb-line bg-jb-surface px-3 py-2.5 text-right">#</th>
-                  <SortableTh label="라이더" onClick={() => toggleSort("name")} active={sortKey === "name"} dir={sortDir} align="left" className="sticky left-[48px] z-10 bg-jb-surface" />
+                  <th className="sticky left-0 z-10 w-[40px] min-w-[40px] max-w-[40px] border-b border-jb-line bg-jb-surface px-2 py-2.5 text-right">#</th>
+                  <SortableTh label="라이더" onClick={() => toggleSort("name")} active={sortKey === "name"} dir={sortDir} align="left" className="sticky left-[40px] z-10 bg-jb-surface" />
                   <th className="w-[200px] border-b border-jb-line px-3 py-2.5 text-left">메모</th>
                   <th className="border-b border-jb-line px-3 py-2.5 text-left">라이더 ID</th>
                   <SortableTh label="본사미션(세전)" onClick={() => toggleSort("mission")} active={sortKey === "mission"} dir={sortDir} align="right" className="border-l border-jb-line" />
                   <th className="border-b border-jb-line px-3 py-2.5 text-right">원천세 {WHT_PCT}</th>
                   <th className="border-b border-jb-line px-3 py-2.5 text-right">고용산재 {INS_PCT}</th>
                   <SortableTh label="지급액" onClick={() => toggleSort("payout")} active={sortKey === "payout"} dir={sortDir} align="right" className="border-l border-jb-line font-semibold text-jb-ink" />
-                  <th className="w-[240px] border-b border-l border-jb-line px-3 py-2.5 text-left">특이사항</th>
+                  <th className="w-full min-w-[240px] border-b border-l border-jb-line px-3 py-2.5 text-left">특이사항</th>
                 </tr>
               </thead>
               <tbody>
@@ -311,8 +311,8 @@ const Row = memo(function Row({
 }) {
   return (
     <tr className="border-b border-jb-line-soft transition-colors hover:bg-jb-surface/60">
-      <td className="sticky left-0 z-10 w-[48px] min-w-[48px] max-w-[48px] bg-jb-card px-3 py-2.5 text-right font-mono text-[12px] tabular-nums text-jb-ink-mute">{index}</td>
-      <td className="sticky left-[48px] z-10 bg-jb-card px-3 py-2.5 font-medium text-jb-ink">{row.name}</td>
+      <td className="sticky left-0 z-10 w-[40px] min-w-[40px] max-w-[40px] bg-jb-card px-2 py-2.5 text-right font-mono text-[12px] tabular-nums text-jb-ink-mute">{index}</td>
+      <td className="sticky left-[40px] z-10 bg-jb-card px-3 py-2.5 font-medium text-jb-ink">{row.name}</td>
       <td className="px-2 py-1.5">
         <input
           value={memoVal}

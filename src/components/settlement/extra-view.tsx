@@ -160,11 +160,11 @@ export function ExtraPaymentsView({ data }: { data: ExtraPayments }) {
         </div>
       ) : (
         <div className="overflow-hidden rounded-[12px] border border-jb-line bg-jb-card">
-          <table className="w-full text-[13.5px]">
+          <table className="w-full whitespace-nowrap text-[13.5px]">
             <thead>
               <tr className="border-b border-jb-line bg-jb-surface text-left text-[12px] text-jb-ink-mute">
-                <th className="px-4 py-2.5 font-medium">번호</th>
-                <th className="px-4 py-2.5 font-medium">라이더</th>
+                <th className="px-3 py-2.5 font-medium">번호</th>
+                <th className="w-full px-4 py-2.5 font-medium">라이더</th>
                 <th className="px-4 py-2.5 font-medium">라이더ID</th>
                 <th className="px-4 py-2.5 text-right font-medium">건수</th>
                 <th className="px-4 py-2.5 text-right font-medium">합계 (세전)</th>
@@ -220,7 +220,7 @@ function ExtraRow({
           opened && "bg-jb-surface/50",
         )}
       >
-        <td className="px-4 py-2.5 tabular-nums text-jb-ink-mute">{idx}</td>
+        <td className="px-3 py-2.5 tabular-nums text-jb-ink-mute">{idx}</td>
         <td className="px-4 py-2.5 font-semibold text-jb-ink">{row.name}</td>
         <td className="px-4 py-2.5 text-jb-ink-mute">{row.riderId}</td>
         <td className="px-4 py-2.5 text-right tabular-nums text-jb-ink-soft">{row.count}건</td>
@@ -233,11 +233,11 @@ function ExtraRow({
         <tr className="border-b border-jb-line/60 bg-jb-surface/40">
           <td colSpan={6} className="px-4 pb-3 pt-1">
             <div className="overflow-hidden rounded-[10px] border border-jb-line/70 bg-jb-card">
-              <table className="w-full text-[12.5px]">
+              <table className="w-full whitespace-nowrap text-[12.5px]">
                 <thead>
                   <tr className="border-b border-jb-line/70 text-left text-[11.5px] text-jb-ink-mute">
                     <th className="px-3 py-2 font-medium">대상 배달</th>
-                    <th className="px-3 py-2 font-medium">사유</th>
+                    <th className="w-full px-3 py-2 font-medium">사유</th>
                     <th className="px-3 py-2 text-right font-medium">금액</th>
                   </tr>
                 </thead>

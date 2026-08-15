@@ -141,11 +141,11 @@ export function DeductionView({
         {error ? <p className="border-b border-jb-line px-4 py-2 text-[12.5px] font-medium text-jb-red">{error}</p> : null}
 
         <div className="max-h-[calc(100dvh-360px)] overflow-auto">
-          <table className="w-full min-w-[720px] border-collapse text-[13px]">
+          <table className="w-full whitespace-nowrap border-collapse text-[13px]">
             <thead className="sticky top-0 z-10 bg-jb-surface text-[12px] font-medium text-jb-ink-mute">
               <tr>
-                <th className="w-[44px] border-b border-jb-line px-3 py-2.5 text-right">#</th>
-                <th className="border-b border-jb-line px-4 py-2.5 text-left">라이더</th>
+                <th className="border-b border-jb-line px-2 py-2.5 text-right">#</th>
+                <th className="w-full border-b border-jb-line px-4 py-2.5 text-left">라이더</th>
                 <th className="border-b border-jb-line px-3 py-2.5 text-left">라이더 ID</th>
                 <th className="w-[160px] border-b border-l border-jb-line px-3 py-2.5 text-right">시간제보험료<span className="font-normal text-jb-ink-mute"> 자동</span></th>
                 <th className="w-[150px] border-b border-jb-line px-3 py-2.5 text-right">수동 조정</th>
