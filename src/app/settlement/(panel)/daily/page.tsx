@@ -1,5 +1,6 @@
 import { fetchDailySettlement } from "@/app/settlement/_lib/daily";
 import { loadRiderNotes, loadRiderMemos } from "@/app/settlement/_lib/notes";
+import { loadTerminatedRiderIds } from "@/app/settlement/_lib/contract";
 import { kstToday, kstYesterday, isValidYmd } from "@/app/settlement/_lib/dates";
 import { DailyTabs } from "@/components/settlement/daily-tabs";
 import { DataPulse } from "@/components/settlement/data-pulse";
@@ -14,15 +15,16 @@ export default async function DailySettlementPage({
 }) {
   const sp = await searchParams;
   const date = isValidYmd(sp.date) ? sp.date : kstYesterday();
-  const [data, notes, memos] = await Promise.all([
+  const [data, notes, memos, terminated] = await Promise.all([
     fetchDailySettlement(date),
     loadRiderNotes(),
     loadRiderMemos(),
+    loadTerminatedRiderIds(),
   ]);
   return (
     <div>
       <div className="mb-4"><DataPulse source="daily" label="배달처리비 데이터" cadence="매일 08:00 자동 수집 (전일분)" /></div>
-      <DailyTabs data={data} today={kstToday()} notes={notes} memos={memos} />
+      <DailyTabs data={data} today={kstToday()} notes={notes} memos={memos} terminated={terminated} />
     </div>
   );
 }

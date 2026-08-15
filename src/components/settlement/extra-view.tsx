@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, ChevronDown, Download, Search, HandCoins } from "lucide-react";
 import type { ExtraPayments } from "@/app/settlement/_lib/extra";
 import { cn } from "@/lib/cn";
+import { TerminatedBadge } from "./terminated-badge";
 
 // 추가 지급 뷰 — 주차(수~화) 선택 + 라이더별 합산 표(행 펼침 시 건별 배달정보·사유).
 // 데이터 원천: 바로고 주차별 정산내역서 '추가배달료' 시트. 세전 금액, 공제 미적용
@@ -26,7 +27,8 @@ function fmtReason(reason: string): string {
   return `${m[7]} (${Number(m[2])}/${Number(m[3])}~${Number(m[5])}/${Number(m[6])} 처리)`;
 }
 
-export function ExtraPaymentsView({ data }: { data: ExtraPayments }) {
+export function ExtraPaymentsView({ data, terminated }: { data: ExtraPayments; terminated?: string[] }) {
+  const termSet = new Set(terminated ?? []);
   const router = useRouter();
   const { weekStart, weekEnd, rows, totalKrw, totalCount, availableWeeks } = data;
 
@@ -179,6 +181,7 @@ export function ExtraPaymentsView({ data }: { data: ExtraPayments }) {
                     key={r.riderId}
                     idx={i + 1}
                     row={r}
+                    isTerminated={termSet.has(r.riderId)}
                     opened={opened}
                     onToggle={() => toggle(r.riderId)}
                   />
@@ -203,11 +206,13 @@ export function ExtraPaymentsView({ data }: { data: ExtraPayments }) {
 function ExtraRow({
   idx,
   row,
+  isTerminated,
   opened,
   onToggle,
 }: {
   idx: number;
   row: ExtraPayments["rows"][number];
+  isTerminated: boolean;
   opened: boolean;
   onToggle: () => void;
 }) {
@@ -221,7 +226,7 @@ function ExtraRow({
         )}
       >
         <td className="px-3 py-2.5 tabular-nums text-jb-ink-mute">{idx}</td>
-        <td className="px-4 py-2.5 font-semibold text-jb-ink">{row.name}</td>
+        <td className="px-4 py-2.5 font-semibold text-jb-ink">{row.name}{isTerminated ? <TerminatedBadge /> : null}</td>
         <td className="px-4 py-2.5 text-jb-ink-mute">{row.riderId}</td>
         <td className="px-4 py-2.5 text-right tabular-nums text-jb-ink-soft">{row.count}건</td>
         <td className="px-4 py-2.5 text-right font-semibold tabular-nums text-jb-ink">{won(row.totalKrw)}원</td>

@@ -15,11 +15,13 @@ export function RiderSettings({
   notes,
   memos,
   rrns,
+  terminated,
 }: {
   riders: SettlementRider[];
   notes: Record<string, string>;
   memos: Record<string, string>;
   rrns: Record<string, string>;
+  terminated?: string[];
 }) {
   const api = useRiderNotesApi(notes, memos, rrns);
   const router = useRouter();
@@ -48,6 +50,7 @@ export function RiderSettings({
       <RiderNotes
         api={api}
         riders={riders}
+        terminated={terminated}
         heading="라이더별 정보"
         subtitle="메모·특이사항·주민등록번호 · 라이더에 귀속돼 유지"
       />

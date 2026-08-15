@@ -12,19 +12,21 @@ export function MissionTabs({
   today,
   notes,
   memos,
+  terminated,
 }: {
   data: MissionSettlement;
   period: "daily" | "weekly";
   today: string;
   notes: Record<string, string>;
   memos: Record<string, string>;
+  terminated?: string[];
 }) {
   const notesApi = useRiderNotesApi(notes, memos);
 
   return (
     <div className="flex flex-col gap-5">
       <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-jb-ink">본사 미션</h1>
-      <MissionSettlementView data={data} period={period} today={today} notesApi={notesApi} />
+      <MissionSettlementView data={data} period={period} today={today} notesApi={notesApi} terminated={terminated} />
     </div>
   );
 }

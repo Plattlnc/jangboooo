@@ -8,10 +8,10 @@ import type { Logger } from './logger'
 import { serializeError } from './logger'
 import type { BrowserSession } from './browser'
 import type { Db } from './supabase'
-import { upsertCenterCurrents, upsertDeliveryFeeDetails, upsertHourlyStats, upsertInsurance, upsertRiderDailyFees, upsertRiderExtraPayments, upsertRiderWeeklyInsurance, upsertRiders, upsertSlaSnapshots, upsertWorkingStatus } from './supabase'
+import { upsertCenterCurrents, upsertDeliveryFeeDetails, upsertHourlyStats, upsertInsurance, upsertRiderContractStatus, upsertRiderDailyFees, upsertRiderExtraPayments, upsertRiderWeeklyInsurance, upsertRiders, upsertSlaSnapshots, upsertWorkingStatus } from './supabase'
 import { captureApiHeaders, fetchSlaDataWithHeaders, isSessionExpired, mockScrapeResult } from './sources/baemin'
 import { collectDeliveryFees } from './sources/baemin-fees'
-import { tryCollectGriderWeekly } from './sources/grider'
+import { tryCollectGriderRiders, tryCollectGriderWeekly } from './sources/grider'
 import type { RiderDailyFee, ScrapeResult, UpsertCounts } from './types'
 import { isBusinessDayRollover, trustedNow } from './util'
 
@@ -364,6 +364,25 @@ async function maybeCollectGriderWeekly(cfg: Config, db: Db, log: Logger): Promi
   }
 }
 
+// ── grider 라이더 계약상태(계약중/계약종료) 주 X 하루 1회 수집 → '계약종료' 뱃지 소스 ──
+let griderRidersDay: string | null = null
+
+async function maybeCollectGriderRiders(cfg: Config, db: Db, log: Logger): Promise<void> {
+  if (!cfg.grider.configured) return
+  const { date: today, hour } = kstDateHour(trustedNow())
+  if (hour < cfg.grider.hour) return
+  if (griderRidersDay === today) return
+  griderRidersDay = today // 하루 1회(실패해도 내일 재시도 — 계약상태는 완만히 변함)
+  try {
+    const riders = await tryCollectGriderRiders(cfg, log)
+    if (!riders || riders.length === 0) return
+    const n = await upsertRiderContractStatus(db, riders)
+    log.info('grider 계약상태 적재 완료', { total: n, terminated: riders.filter((r) => r.is_terminated).length })
+  } catch (err) {
+    log.error('grider 계약상태 적재 실패(내일 재시도)', serializeError(err))
+  }
+}
+
 // ── app_visits retention — 하루 1회, 90일 초과 로그 삭제 ──
 // 소비처(get_app_usage)는 최근 14일만 읽는데 적재는 무한이라 데드 웨이트만 쌓인다(0017).
 // 90일 보존이면 재집계 여지까지 넉넉. best-effort — 실패해도 사이클 무영향.
@@ -415,6 +434,8 @@ export async function runScrapeCycle(deps: CycleDeps): Promise<UpsertCounts | nu
     if (apiSession) await maybeBackfillMissedFees(deps, apiSession)
     // grider 주정산서(추가지급·시간제보험료) 주 1회 자동 수집 — 배민 세션과 독립.
     await maybeCollectGriderWeekly(cfg, db, log)
+    // grider 라이더 계약상태(계약종료 뱃지) 하루 1회.
+    await maybeCollectGriderRiders(cfg, db, log)
     await maybePruneAppVisits(db, log)
     return settled
   } catch (err) {

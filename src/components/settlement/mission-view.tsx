@@ -8,6 +8,7 @@ import { WITHHOLDING_RATE, INSURANCE_RATE } from "@/app/settlement/_lib/rates";
 import { ymdAdd, formatKoreanDate } from "@/app/settlement/_lib/dates";
 import { NotesSaveButton, type NotesApi } from "./notes-api";
 import { DualScrollX } from "./dual-scroll";
+import { TerminatedBadge } from "./terminated-badge";
 
 // 본사 미션 정산 뷰 — 상단 [일일/주간]. 라이더별 본사 미션(세전)에서 원천세·고용산재 공제 → 지급액.
 // 수수료(완료건당 100원) 미적용. 주간은 수~화 기간 합산. 메모·특이사항은 라이더 설정과 공유.
@@ -26,13 +27,16 @@ export function MissionSettlementView({
   period,
   today,
   notesApi,
+  terminated,
 }: {
   data: MissionSettlement;
   period: Period;
   today: string;
   notesApi: NotesApi;
+  terminated?: string[];
 }) {
   const router = useRouter();
+  const termSet = useMemo(() => new Set(terminated ?? []), [terminated]);
   const { start, end, rows } = data;
   const weekly = period === "weekly";
 
@@ -197,6 +201,7 @@ export function MissionSettlementView({
                   <Row
                     key={r.riderId}
                     row={r}
+            isTerminated={termSet.has(r.riderId)}
                     index={i + 1}
                     memo={notesApi.memos[r.riderId] ?? ""}
                     onMemo={notesApi.setMemo}
@@ -298,6 +303,7 @@ function Num({ v, deduct, className = "" }: { v: number; deduct?: boolean; class
 
 const Row = memo(function Row({
   row,
+  isTerminated,
   index,
   memo: memoVal,
   onMemo,
@@ -305,6 +311,7 @@ const Row = memo(function Row({
   onNote,
 }: {
   row: MissionSettlementRow;
+  isTerminated: boolean;
   index: number;
   memo: string;
   onMemo: (id: string, val: string) => void;
@@ -314,7 +321,7 @@ const Row = memo(function Row({
   return (
     <tr className="border-b border-jb-line-soft transition-colors hover:bg-jb-surface/60">
       <td className="sticky left-0 z-10 w-[40px] min-w-[40px] max-w-[40px] bg-jb-card px-2 py-2.5 text-right font-mono text-[12px] tabular-nums text-jb-ink-mute">{index}</td>
-      <td className="sticky left-[40px] z-10 bg-jb-card px-3 py-2.5 font-medium text-jb-ink">{row.name}</td>
+      <td className="sticky left-[40px] z-10 bg-jb-card px-3 py-2.5 font-medium text-jb-ink">{row.name}{isTerminated ? <TerminatedBadge /> : null}</td>
       <td className="px-2 py-1.5">
         <input
           value={memoVal}

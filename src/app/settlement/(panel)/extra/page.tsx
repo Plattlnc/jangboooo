@@ -1,4 +1,5 @@
 import { fetchExtraPayments } from "@/app/settlement/_lib/extra";
+import { loadTerminatedRiderIds } from "@/app/settlement/_lib/contract";
 import { isValidYmd } from "@/app/settlement/_lib/dates";
 import { ExtraPaymentsView } from "@/components/settlement/extra-view";
 import { DataPulse } from "@/components/settlement/data-pulse";
@@ -15,13 +16,13 @@ export default async function ExtraPaymentsPage({
 }) {
   const sp = await searchParams;
   const week = isValidYmd(sp.week) ? sp.week : undefined;
-  const data = await fetchExtraPayments(week);
+  const [data, terminated] = await Promise.all([fetchExtraPayments(week), loadTerminatedRiderIds()]);
   return (
     <div>
       <div className="mb-4">
         <DataPulse source="extra" label="추가 지급 데이터" cadence="주간 정산서(수~화) 반영" />
       </div>
-      <ExtraPaymentsView data={data} />
+      <ExtraPaymentsView data={data} terminated={terminated} />
     </div>
   );
 }

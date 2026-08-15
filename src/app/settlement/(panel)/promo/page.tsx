@@ -1,5 +1,6 @@
 import { fetchPromoSettlement } from "@/app/settlement/_lib/promo";
 import { loadRiderNotes, loadRiderMemos } from "@/app/settlement/_lib/notes";
+import { loadTerminatedRiderIds } from "@/app/settlement/_lib/contract";
 import { kstToday, kstYesterday, isValidYmd, weekRangeOf } from "@/app/settlement/_lib/dates";
 import { PromoTabs } from "@/components/settlement/promo-tabs";
 import { DataPulse } from "@/components/settlement/data-pulse";
@@ -17,15 +18,16 @@ export default async function PromoSettlementPage({
   const ref = isValidYmd(sp.date) ? sp.date : kstYesterday();
   const { start, end } = weekRangeOf(ref);
 
-  const [data, notes, memos] = await Promise.all([
+  const [data, notes, memos, terminated] = await Promise.all([
     fetchPromoSettlement(start, end, true),
     loadRiderNotes(),
     loadRiderMemos(),
+    loadTerminatedRiderIds(),
   ]);
   return (
     <div>
       <div className="mb-4"><DataPulse source="hourly" label="시간대 실적 데이터" cadence="60초 주기 실시간 수집" pollMs={20_000} /></div>
-      <PromoTabs data={data} today={kstToday()} notes={notes} memos={memos} />
+      <PromoTabs data={data} today={kstToday()} notes={notes} memos={memos} terminated={terminated} />
     </div>
   );
 }

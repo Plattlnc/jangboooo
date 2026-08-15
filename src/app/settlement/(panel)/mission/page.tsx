@@ -1,5 +1,6 @@
 import { fetchMissionSettlement } from "@/app/settlement/_lib/mission";
 import { loadRiderNotes, loadRiderMemos } from "@/app/settlement/_lib/notes";
+import { loadTerminatedRiderIds } from "@/app/settlement/_lib/contract";
 import { kstToday, kstYesterday, isValidYmd, weekRangeOf } from "@/app/settlement/_lib/dates";
 import { MissionTabs } from "@/components/settlement/mission-tabs";
 import { DataPulse } from "@/components/settlement/data-pulse";
@@ -18,15 +19,16 @@ export default async function MissionSettlementPage({
   const ref = isValidYmd(sp.date) ? sp.date : kstYesterday();
   const { start, end } = period === "weekly" ? weekRangeOf(ref) : { start: ref, end: ref };
 
-  const [data, notes, memos] = await Promise.all([
+  const [data, notes, memos, terminated] = await Promise.all([
     fetchMissionSettlement(start, end),
     loadRiderNotes(),
     loadRiderMemos(),
+    loadTerminatedRiderIds(),
   ]);
   return (
     <div>
       <div className="mb-4"><DataPulse source="daily" label="본사 미션 데이터" cadence="매일 08:00 자동 수집 (전일분)" /></div>
-      <MissionTabs data={data} period={period} today={kstToday()} notes={notes} memos={memos} />
+      <MissionTabs data={data} period={period} today={kstToday()} notes={notes} memos={memos} terminated={terminated} />
     </div>
   );
 }

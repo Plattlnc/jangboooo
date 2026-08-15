@@ -4,6 +4,7 @@ import { useMemo, useState, useTransition } from "react";
 import { Search, Save, Check } from "lucide-react";
 import type { SettlementRider } from "@/app/settlement/_lib/notes";
 import { saveRiderDeductions } from "@/actions/deductions";
+import { TerminatedBadge } from "./terminated-badge";
 
 // 차감 정산 — 라이더별 시간제보험료 차감액 입력/저장. 금요일 정산 시 별도 차감(분류 관리).
 const won = (n: number) => n.toLocaleString("ko-KR");
@@ -13,11 +14,13 @@ export function DeductionView({
   deductions,
   scraped,
   latestDate,
+  terminated,
 }: {
   riders: SettlementRider[];
   deductions: Record<string, number>;
   scraped: Record<string, number>;
   latestDate: string | null;
+  terminated?: string[];
 }) {
   // 입력 편의를 위해 문자열 맵으로 보관(빈칸 허용).
   const initial = useMemo(() => {
@@ -26,6 +29,7 @@ export function DeductionView({
     return m;
   }, [deductions]);
 
+  const termSet = useMemo(() => new Set(terminated ?? []), [terminated]);
   const [map, setMap] = useState<Record<string, string>>(initial);
   const [baseline, setBaseline] = useState<Record<string, string>>(initial);
   const [q, setQ] = useState("");
@@ -156,7 +160,7 @@ export function DeductionView({
               {view.map((r, i) => (
                 <tr key={r.id} className="border-b border-jb-line-soft">
                   <td className="px-3 py-2 text-right font-mono text-[12px] tabular-nums text-jb-ink-mute">{i + 1}</td>
-                  <td className="whitespace-nowrap px-4 py-2 font-medium text-jb-ink">{r.name}</td>
+                  <td className="whitespace-nowrap px-4 py-2 font-medium text-jb-ink">{r.name}{termSet.has(r.id) ? <TerminatedBadge /> : null}</td>
                   <td className="whitespace-nowrap px-3 py-2 font-mono text-[12px] text-jb-ink-mute">{r.id}</td>
                   <td className="border-l border-jb-line-soft px-3 py-2 text-right font-mono tabular-nums text-jb-ink-soft">
                     {scrapedAmt(r.id) > 0 ? won(scrapedAmt(r.id)) : "-"}

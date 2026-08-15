@@ -7,13 +7,41 @@
  * 다운로드 URL(주정산서 = 을지/추가배달료/프로모션 포함):
  *   /settlement/weekly/settlement-excel?partner_company_id=&partner_company_name=&base_date=&end_date=
  */
-import { chromium } from 'playwright'
+import { chromium, type Browser, type Page } from 'playwright'
 import * as XLSX from 'xlsx'
 import type { Config } from '../config'
 import type { Logger } from '../logger'
 import { serializeError } from '../logger'
 import { TRAFFIC_ARGS } from '../browser'
-import type { RiderExtraPayment, RiderWeeklyInsurance } from '../types'
+import type { RiderContractStatus, RiderExtraPayment, RiderWeeklyInsurance } from '../types'
+
+const GRIDER_UA =
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
+
+/** grider 로그인(ID/PW, 2FA 없음) → 인증된 page 반환. 호출부가 browser.close() 책임. */
+async function griderLogin(cfg: Config): Promise<{ browser: Browser; page: Page }> {
+  const { id, pw, baseUrl } = cfg.grider
+  if (!id || !pw) throw new Error('grider 미설정(GRIDER_ID/PW)')
+  const browser = await chromium.launch({ headless: cfg.headless, timeout: 60_000, args: [...TRAFFIC_ARGS] })
+  try {
+    const context = await browser.newContext({ userAgent: GRIDER_UA, viewport: { width: 1440, height: 900 }, locale: 'ko-KR' })
+    context.setDefaultNavigationTimeout(cfg.navTimeoutMs)
+    const page = await context.newPage()
+    await page.goto(`${baseUrl}/login`, { waitUntil: 'domcontentloaded' })
+    await page.fill('#id', id)
+    await page.fill('#password', pw)
+    await Promise.all([
+      page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: cfg.navTimeoutMs }).catch(() => {}),
+      page.click('#loginBtn').catch(() => page.press('#password', 'Enter')),
+    ])
+    await page.waitForTimeout(1500)
+    if (page.url().includes('/login')) throw new Error('grider 로그인 실패(자격증명 확인 필요)')
+    return { browser, page }
+  } catch (err) {
+    await browser.close().catch(() => {})
+    throw err
+  }
+}
 
 const SHEET_EULJI_PREFIX = '을지' // 을지_협력사 소속 라이더 정산 확인용
 const SHEET_EXTRA = '추가배달료'
@@ -92,29 +120,9 @@ export async function collectGriderWeekly(
   weekEnd: string,
 ): Promise<GriderWeeklyResult> {
   if (!cfg.grider.configured) throw new Error('grider 미설정(GRIDER_ID/PW)')
-  const { id, pw, baseUrl } = cfg.grider
-  const browser = await chromium.launch({ headless: cfg.headless, timeout: 60_000, args: [...TRAFFIC_ARGS] })
+  const { id, baseUrl } = cfg.grider
+  const { browser, page } = await griderLogin(cfg)
   try {
-    const context = await browser.newContext({
-      userAgent:
-        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-      viewport: { width: 1440, height: 900 },
-      locale: 'ko-KR',
-    })
-    context.setDefaultNavigationTimeout(cfg.navTimeoutMs)
-    const page = await context.newPage()
-
-    // 로그인 — id/password 필드는 name 이 아니라 element id.
-    await page.goto(`${baseUrl}/login`, { waitUntil: 'domcontentloaded' })
-    await page.fill('#id', id!)
-    await page.fill('#password', pw!)
-    await Promise.all([
-      page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: cfg.navTimeoutMs }).catch(() => {}),
-      page.click('#loginBtn').catch(() => page.press('#password', 'Enter')),
-    ])
-    await page.waitForTimeout(1500)
-    if (page.url().includes('/login')) throw new Error('grider 로그인 실패(자격증명 확인 필요)')
-
     // 주정산서 엑셀 직접 다운로드(세션 쿠키 포함). partner_company_name 은 URL 인코딩.
     const q = new URLSearchParams({
       partner_company_id: id!,
@@ -163,6 +171,72 @@ export async function tryCollectGriderWeekly(
     return await collectGriderWeekly(cfg, log, weekStart, weekEnd)
   } catch (err) {
     log.warn('grider 주정산서 수집 실패(스킵)', serializeError(err))
+    return null
+  }
+}
+
+/**
+ * grider 라이더 관리(/partners/riders) 전량 수집 → 계약상태(계약중/계약종료).
+ * 테이블 컬럼: [_, 협력사명, 협력사ID, 라이더ID(3), 라이더명(4), 휴대폰(5), 계약상태(6), ...].
+ * 페이지당 20행, ?page=N 순회. 20행 미만이면 마지막 페이지.
+ */
+export async function collectGriderRiders(cfg: Config, log: Logger): Promise<RiderContractStatus[]> {
+  if (!cfg.grider.configured) throw new Error('grider 미설정(GRIDER_ID/PW)')
+  const { baseUrl } = cfg.grider
+  const { browser, page } = await griderLogin(cfg)
+  try {
+    const out: RiderContractStatus[] = []
+    const seen = new Set<string>()
+    for (let pageNo = 1; pageNo <= 40; pageNo++) {
+      await page.goto(`${baseUrl}/partners/riders?page=${pageNo}`, { waitUntil: 'networkidle' })
+      await page.waitForTimeout(800)
+      const rows: string[][] = await page.evaluate(() => {
+        const doc = (globalThis as { document?: { querySelectorAll(s: string): ArrayLike<{ querySelectorAll(s: string): ArrayLike<{ textContent: string | null }> }> } }).document
+        const res: string[][] = []
+        if (!doc) return res
+        const trs = doc.querySelectorAll('table tbody tr')
+        for (let i = 0; i < trs.length; i++) {
+          const tds = trs[i]!.querySelectorAll('td')
+          const cells: string[] = []
+          for (let j = 0; j < tds.length; j++) cells.push((tds[j]!.textContent ?? '').trim().replace(/\s+/g, ' '))
+          res.push(cells)
+        }
+        return res
+      })
+      if (rows.length === 0) break
+      let added = 0
+      for (const r of rows) {
+        const rid = str(r[3])
+        if (!rid || seen.has(rid)) continue
+        seen.add(rid)
+        added += 1
+        const status = str(r[6]) ?? ''
+        out.push({
+          admin_rider_id: rid,
+          rider_name: str(r[4]),
+          phone: str(r[5]),
+          status,
+          is_terminated: status.includes('종료') || status.includes('해지') || status.includes('탈퇴'),
+        })
+      }
+      if (rows.length < 20 || added === 0) break
+    }
+    log.info('grider 계약상태 수집', {
+      total: out.length,
+      terminated: out.filter((r) => r.is_terminated).length,
+    })
+    return out
+  } finally {
+    await browser.close().catch(() => {})
+  }
+}
+
+/** best-effort 래퍼 — 실패 시 null. */
+export async function tryCollectGriderRiders(cfg: Config, log: Logger): Promise<RiderContractStatus[] | null> {
+  try {
+    return await collectGriderRiders(cfg, log)
+  } catch (err) {
+    log.warn('grider 계약상태 수집 실패(스킵)', serializeError(err))
     return null
   }
 }

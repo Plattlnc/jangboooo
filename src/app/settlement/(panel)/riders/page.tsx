@@ -1,4 +1,5 @@
 import { loadRiderNotes, loadRiderMemos, loadRiderRrns, loadSettlementRiders } from "@/app/settlement/_lib/notes";
+import { loadTerminatedRiderIds } from "@/app/settlement/_lib/contract";
 import { isRidersUnlocked } from "@/lib/auth/settlement-cookies";
 import { RiderSettings } from "@/components/settlement/rider-settings";
 import { RidersUnlockForm } from "@/components/settlement/riders-unlock-form";
@@ -11,11 +12,12 @@ export default async function RiderSettingsPage() {
   if (!(await isRidersUnlocked())) {
     return <RidersUnlockForm />;
   }
-  const [riders, notes, memos, rrns] = await Promise.all([
+  const [riders, notes, memos, rrns, terminated] = await Promise.all([
     loadSettlementRiders(),
     loadRiderNotes(),
     loadRiderMemos(),
     loadRiderRrns(),
+    loadTerminatedRiderIds(),
   ]);
-  return <RiderSettings riders={riders} notes={notes} memos={memos} rrns={rrns} />;
+  return <RiderSettings riders={riders} notes={notes} memos={memos} rrns={rrns} terminated={terminated} />;
 }

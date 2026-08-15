@@ -4,7 +4,7 @@
  */
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import type { Config } from './config'
-import type { CenterCurrentUpsert, CenterGoalUpsert, DeliveryFeeDetail, HourlyStatUpsert, RiderDailyFee, RiderExtraPayment, RiderInsurance, RiderUpsert, RiderWeeklyInsurance, SlaSnapshotUpsert, WorkingStatusSummary } from './types'
+import type { CenterCurrentUpsert, CenterGoalUpsert, DeliveryFeeDetail, HourlyStatUpsert, RiderContractStatus, RiderDailyFee, RiderExtraPayment, RiderInsurance, RiderUpsert, RiderWeeklyInsurance, SlaSnapshotUpsert, WorkingStatusSummary } from './types'
 
 export type Db = SupabaseClient
 
@@ -124,6 +124,16 @@ export async function upsertRiderWeeklyInsurance(db: Db, rows: RiderWeeklyInsura
     .upsert(rows, { onConflict: 'week_start,admin_rider_id' })
   if (error) throw new SupabaseUpsertError('rider_weekly_insurance', error)
   return rows.length
+}
+
+/** rider_contract_status 멱등 upsert (키: admin_rider_id). captured_at 갱신으로 신선도 표시. */
+export async function upsertRiderContractStatus(db: Db, rows: RiderContractStatus[]): Promise<number> {
+  if (rows.length === 0) return 0
+  const capturedAt = new Date().toISOString()
+  const payload = rows.map((r) => ({ ...r, captured_at: capturedAt }))
+  const { error } = await db.from('rider_contract_status').upsert(payload, { onConflict: 'admin_rider_id' })
+  if (error) throw new SupabaseUpsertError('rider_contract_status', error)
+  return payload.length
 }
 
 /** delivery_fee_details 멱등 upsert (키: delivery_no). 배달건별 상세(취소 포함). 청크 500. */

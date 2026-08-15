@@ -12,11 +12,13 @@ export function PromoTabs({
   today,
   notes,
   memos,
+  terminated,
 }: {
   data: PromoSettlement;
   today: string;
   notes: Record<string, string>;
   memos: Record<string, string>;
+  terminated?: string[];
 }) {
   const notesApi = useRiderNotesApi(notes, memos);
 
@@ -32,7 +34,7 @@ export function PromoTabs({
           설정
         </Link>
       </div>
-      <PromoSettlementView data={data} today={today} notesApi={notesApi} />
+      <PromoSettlementView data={data} today={today} notesApi={notesApi} terminated={terminated} />
     </div>
   );
 }

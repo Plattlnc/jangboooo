@@ -4,6 +4,7 @@ import { useMemo, useState, memo } from "react";
 import { Search } from "lucide-react";
 import type { SettlementRider } from "@/app/settlement/_lib/notes";
 import { NotesSaveButton, type NotesApi } from "./notes-api";
+import { TerminatedBadge } from "./terminated-badge";
 
 // 라이더별 메모·특이사항(·주민번호) — 상위 공유 상태(NotesApi) 소비. 검색 + 인라인 입력 + 저장.
 // api.rrns 가 있으면(라이더 설정 페이지) 주민등록번호 컬럼을 함께 노출/편집.
@@ -11,15 +12,18 @@ import { NotesSaveButton, type NotesApi } from "./notes-api";
 export function RiderNotes({
   api,
   riders,
+  terminated,
   heading = "라이더별 메모·특이사항",
   subtitle = "라이더 ID·이름에 귀속돼 날짜가 바뀌어도 유지됩니다",
 }: {
   api: NotesApi;
   riders: SettlementRider[];
+  terminated?: string[];
   heading?: string;
   subtitle?: string;
 }) {
   const { notes, setNote, memos, setMemo, rrns, setRrn } = api;
+  const termSet = new Set(terminated ?? []);
   const showRrn = rrns !== undefined && setRrn !== undefined;
   const [q, setQ] = useState("");
   const [onlyNoted, setOnlyNoted] = useState(false);
@@ -92,6 +96,7 @@ export function RiderNotes({
                 index={i + 1}
                 id={r.id}
                 name={r.name}
+                isTerminated={termSet.has(r.id)}
                 memoValue={memos[r.id] ?? ""}
                 noteValue={notes[r.id] ?? ""}
                 rrnValue={showRrn ? rrns[r.id] ?? "" : undefined}
@@ -118,6 +123,7 @@ const NoteRow = memo(function NoteRow({
   index,
   id,
   name,
+  isTerminated,
   memoValue,
   noteValue,
   rrnValue,
@@ -128,6 +134,7 @@ const NoteRow = memo(function NoteRow({
   index: number;
   id: string;
   name: string;
+  isTerminated: boolean;
   memoValue: string;
   noteValue: string;
   rrnValue?: string;
@@ -140,7 +147,7 @@ const NoteRow = memo(function NoteRow({
   return (
     <tr className="border-b border-jb-line-soft">
       <td className="px-3 py-1.5 text-right font-mono text-[12px] tabular-nums text-jb-ink-mute">{index}</td>
-      <td className="whitespace-nowrap px-4 py-1.5 font-medium text-jb-ink">{name}</td>
+      <td className="whitespace-nowrap px-4 py-1.5 font-medium text-jb-ink">{name}{isTerminated ? <TerminatedBadge /> : null}</td>
       <td className="px-3 py-1.5">
         <input value={memoValue} onChange={(e) => onMemo(id, e.target.value)} placeholder="메모 입력…" className={cell} />
       </td>

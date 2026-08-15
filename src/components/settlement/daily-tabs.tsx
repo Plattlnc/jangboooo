@@ -11,18 +11,20 @@ export function DailyTabs({
   today,
   notes,
   memos,
+  terminated,
 }: {
   data: DailySettlement;
   today: string;
   notes: Record<string, string>;
   memos: Record<string, string>;
+  terminated?: string[];
 }) {
   const notesApi = useRiderNotesApi(notes, memos);
 
   return (
     <div className="flex flex-col gap-5">
       <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-jb-ink">일일 정산</h1>
-      <DailySettlementView data={data} today={today} notesApi={notesApi} />
+      <DailySettlementView data={data} today={today} notesApi={notesApi} terminated={terminated} />
     </div>
   );
 }

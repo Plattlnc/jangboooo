@@ -90,6 +90,16 @@ export type RiderWeeklyInsuranceRow = {
   captured_at: string
 }
 
+// 0026: 라이더 계약상태 — grider 라이더 관리(계약중/계약종료). 정산 '계약종료' 뱃지 소스.
+export type RiderContractStatusRow = {
+  admin_rider_id: string
+  rider_name: string | null
+  phone: string | null
+  status: string
+  is_terminated: boolean
+  captured_at: string
+}
+
 export type RiderDailyFeeRow = {
   admin_rider_id: string
   snapshot_date: string
@@ -331,6 +341,13 @@ export type Database = {
         Insert: Pick<RiderWeeklyInsuranceRow, 'week_start' | 'week_end' | 'admin_rider_id' | 'amount_krw'> &
           Partial<Omit<RiderWeeklyInsuranceRow, 'week_start' | 'week_end' | 'admin_rider_id' | 'amount_krw' | 'id'>>
         Update: Partial<Omit<RiderWeeklyInsuranceRow, 'id'>>
+        Relationships: []
+      }
+      rider_contract_status: {
+        Row: RiderContractStatusRow
+        Insert: Pick<RiderContractStatusRow, 'admin_rider_id' | 'status'> &
+          Partial<Omit<RiderContractStatusRow, 'admin_rider_id' | 'status'>>
+        Update: Partial<RiderContractStatusRow>
         Relationships: []
       }
       rider_daily_fees: {

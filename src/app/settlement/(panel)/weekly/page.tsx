@@ -4,6 +4,7 @@ import { kstMonth, isValidYm } from "@/app/settlement/_lib/dates";
 import { isRidersUnlocked } from "@/lib/auth/settlement-cookies";
 import { MonthlyStatementView } from "@/components/settlement/monthly-view";
 import { RidersUnlockForm } from "@/components/settlement/riders-unlock-form";
+import { loadTerminatedRiderIds } from "@/app/settlement/_lib/contract";
 import { DataPulse } from "@/components/settlement/data-pulse";
 
 export const dynamic = "force-dynamic";
@@ -25,7 +26,11 @@ export default async function StatementPage({
     );
   }
 
-  const [data, notes] = await Promise.all([fetchMonthlySettlement(ym), loadRiderNotes()]);
+  const [data, notes, terminated] = await Promise.all([
+    fetchMonthlySettlement(ym),
+    loadRiderNotes(),
+    loadTerminatedRiderIds(),
+  ]);
 
   return (
     <div className="flex flex-col gap-5">
@@ -36,7 +41,7 @@ export default async function StatementPage({
           <DataPulse source="daily" label="정산 원천 데이터" cadence="매일 08:00 자동 수집 (전일분)" />
         </span>
       </div>
-      <MonthlyStatementView data={data} thisMonth={thisMonth} notes={notes} />
+      <MonthlyStatementView data={data} thisMonth={thisMonth} notes={notes} terminated={terminated} />
     </div>
   );
 }

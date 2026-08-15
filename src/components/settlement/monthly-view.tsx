@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight, Download, Search } from "lucide-react";
 import type { MonthlySettlement } from "@/app/settlement/_lib/monthly";
 import { ymAdd, mdShort } from "@/app/settlement/_lib/dates";
 import { DualScrollX } from "./dual-scroll";
+import { TerminatedBadge } from "./terminated-badge";
 
 // 월 소득정산서(세무사용) — 라이더별 × 주차별 세전 소득(배달처리비 + 기타/인센티브) 통합. 소득합계 = 월 지급 세전 총액.
 const won = (n: number) => (n ? n.toLocaleString("ko-KR") : "-");
@@ -15,11 +16,14 @@ export function MonthlyStatementView({
   data,
   thisMonth,
   notes,
+  terminated,
 }: {
   data: MonthlySettlement;
   thisMonth: string;
   notes: Record<string, string>;
+  terminated?: string[];
 }) {
+  const termSet = new Set(terminated ?? []);
   const router = useRouter();
   const { ym, weeks, rows, totals } = data;
   const [q, setQ] = useState("");
@@ -135,7 +139,7 @@ export function MonthlyStatementView({
                 {view.map((r, i) => (
                   <tr key={r.riderId} className="border-b border-jb-line-soft hover:bg-jb-surface/50">
                     <td className="sticky left-0 z-10 w-[40px] min-w-[40px] max-w-[40px] border-r border-jb-line-soft bg-jb-card px-2 py-2 text-right font-mono text-[11.5px] tabular-nums text-jb-ink-mute">{i + 1}</td>
-                    <td className="sticky left-[40px] z-10 whitespace-nowrap border-r border-jb-line-soft bg-jb-card px-3 py-2 font-medium text-jb-ink">{r.name}</td>
+                    <td className="sticky left-[40px] z-10 whitespace-nowrap border-r border-jb-line-soft bg-jb-card px-3 py-2 font-medium text-jb-ink">{r.name}{termSet.has(r.riderId) ? <TerminatedBadge /> : null}</td>
                     <td className="whitespace-nowrap border-r border-jb-line-soft px-3 py-2 font-mono text-[11.5px] text-jb-ink-soft">{r.rrn || "—"}</td>
                     {r.weeks.map((c, wi) => (
                       <Fragment key={wi}>

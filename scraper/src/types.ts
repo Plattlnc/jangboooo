@@ -109,6 +109,15 @@ export type RiderWeeklyInsurance = {
   amount_krw: number
 }
 
+/** grider 라이더 관리 계약상태(rider_contract_status upsert). */
+export type RiderContractStatus = {
+  admin_rider_id: string
+  rider_name: string | null
+  phone: string | null
+  status: string
+  is_terminated: boolean
+}
+
 /** rider_daily_fees upsert: 라이더 × 영업일 배달처리비(세전 수입) + 본사미션. */
 export type RiderDailyFee = {
   admin_rider_id: string
