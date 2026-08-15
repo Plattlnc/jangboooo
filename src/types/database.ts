@@ -122,6 +122,22 @@ export type WeeklyRevenueRow = {
   captured_at: string
 }
 
+// 0028: 라이더 관리(디렉터리) — 전 라이더 × 계약상태 × 배민 활동요약.
+export type RiderDirectoryRow = {
+  admin_rider_id: string
+  name: string | null
+  phone: string | null
+  region: string | null
+  center_id: string | null
+  created_at: string
+  is_active: boolean
+  contract_status: string | null
+  is_terminated: boolean
+  last_active: string | null
+  active_days: number
+  total_completed: number
+}
+
 export type RiderDailyFeeRow = {
   admin_rider_id: string
   snapshot_date: string
@@ -425,6 +441,7 @@ export type Database = {
       get_rider_ranking: { Args: RpcArgs; Returns: RiderRankingRow[] }
       // 앱 사용 현황(0017): KST 일별 방문·활성 라이더. service_role 전용.
       get_app_usage: { Args: { p_days?: number }; Returns: AppUsageRow[] }
+      get_rider_directory: { Args: Empty; Returns: RiderDirectoryRow[] }
       // 공지 고유 조회 기록(0022): 뷰어당 1회 dedupe + view_count 유지. service_role 전용.
       record_notice_view: {
         Args: { p_notice_id: string; p_viewer_id: string }
