@@ -15,11 +15,17 @@ interface NavItem {
   label: string;
   icon: LucideIcon;
   exact: boolean;
-  badge?: string;
+  badge?: string; // 인디고 칩(세무사용·대시보드)
+  freq?: string; // 정산 주기 표기(매일·금요일) — 뮤트 칩
+}
+interface NavSubGroup {
+  title: string;
+  items: NavItem[];
 }
 interface NavGroup {
   title?: string; // 없으면 헤더 없는 단독 항목(홈)
-  items: NavItem[];
+  items?: NavItem[];
+  subGroups?: NavSubGroup[]; // 하부 카테고리(예: 정산 관리 > 추가 정산)
 }
 
 const NAV_GROUPS: NavGroup[] = [
@@ -33,12 +39,17 @@ const NAV_GROUPS: NavGroup[] = [
   },
   {
     title: "정산 관리",
-    items: [
-      { href: "/settlement/daily", label: "일일 정산", icon: ListChecks, exact: false },
-      { href: "/settlement/mission", label: "본사 미션", icon: Building2, exact: false },
-      { href: "/settlement/extra", label: "추가 지급", icon: HandCoins, exact: false },
-      { href: "/settlement/deductions", label: "차감 정산", icon: Scissors, exact: false },
-      { href: "/settlement/promo", label: "자사 프로모션", icon: Megaphone, exact: false },
+    items: [{ href: "/settlement/daily", label: "일일 정산", icon: ListChecks, exact: false, freq: "매일" }],
+    subGroups: [
+      {
+        title: "추가 정산",
+        items: [
+          { href: "/settlement/mission", label: "본사 미션", icon: Building2, exact: false, freq: "금요일" },
+          { href: "/settlement/extra", label: "추가 지급", icon: HandCoins, exact: false, freq: "금요일" },
+          { href: "/settlement/deductions", label: "차감 정산", icon: Scissors, exact: false, freq: "금요일" },
+          { href: "/settlement/promo", label: "자사 프로모션", icon: Megaphone, exact: false, freq: "금요일" },
+        ],
+      },
     ],
   },
   {
@@ -77,6 +88,36 @@ function Brand() {
 
 // 그룹형 내비 링크(데스크톱·모바일 공유). onNavigate = 모바일 드로어 닫기.
 function NavLinks({ isActive, onNavigate }: { isActive: (it: NavItem) => boolean; onNavigate?: () => void }) {
+  const renderItem = (it: NavItem) => {
+    const active = isActive(it);
+    const Icon = it.icon;
+    return (
+      <Link
+        key={it.href}
+        href={it.href}
+        onClick={onNavigate}
+        aria-current={active ? "page" : undefined}
+        className={cn(
+          "mb-1 flex items-center gap-2.5 rounded-[10px] px-3 py-2.5 text-[14px] transition-colors",
+          active ? "bg-jb-indigo-tint font-semibold text-jb-indigo" : "font-medium text-jb-ink-soft hover:bg-jb-surface",
+        )}
+      >
+        <Icon size={18} strokeWidth={active ? 2.4 : 2} />
+        <span className="flex-1 truncate">{it.label}</span>
+        {it.freq ? (
+          <span className="rounded-[6px] bg-jb-surface px-1.5 py-[3px] text-[10px] font-bold leading-none text-jb-ink-mute">
+            {it.freq}
+          </span>
+        ) : null}
+        {it.badge ? (
+          <span className="rounded-[6px] bg-jb-indigo-tint px-1.5 py-[3px] text-[10px] font-bold leading-none text-jb-indigo">
+            {it.badge}
+          </span>
+        ) : null}
+      </Link>
+    );
+  };
+
   return (
     <>
       {NAV_GROUPS.map((group, gi) => (
@@ -84,30 +125,13 @@ function NavLinks({ isActive, onNavigate }: { isActive: (it: NavItem) => boolean
           {group.title ? (
             <div className="mb-1 px-3 text-[11px] font-bold tracking-[0.02em] text-jb-ink-mute">{group.title}</div>
           ) : null}
-          {group.items.map((it) => {
-            const active = isActive(it);
-            const Icon = it.icon;
-            return (
-              <Link
-                key={it.href}
-                href={it.href}
-                onClick={onNavigate}
-                aria-current={active ? "page" : undefined}
-                className={cn(
-                  "mb-1 flex items-center gap-2.5 rounded-[10px] px-3 py-2.5 text-[14px] transition-colors",
-                  active ? "bg-jb-indigo-tint font-semibold text-jb-indigo" : "font-medium text-jb-ink-soft hover:bg-jb-surface",
-                )}
-              >
-                <Icon size={18} strokeWidth={active ? 2.4 : 2} />
-                {it.label}
-                {it.badge ? (
-                  <span className="ml-auto rounded-[6px] bg-jb-indigo-tint px-1.5 py-[3px] text-[10px] font-bold leading-none text-jb-indigo">
-                    {it.badge}
-                  </span>
-                ) : null}
-              </Link>
-            );
-          })}
+          {group.items?.map(renderItem)}
+          {group.subGroups?.map((sub) => (
+            <div key={sub.title} className="mt-1.5 border-l-2 border-jb-line pl-2.5">
+              <div className="mb-1 px-2 text-[10.5px] font-bold tracking-[0.02em] text-jb-ink-mute">↳ {sub.title}</div>
+              {sub.items.map(renderItem)}
+            </div>
+          ))}
         </div>
       ))}
     </>
