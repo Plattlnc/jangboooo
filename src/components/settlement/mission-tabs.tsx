@@ -2,6 +2,7 @@
 
 import type { MissionSettlement } from "@/app/settlement/_lib/mission";
 import { MissionSettlementView } from "./mission-view";
+import { SettlementHeader } from "./settlement-header";
 import { useRiderNotesApi } from "./notes-api";
 
 // 본사 미션 — 정산 내역 테이블(메모·특이사항 컬럼 포함). 정보 입력은 라이더 설정 페이지에서 중앙 관리하며
@@ -24,8 +25,8 @@ export function MissionTabs({
   const notesApi = useRiderNotesApi(notes, memos);
 
   return (
-    <div className="flex flex-col gap-5">
-      <h1 className="text-[22px] font-black tracking-[-0.02em] text-jb-ink">본사 미션</h1>
+    <div>
+      <SettlementHeader title="본사 미션" />
       <MissionSettlementView data={data} period={period} today={today} notesApi={notesApi} terminated={terminated} />
     </div>
   );

@@ -2,6 +2,7 @@
 
 import type { DailySettlement } from "@/app/settlement/_lib/daily";
 import { DailySettlementView } from "./daily-view";
+import { SettlementHeader } from "./settlement-header";
 import { useRiderNotesApi } from "./notes-api";
 
 // 일일 정산 — 정산 내역 테이블(메모·특이사항 컬럼 포함). 정보 입력은 라이더 설정 페이지에서 중앙 관리하며
@@ -22,8 +23,8 @@ export function DailyTabs({
   const notesApi = useRiderNotesApi(notes, memos);
 
   return (
-    <div className="flex flex-col gap-5">
-      <h1 className="text-[22px] font-black tracking-[-0.02em] text-jb-ink">일일 정산</h1>
+    <div>
+      <SettlementHeader title="일일 정산" />
       <DailySettlementView data={data} today={today} notesApi={notesApi} terminated={terminated} />
     </div>
   );

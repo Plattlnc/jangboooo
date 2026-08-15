@@ -32,9 +32,9 @@ const NAV_GROUPS: NavGroup[] = [
     title: "정산 관리",
     items: [
       { href: "/settlement/daily", label: "일일 정산", icon: ListChecks, exact: false },
-      { href: "/settlement/deductions", label: "차감 정산", icon: Scissors, exact: false },
       { href: "/settlement/mission", label: "본사 미션", icon: Building2, exact: false },
       { href: "/settlement/extra", label: "추가 지급", icon: HandCoins, exact: false },
+      { href: "/settlement/deductions", label: "차감 정산", icon: Scissors, exact: false },
       { href: "/settlement/promo", label: "자사 프로모션", icon: Megaphone, exact: false },
     ],
   },

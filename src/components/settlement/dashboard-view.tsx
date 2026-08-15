@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { TrendingUp, Package, Building2, Megaphone, Truck, Users, ArrowRight, Target } from "lucide-react";
 import type { DashboardData } from "@/app/settlement/_lib/dashboard";
+import { SettlementHeader } from "./settlement-header";
 
 // 정산 홈(대시보드) — 회사 현황 한눈에. 서버 컴포넌트(정적 렌더, 인터랙션 없음).
 const won = (n: number) => n.toLocaleString("ko-KR");
@@ -14,21 +15,18 @@ export function DashboardView({ data }: { data: DashboardData }) {
   const slotPct = revenue && revenue.totalSlots ? Math.round((revenue.achievedSlots ?? 0) / revenue.totalSlots * 100) : null;
 
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex flex-wrap items-end justify-between gap-2">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-[24px] font-black tracking-[-0.02em] text-jb-ink">홈</h1>
-            <span className="rounded-[6px] bg-jb-indigo-tint px-1.5 py-[3px] text-[11px] font-bold leading-none text-jb-indigo">대시보드</span>
-          </div>
-          <p className="mt-1 text-[13.5px] text-jb-ink-mute">
-            {week ? `최신 확정 주차 ${week.start} ~ ${week.end} 기준` : "회사 현황 요약"} · 슬라이더 정산팀
-          </p>
-        </div>
-        <Link href="/settlement/revenue" className="flex items-center gap-1 rounded-[10px] border border-jb-line px-3 py-2 text-[13px] font-semibold text-jb-ink-soft transition-colors hover:bg-jb-surface">
-          매출 상세 <ArrowRight size={14} />
-        </Link>
-      </div>
+    <div>
+      <SettlementHeader
+        title="홈"
+        badge="대시보드"
+        subtitle={`${week ? `최신 확정 주차 ${week.start} ~ ${week.end} 기준` : "회사 현황 요약"} · 슬라이더 정산팀`}
+        actions={
+          <Link href="/settlement/revenue" className="flex items-center gap-1 rounded-[10px] border border-jb-line px-3 py-2 text-[13px] font-semibold text-jb-ink-soft transition-colors hover:bg-jb-surface">
+            매출 상세 <ArrowRight size={14} />
+          </Link>
+        }
+      />
+      <div className="flex flex-col gap-5">
 
       {/* 상단: 매출 히어로 + 세트 달성 */}
       <div className="grid gap-4 lg:grid-cols-3">
@@ -126,6 +124,7 @@ export function DashboardView({ data }: { data: DashboardData }) {
           </div>
         </div>
       </div>
+    </div>
     </div>
   );
 }

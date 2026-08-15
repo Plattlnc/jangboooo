@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, TrendingUp, Package, Target, Download } from "lucide-react";
 import type { RevenueData, RevenueWeek } from "@/app/settlement/_lib/revenue";
 import { cn } from "@/lib/cn";
+import { SettlementHeader } from "./settlement-header";
 
 // 매출 뷰 — 회사 메인 수입인 관리비(관리수수료). 주차 선택 + 관리비 총액/기본·보너스 분해 +
 // 세트 목표·달성 지표(발주/유효처리/슬롯/수락률) + 주차별 추이. VAT 별도 기준.
@@ -48,8 +49,8 @@ export function RevenueView({ data }: { data: RevenueData }) {
   if (!week) {
     return (
       <div>
-        <h1 className="text-[22px] font-black tracking-[-0.02em] text-jb-ink">매출</h1>
-        <div className="mt-4 grid place-items-center rounded-[12px] border border-jb-line bg-jb-card py-16 text-center">
+        <SettlementHeader title="매출" />
+        <div className="grid place-items-center rounded-[12px] border border-jb-line bg-jb-card py-16 text-center">
           <TrendingUp size={28} className="mb-3 text-jb-ink-mute/60" />
           <div className="text-[14px] font-semibold text-jb-ink-soft">매출 데이터가 아직 없습니다</div>
           <div className="mt-1 text-[12.5px] text-jb-ink-mute">주간 정산서가 반영되면 관리비 수입이 집계됩니다.</div>
@@ -62,38 +63,35 @@ export function RevenueView({ data }: { data: RevenueData }) {
 
   return (
     <div>
-      {/* 헤더 + 주 이동 */}
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-[22px] font-black tracking-[-0.02em] text-jb-ink">매출</h1>
-          <p className="mt-1 text-[13px] text-jb-ink-mute">
-            회사 메인 수입 — 관리수수료(세트 목표 달성 기반). 금액은 VAT 별도 기준입니다.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            disabled={idx >= weeks.length - 1}
-            onClick={() => setIdx((i) => Math.min(weeks.length - 1, i + 1))}
-            className="grid size-9 place-items-center rounded-[10px] border border-jb-line text-jb-ink-soft transition-colors hover:bg-jb-surface disabled:opacity-35"
-            aria-label="이전 주"
-          >
-            <ChevronLeft size={17} />
-          </button>
-          <div className="min-w-[176px] rounded-[10px] border border-jb-line px-3 py-2 text-center text-[13.5px] font-semibold tabular-nums text-jb-ink">
-            {week.weekStart} ~ {week.weekEnd}
-          </div>
-          <button
-            type="button"
-            disabled={idx <= 0}
-            onClick={() => setIdx((i) => Math.max(0, i - 1))}
-            className="grid size-9 place-items-center rounded-[10px] border border-jb-line text-jb-ink-soft transition-colors hover:bg-jb-surface disabled:opacity-35"
-            aria-label="다음 주"
-          >
-            <ChevronRight size={17} />
-          </button>
-        </div>
-      </div>
+      <SettlementHeader
+        title="매출"
+        subtitle="회사 메인 수입 — 관리수수료(세트 목표 달성 기반). 금액은 VAT 별도 기준입니다."
+        actions={
+          <>
+            <button
+              type="button"
+              disabled={idx >= weeks.length - 1}
+              onClick={() => setIdx((i) => Math.min(weeks.length - 1, i + 1))}
+              className="grid size-9 place-items-center rounded-[10px] border border-jb-line text-jb-ink-soft transition-colors hover:bg-jb-surface disabled:opacity-35"
+              aria-label="이전 주"
+            >
+              <ChevronLeft size={17} />
+            </button>
+            <div className="min-w-[176px] rounded-[10px] border border-jb-line px-3 py-2 text-center text-[13.5px] font-semibold tabular-nums text-jb-ink">
+              {week.weekStart} ~ {week.weekEnd}
+            </div>
+            <button
+              type="button"
+              disabled={idx <= 0}
+              onClick={() => setIdx((i) => Math.max(0, i - 1))}
+              className="grid size-9 place-items-center rounded-[10px] border border-jb-line text-jb-ink-soft transition-colors hover:bg-jb-surface disabled:opacity-35"
+              aria-label="다음 주"
+            >
+              <ChevronRight size={17} />
+            </button>
+          </>
+        }
+      />
 
       {/* 관리비 히어로 */}
       <div className="mb-3 rounded-[14px] border border-jb-line bg-jb-card px-5 py-5">

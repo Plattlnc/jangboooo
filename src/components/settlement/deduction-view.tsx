@@ -5,6 +5,7 @@ import { Search, Save, Check } from "lucide-react";
 import type { SettlementRider } from "@/app/settlement/_lib/notes";
 import { saveRiderDeductions } from "@/actions/deductions";
 import { TerminatedBadge } from "./terminated-badge";
+import { SettlementHeader } from "./settlement-header";
 
 // 차감 정산 — 라이더별 시간제보험료 차감액 입력/저장. 금요일 정산 시 별도 차감(분류 관리).
 const won = (n: number) => n.toLocaleString("ko-KR");
@@ -94,13 +95,16 @@ export function DeductionView({
   }
 
   return (
-    <div className="flex flex-col gap-5">
-      <div>
-        <h1 className="text-[22px] font-black tracking-[-0.02em] text-jb-ink">차감 정산</h1>
-        <p className="mt-1 text-[13px] text-jb-ink-mute">
-          <span className="font-semibold text-jb-ink-soft">시간제보험료</span>는 주간 정산서(을지)에서 <span className="font-semibold text-jb-ink-soft">자동 반영</span>됩니다{latestDate ? ` (최근 반영 주차: ${latestDate})` : " (아직 반영된 보험료 없음)"}. 필요 시 수동 조정 가능 · 금요일 정산 시 별도 차감.
-        </p>
-      </div>
+    <div>
+      <SettlementHeader
+        title="차감 정산"
+        subtitle={
+          <>
+            <span className="font-semibold text-jb-ink-soft">시간제보험료</span>는 주간 정산서(을지)에서 <span className="font-semibold text-jb-ink-soft">자동 반영</span>됩니다{latestDate ? ` (최근 반영 주차: ${latestDate})` : " (아직 반영된 보험료 없음)"}. 필요 시 수동 조정 가능 · 금요일 정산 시 별도 차감.
+          </>
+        }
+      />
+      <div className="flex flex-col gap-5">
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-2">
         <SummaryCard label="차감 대상" value={`${won(deductedCount)}명`} />
@@ -188,6 +192,7 @@ export function DeductionView({
           </table>
         </div>
       </div>
+    </div>
     </div>
   );
 }

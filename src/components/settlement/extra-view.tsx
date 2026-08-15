@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, ChevronDown, Download, Search, HandCoins } from "lucide-react";
 import type { ExtraPayments } from "@/app/settlement/_lib/extra";
 import { cn } from "@/lib/cn";
+import { SettlementHeader } from "./settlement-header";
 import { TerminatedBadge } from "./terminated-badge";
 
 // 추가 지급 뷰 — 주차(수~화) 선택 + 라이더별 합산 표(행 펼침 시 건별 배달정보·사유).
@@ -82,38 +83,35 @@ export function ExtraPaymentsView({ data, terminated }: { data: ExtraPayments; t
 
   return (
     <div>
-      {/* 헤더: 타이틀 + 주 이동 */}
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-[22px] font-black tracking-[-0.02em] text-jb-ink">추가 지급</h1>
-          <p className="mt-1 text-[13px] text-jb-ink-mute">
-            주간 정산서의 소급 보정 내역(기상할증 보정 등) — 본사 미션과 별개 항목입니다.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            disabled={!older}
-            onClick={() => older && router.push(`/settlement/extra?week=${older.start}`)}
-            className="grid size-9 place-items-center rounded-[10px] border border-jb-line text-jb-ink-soft transition-colors hover:bg-jb-surface disabled:opacity-35"
-            aria-label="이전 주"
-          >
-            <ChevronLeft size={17} />
-          </button>
-          <div className="min-w-[176px] rounded-[10px] border border-jb-line px-3 py-2 text-center text-[13.5px] font-semibold tabular-nums text-jb-ink">
-            {weekStart ? `${weekStart} ~ ${weekEnd}` : "데이터 없음"}
-          </div>
-          <button
-            type="button"
-            disabled={!newer}
-            onClick={() => newer && router.push(`/settlement/extra?week=${newer.start}`)}
-            className="grid size-9 place-items-center rounded-[10px] border border-jb-line text-jb-ink-soft transition-colors hover:bg-jb-surface disabled:opacity-35"
-            aria-label="다음 주"
-          >
-            <ChevronRight size={17} />
-          </button>
-        </div>
-      </div>
+      <SettlementHeader
+        title="추가 지급"
+        subtitle="주간 정산서의 소급 보정 내역(기상할증 보정 등) — 본사 미션과 별개 항목입니다."
+        actions={
+          <>
+            <button
+              type="button"
+              disabled={!older}
+              onClick={() => older && router.push(`/settlement/extra?week=${older.start}`)}
+              className="grid size-9 place-items-center rounded-[10px] border border-jb-line text-jb-ink-soft transition-colors hover:bg-jb-surface disabled:opacity-35"
+              aria-label="이전 주"
+            >
+              <ChevronLeft size={17} />
+            </button>
+            <div className="min-w-[176px] rounded-[10px] border border-jb-line px-3 py-2 text-center text-[13.5px] font-semibold tabular-nums text-jb-ink">
+              {weekStart ? `${weekStart} ~ ${weekEnd}` : "데이터 없음"}
+            </div>
+            <button
+              type="button"
+              disabled={!newer}
+              onClick={() => newer && router.push(`/settlement/extra?week=${newer.start}`)}
+              className="grid size-9 place-items-center rounded-[10px] border border-jb-line text-jb-ink-soft transition-colors hover:bg-jb-surface disabled:opacity-35"
+              aria-label="다음 주"
+            >
+              <ChevronRight size={17} />
+            </button>
+          </>
+        }
+      />
 
       {/* 요약 히어로 */}
       <div className="mb-4 grid grid-cols-3 gap-3">

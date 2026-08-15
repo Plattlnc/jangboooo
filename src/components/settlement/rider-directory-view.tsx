@@ -5,6 +5,7 @@ import { Search, Download, X, Loader2, ChevronRight, Phone, MapPin, Bike, Shield
 import type { RiderListItem, RiderDetail } from "@/app/settlement/_lib/riders-admin";
 import { loadRiderDetail } from "@/actions/rider-directory";
 import { TerminatedBadge } from "./terminated-badge";
+import { SettlementHeader } from "./settlement-header";
 import { cn } from "@/lib/cn";
 
 // 라이더 관리 — 전 라이더 목록(계약상태·활동요약) + 행 클릭 시 상세 드로어.
@@ -69,10 +70,7 @@ export function RiderDirectoryView({ riders }: { riders: RiderListItem[] }) {
 
   return (
     <div>
-      <div className="mb-4">
-        <h1 className="text-[22px] font-black tracking-[-0.02em] text-jb-ink">라이더 정보</h1>
-        <p className="mt-1 text-[13px] text-jb-ink-mute">전 라이더 명단·계약상태·활동 현황. 행을 클릭하면 상세 정보를 볼 수 있습니다.</p>
-      </div>
+      <SettlementHeader title="라이더 정보" subtitle="전 라이더 명단·계약상태·활동 현황. 행을 클릭하면 상세 정보를 볼 수 있습니다." />
 
       {/* 필터 + 검색 + 정렬 */}
       <div className="mb-3 flex flex-wrap items-center gap-2">
