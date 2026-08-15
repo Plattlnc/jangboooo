@@ -20,7 +20,7 @@ interface NavItem {
 const NAV: NavItem[] = [
   { href: "/settlement", label: "홈", icon: Home, exact: true },
   { href: "/settlement/revenue", label: "매출", icon: TrendingUp, exact: false },
-  { href: "/settlement/rider-admin", label: "라이더 관리", icon: Users, exact: false },
+  { href: "/settlement/rider-admin", label: "라이더 정보", icon: Users, exact: false },
   { href: "/settlement/daily", label: "일일 정산", icon: ListChecks, exact: false },
   { href: "/settlement/deductions", label: "차감 정산", icon: Scissors, exact: false },
   { href: "/settlement/mission", label: "본사 미션", icon: Building2, exact: false },

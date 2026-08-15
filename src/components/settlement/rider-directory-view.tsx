@@ -70,7 +70,7 @@ export function RiderDirectoryView({ riders }: { riders: RiderListItem[] }) {
   return (
     <div>
       <div className="mb-4">
-        <h1 className="text-[22px] font-black tracking-[-0.02em] text-jb-ink">라이더 관리</h1>
+        <h1 className="text-[22px] font-black tracking-[-0.02em] text-jb-ink">라이더 정보</h1>
         <p className="mt-1 text-[13px] text-jb-ink-mute">전 라이더 명단·계약상태·활동 현황. 행을 클릭하면 상세 정보를 볼 수 있습니다.</p>
       </div>
 
