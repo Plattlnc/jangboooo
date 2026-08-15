@@ -23,7 +23,7 @@ interface NavGroup {
 }
 
 const NAV_GROUPS: NavGroup[] = [
-  { items: [{ href: "/settlement", label: "홈 (대시보드)", icon: Home, exact: true }] },
+  { items: [{ href: "/settlement", label: "홈", icon: Home, exact: true, badge: "대시보드" }] },
   {
     title: "매출",
     items: [
