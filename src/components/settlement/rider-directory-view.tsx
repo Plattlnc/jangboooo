@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { Search, Download, X, Loader2, Phone, MapPin, Bike, Shield, Calendar, TrendingUp } from "lucide-react";
+import { Search, Download, X, Loader2, ChevronRight, Phone, MapPin, Bike, Shield, Calendar, TrendingUp } from "lucide-react";
 import type { RiderListItem, RiderDetail } from "@/app/settlement/_lib/riders-admin";
 import { loadRiderDetail } from "@/actions/rider-directory";
 import { TerminatedBadge } from "./terminated-badge";
@@ -107,13 +107,14 @@ export function RiderDirectoryView({ riders }: { riders: RiderListItem[] }) {
         <table className="w-full table-fixed text-[13.5px]">
           <colgroup>
             <col className="w-[6%]" />
-            <col className="w-[17%]" />
             <col className="w-[16%]" />
+            <col className="w-[15%]" />
             <col className="w-[13%]" />
             <col className="w-[11%]" />
-            <col className="w-[15%]" />
+            <col className="w-[14%]" />
             <col className="w-[12%]" />
-            <col className="w-[10%]" />
+            <col className="w-[9%]" />
+            <col className="w-[4%]" />
           </colgroup>
           <thead>
             <tr className="border-b border-jb-line bg-jb-surface text-left text-[12px] text-jb-ink-mute">
@@ -125,6 +126,7 @@ export function RiderDirectoryView({ riders }: { riders: RiderListItem[] }) {
               <th className="px-4 py-2.5 font-medium">지역</th>
               <th className="px-4 py-2.5 text-right font-medium">마지막 활동</th>
               <th className="px-4 py-2.5 text-right font-medium">누적 완료</th>
+              <th className="py-2.5" aria-hidden />
             </tr>
           </thead>
           <tbody>
@@ -143,10 +145,13 @@ export function RiderDirectoryView({ riders }: { riders: RiderListItem[] }) {
                 <td className="truncate px-4 py-2.5 text-jb-ink-soft">{dash(r.region)}</td>
                 <td className="px-4 py-2.5 text-right tabular-nums text-jb-ink-soft">{dash(r.lastActive)}</td>
                 <td className="px-4 py-2.5 text-right tabular-nums font-semibold text-jb-ink">{won(r.totalCompleted)}</td>
+                <td className="pr-4 text-right text-jb-ink-mute">
+                  <ChevronRight size={16} className="inline-block" />
+                </td>
               </tr>
             ))}
             {view.length === 0 ? (
-              <tr><td colSpan={8} className="px-4 py-16 text-center text-[13px] text-jb-ink-mute">해당하는 라이더가 없습니다.</td></tr>
+              <tr><td colSpan={9} className="px-4 py-16 text-center text-[13px] text-jb-ink-mute">해당하는 라이더가 없습니다.</td></tr>
             ) : null}
           </tbody>
         </table>
