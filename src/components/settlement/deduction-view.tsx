@@ -1,28 +1,37 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { Search, Save, Check } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Search, Save, Check, ChevronLeft, ChevronRight } from "lucide-react";
 import type { SettlementRider } from "@/app/settlement/_lib/notes";
+import type { InsWeek } from "@/app/settlement/_lib/deductions";
 import { saveRiderDeductions } from "@/actions/deductions";
 import { TerminatedBadge } from "./terminated-badge";
 import { SettlementHeader } from "./settlement-header";
 
-// 차감 정산 — 라이더별 시간제보험료 차감액 입력/저장. 금요일 정산 시 별도 차감(분류 관리).
+// 차감 정산 — 주차(수~화)별 시간제보험료(자동) + 수동 조정. 주차 이동으로 각 주 기록 조회/저장.
 const won = (n: number) => n.toLocaleString("ko-KR");
 
 export function DeductionView({
   riders,
   deductions,
   scraped,
-  latestDate,
+  weeks,
+  week,
   terminated,
 }: {
   riders: SettlementRider[];
   deductions: Record<string, number>;
   scraped: Record<string, number>;
-  latestDate: string | null;
+  weeks: InsWeek[];
+  week: InsWeek | null;
   terminated?: string[];
 }) {
+  const router = useRouter();
+  const weekIdx = week ? weeks.findIndex((w) => w.start === week.start) : -1;
+  const newer = weekIdx > 0 ? weeks[weekIdx - 1] : null;
+  const older = weekIdx >= 0 && weekIdx < weeks.length - 1 ? weeks[weekIdx + 1] : null;
+  const goWeek = (w: InsWeek | null) => w && router.push(`/settlement/deductions?week=${w.start}`);
   // 입력 편의를 위해 문자열 맵으로 보관(빈칸 허용).
   const initial = useMemo(() => {
     const m: Record<string, string> = {};
@@ -78,13 +87,14 @@ export function DeductionView({
   }
 
   function submit() {
+    if (!week) return;
     startSave(async () => {
       const payload: Record<string, number> = {};
       for (const [k, v] of Object.entries(map)) {
         const n = Math.floor(Number(v.replace(/[^0-9]/g, "")) || 0);
         if (n > 0) payload[k] = n;
       }
-      const res = await saveRiderDeductions(payload);
+      const res = await saveRiderDeductions(week.start, payload);
       if (res.ok) {
         setBaseline(map);
         setSaved(true);
@@ -100,7 +110,32 @@ export function DeductionView({
         title="차감 정산"
         subtitle={
           <>
-            <span className="font-semibold text-jb-ink-soft">시간제보험료</span>는 주간 정산서(을지)에서 <span className="font-semibold text-jb-ink-soft">자동 반영</span>됩니다{latestDate ? ` (최근 반영 주차: ${latestDate})` : " (아직 반영된 보험료 없음)"}. 필요 시 수동 조정 가능 · 금요일 정산 시 별도 차감.
+            <span className="font-semibold text-jb-ink-soft">시간제보험료</span>는 주차(수~화)별 정산서(을지)에서 <span className="font-semibold text-jb-ink-soft">자동 반영</span>됩니다. 주차별로 다르며, 필요 시 수동 조정 · 금요일 정산 시 별도 차감.
+          </>
+        }
+        actions={
+          <>
+            <button
+              type="button"
+              disabled={!older}
+              onClick={() => goWeek(older)}
+              className="grid size-9 place-items-center rounded-[10px] border border-jb-line text-jb-ink-soft transition-colors hover:bg-jb-surface disabled:opacity-35"
+              aria-label="이전 주"
+            >
+              <ChevronLeft size={17} />
+            </button>
+            <div className="min-w-[176px] rounded-[10px] border border-jb-line px-3 py-2 text-center text-[13.5px] font-semibold tabular-nums text-jb-ink">
+              {week ? `${week.start} ~ ${week.end}` : "데이터 없음"}
+            </div>
+            <button
+              type="button"
+              disabled={!newer}
+              onClick={() => goWeek(newer)}
+              className="grid size-9 place-items-center rounded-[10px] border border-jb-line text-jb-ink-soft transition-colors hover:bg-jb-surface disabled:opacity-35"
+              aria-label="다음 주"
+            >
+              <ChevronRight size={17} />
+            </button>
           </>
         }
       />
