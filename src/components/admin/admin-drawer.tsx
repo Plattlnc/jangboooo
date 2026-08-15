@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, Megaphone, Menu, Wrench, Users, LineChart, Target, type LucideIcon } from "lucide-react";
+import { BarChart3, Megaphone, Menu, Wrench, Users, LineChart, Target, Award, type LucideIcon } from "lucide-react";
 import { BrandLogo } from "@/components/ui/brand-logo";
 import { cn } from "@/lib/cn";
 
@@ -25,6 +25,7 @@ const ITEMS: DrawerItem[] = [
   { label: "공지사항 관리", href: "/admin/notices", icon: Megaphone, tileColor: "#3182f6", tileBg: "#e8f1fe" },
   { label: "사용 현황", href: "/admin/usage", icon: BarChart3, tileColor: "#3182f6", tileBg: "#e8f1fe" },
   { label: "제휴 정비소 관리", href: "/admin/repair-shops", icon: Wrench, tileColor: "#4e5968", tileBg: "#eef0f3" },
+  { label: "신규 등급제 현황", href: "/admin/grade-policy", icon: Award, tileColor: "#4f6af5", tileBg: "#eef1fe" },
 ];
 
 export function AdminMenuButton() {
