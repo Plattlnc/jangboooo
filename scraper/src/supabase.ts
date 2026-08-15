@@ -4,7 +4,7 @@
  */
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import type { Config } from './config'
-import type { CenterCurrentUpsert, CenterGoalUpsert, DeliveryFeeDetail, HourlyStatUpsert, RiderContractStatus, RiderDailyFee, RiderExtraPayment, RiderInsurance, RiderUpsert, RiderWeeklyInsurance, SlaSnapshotUpsert, WorkingStatusSummary } from './types'
+import type { CenterCurrentUpsert, CenterGoalUpsert, DeliveryFeeDetail, HourlyStatUpsert, RiderContractStatus, RiderDailyFee, RiderExtraPayment, RiderInsurance, RiderUpsert, RiderWeeklyInsurance, SlaSnapshotUpsert, WeeklyRevenue, WorkingStatusSummary } from './types'
 
 export type Db = SupabaseClient
 
@@ -124,6 +124,16 @@ export async function upsertRiderWeeklyInsurance(db: Db, rows: RiderWeeklyInsura
     .upsert(rows, { onConflict: 'week_start,admin_rider_id' })
   if (error) throw new SupabaseUpsertError('rider_weekly_insurance', error)
   return rows.length
+}
+
+/** weekly_revenue 멱등 upsert (키: week_start). 주간 매출(관리비) 1행. */
+export async function upsertWeeklyRevenue(db: Db, row: WeeklyRevenue | null): Promise<number> {
+  if (!row) return 0
+  const { error } = await db
+    .from('weekly_revenue')
+    .upsert({ ...row, captured_at: new Date().toISOString() }, { onConflict: 'week_start' })
+  if (error) throw new SupabaseUpsertError('weekly_revenue', error)
+  return 1
 }
 
 /** rider_contract_status 멱등 upsert (키: admin_rider_id). captured_at 갱신으로 신선도 표시. */

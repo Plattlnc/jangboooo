@@ -9,7 +9,7 @@
  */
 import { loadConfig } from '../src/config'
 import { createLogger } from '../src/logger'
-import { createDb, upsertRiderExtraPayments, upsertRiderWeeklyInsurance } from '../src/supabase'
+import { createDb, upsertRiderExtraPayments, upsertRiderWeeklyInsurance, upsertWeeklyRevenue } from '../src/supabase'
 import { collectGriderWeekly } from '../src/sources/grider'
 
 function arg(name: string): string | undefined {
@@ -52,10 +52,11 @@ async function main(): Promise<void> {
       const res = await collectGriderWeekly(cfg, log, start, end)
       const ni = await upsertRiderWeeklyInsurance(db, res.insurance)
       const ne = await upsertRiderExtraPayments(db, res.extra)
+      const nr = await upsertWeeklyRevenue(db, res.revenue)
       totIns += ni
       totExtra += ne
       ok += 1
-      log.info('백필 적재', { week: `${start}~${end}`, insurance: ni, extra: ne })
+      log.info('백필 적재', { week: `${start}~${end}`, insurance: ni, extra: ne, revenue: nr, mgmtFee: res.revenue?.mgmt_fee_total ?? null })
     } catch (e) {
       log.error('백필 실패(해당 주 건너뜀)', { week: start, err: String(e) })
     }

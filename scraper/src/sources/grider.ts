@@ -13,7 +13,7 @@ import type { Config } from '../config'
 import type { Logger } from '../logger'
 import { serializeError } from '../logger'
 import { TRAFFIC_ARGS } from '../browser'
-import type { RiderContractStatus, RiderExtraPayment, RiderWeeklyInsurance } from '../types'
+import type { RiderContractStatus, RiderExtraPayment, RiderWeeklyInsurance, WeeklyRevenue } from '../types'
 
 const GRIDER_UA =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
@@ -45,12 +45,14 @@ async function griderLogin(cfg: Config): Promise<{ browser: Browser; page: Page 
 
 const SHEET_EULJI_PREFIX = '을지' // 을지_협력사 소속 라이더 정산 확인용
 const SHEET_EXTRA = '추가배달료'
+const SHEET_MGMT = '관리비'
 
 export type GriderWeeklyResult = {
   weekStart: string
   weekEnd: string
   extra: RiderExtraPayment[]
   insurance: RiderWeeklyInsurance[]
+  revenue: WeeklyRevenue | null
 }
 
 const num = (v: unknown): number => {
@@ -112,6 +114,41 @@ function parseExtra(wb: XLSX.WorkBook, weekStart: string, weekEnd: string): Ride
   return out
 }
 
+/**
+ * '관리비' 시트 → 주간 매출(회사 관리수수료). 데이터 행 = col[1]==='관리비' 이고 합계(col14) 숫자.
+ * 컬럼: 신청세트(2) 세트당(3) 전체슬롯(4) 달성슬롯(5) 미달성(6) 수락률(7) 전체발주(8)
+ *       하위3달성률(9) 유효처리(10) 기본관리비(11) 보너스(12) 기타(13) 합계(14).
+ * 페이백: '건당 페이백' 헤더 다음 행의 총페이백(VAT별도)=col3.
+ */
+function parseRevenue(wb: XLSX.WorkBook, weekStart: string, weekEnd: string): WeeklyRevenue | null {
+  const ws = wb.Sheets[SHEET_MGMT]
+  if (!ws) return null
+  const rows = XLSX.utils.sheet_to_json<unknown[]>(ws, { header: 1, defval: null })
+  const dr = rows.find((r) => r && r[1] === '관리비' && typeof r[14] === 'number')
+  if (!dr) return null
+  let payback = 0
+  const pIdx = rows.findIndex((r) => r && r[1] === '건당 페이백')
+  if (pIdx >= 0 && rows[pIdx + 1]) payback = num(rows[pIdx + 1]![3])
+  return {
+    week_start: weekStart,
+    week_end: weekEnd,
+    mgmt_fee_total: num(dr[14]),
+    base_fee: num(dr[11]),
+    bonus_fee: num(dr[12]),
+    etc_fee: num(dr[13]),
+    payback_total: payback,
+    set_count: num(dr[2]),
+    per_set_volume: num(dr[3]),
+    total_order_volume: num(dr[8]),
+    effective_volume: num(dr[10]),
+    low3_achievement: num(dr[9]),
+    total_slots: num(dr[4]),
+    achieved_slots: num(dr[5]),
+    missed_slots: num(dr[6]),
+    acceptance_rate: num(dr[7]),
+  }
+}
+
 /** 로그인 후 특정 주차(base_date~end_date) 주정산서 xlsx 를 페이지 컨텍스트 fetch 로 받아 파싱. */
 export async function collectGriderWeekly(
   cfg: Config,
@@ -147,14 +184,16 @@ export async function collectGriderWeekly(
     const wb = XLSX.read(buf, { type: 'buffer', dense: true })
     const extra = parseExtra(wb, weekStart, weekEnd)
     const insurance = parseInsurance(wb, weekStart, weekEnd)
+    const revenue = parseRevenue(wb, weekStart, weekEnd)
     log.info('grider 주정산서 수집', {
       week: `${weekStart}~${weekEnd}`,
       extra: extra.length,
       extraKrw: extra.reduce((s, r) => s + r.amount_krw, 0),
       insurance: insurance.length,
       insuranceKrw: insurance.reduce((s, r) => s + r.amount_krw, 0),
+      mgmtFee: revenue?.mgmt_fee_total ?? null,
     })
-    return { weekStart, weekEnd, extra, insurance }
+    return { weekStart, weekEnd, extra, insurance, revenue }
   } finally {
     await browser.close().catch(() => {})
   }

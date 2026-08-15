@@ -8,7 +8,7 @@ import type { Logger } from './logger'
 import { serializeError } from './logger'
 import type { BrowserSession } from './browser'
 import type { Db } from './supabase'
-import { upsertCenterCurrents, upsertDeliveryFeeDetails, upsertHourlyStats, upsertInsurance, upsertRiderContractStatus, upsertRiderDailyFees, upsertRiderExtraPayments, upsertRiderWeeklyInsurance, upsertRiders, upsertSlaSnapshots, upsertWorkingStatus } from './supabase'
+import { upsertCenterCurrents, upsertDeliveryFeeDetails, upsertHourlyStats, upsertInsurance, upsertRiderContractStatus, upsertRiderDailyFees, upsertRiderExtraPayments, upsertRiderWeeklyInsurance, upsertRiders, upsertSlaSnapshots, upsertWeeklyRevenue, upsertWorkingStatus } from './supabase'
 import { captureApiHeaders, fetchSlaDataWithHeaders, isSessionExpired, mockScrapeResult } from './sources/baemin'
 import { collectDeliveryFees } from './sources/baemin-fees'
 import { tryCollectGriderRiders, tryCollectGriderWeekly } from './sources/grider'
@@ -351,14 +351,15 @@ async function maybeCollectGriderWeekly(cfg: Config, db: Db, log: Logger): Promi
     }
     const res = await tryCollectGriderWeekly(cfg, log, week.start, week.end)
     if (!res) return // 로그인 실패/미발행 등 — 내일 재시도
-    if (res.insurance.length === 0 && res.extra.length === 0) {
+    if (res.insurance.length === 0 && res.extra.length === 0 && !res.revenue) {
       log.warn('grider 주정산서 0건 — 미발행 가능(내일 재시도)', { week: week.start })
       return
     }
     const ni = await upsertRiderWeeklyInsurance(db, res.insurance)
     const ne = await upsertRiderExtraPayments(db, res.extra)
+    const nr = await upsertWeeklyRevenue(db, res.revenue)
     griderDoneWeek = week.start
-    log.info('grider 주정산서 적재 완료', { week: `${week.start}~${week.end}`, insurance: ni, extra: ne })
+    log.info('grider 주정산서 적재 완료', { week: `${week.start}~${week.end}`, insurance: ni, extra: ne, revenue: nr })
   } catch (err) {
     log.error('grider 주정산서 수집 실패(내일 재시도)', serializeError(err))
   }

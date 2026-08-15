@@ -118,6 +118,26 @@ export type RiderContractStatus = {
   is_terminated: boolean
 }
 
+/** grider 주정산서 '관리비' 시트 → 주간 매출(회사 관리수수료 수입). weekly_revenue upsert. */
+export type WeeklyRevenue = {
+  week_start: string
+  week_end: string
+  mgmt_fee_total: number
+  base_fee: number
+  bonus_fee: number
+  etc_fee: number
+  payback_total: number
+  set_count: number
+  per_set_volume: number
+  total_order_volume: number
+  effective_volume: number
+  low3_achievement: number
+  total_slots: number
+  achieved_slots: number
+  missed_slots: number
+  acceptance_rate: number
+}
+
 /** rider_daily_fees upsert: 라이더 × 영업일 배달처리비(세전 수입) + 본사미션. */
 export type RiderDailyFee = {
   admin_rider_id: string

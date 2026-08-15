@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, ListChecks, Scissors, Building2, HandCoins, Megaphone, FileSpreadsheet, IdCard, LogOut, Menu, X, type LucideIcon } from "lucide-react";
+import { Home, TrendingUp, ListChecks, Scissors, Building2, HandCoins, Megaphone, FileSpreadsheet, IdCard, LogOut, Menu, X, type LucideIcon } from "lucide-react";
 import { BrandLogo } from "@/components/ui/brand-logo";
 import { signOutSettlement } from "@/actions/settlement-auth";
 import { cn } from "@/lib/cn";
@@ -19,6 +19,7 @@ interface NavItem {
 
 const NAV: NavItem[] = [
   { href: "/settlement", label: "홈", icon: Home, exact: true },
+  { href: "/settlement/revenue", label: "매출", icon: TrendingUp, exact: false },
   { href: "/settlement/daily", label: "일일 정산", icon: ListChecks, exact: false },
   { href: "/settlement/deductions", label: "차감 정산", icon: Scissors, exact: false },
   { href: "/settlement/mission", label: "본사 미션", icon: Building2, exact: false },

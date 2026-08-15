@@ -100,6 +100,28 @@ export type RiderContractStatusRow = {
   captured_at: string
 }
 
+// 0027: 주간 매출(관리비) — grider '관리비' 시트. 회사 관리수수료 수입.
+export type WeeklyRevenueRow = {
+  week_start: string
+  week_end: string
+  mgmt_fee_total: number
+  base_fee: number
+  bonus_fee: number
+  etc_fee: number
+  payback_total: number
+  set_count: number | null
+  per_set_volume: number | null
+  total_order_volume: number | null
+  effective_volume: number | null
+  low3_achievement: number | null
+  total_slots: number | null
+  achieved_slots: number | null
+  missed_slots: number | null
+  acceptance_rate: number | null
+  source: string
+  captured_at: string
+}
+
 export type RiderDailyFeeRow = {
   admin_rider_id: string
   snapshot_date: string
@@ -348,6 +370,12 @@ export type Database = {
         Insert: Pick<RiderContractStatusRow, 'admin_rider_id' | 'status'> &
           Partial<Omit<RiderContractStatusRow, 'admin_rider_id' | 'status'>>
         Update: Partial<RiderContractStatusRow>
+        Relationships: []
+      }
+      weekly_revenue: {
+        Row: WeeklyRevenueRow
+        Insert: Pick<WeeklyRevenueRow, 'week_start' | 'week_end'> & Partial<Omit<WeeklyRevenueRow, 'week_start' | 'week_end'>>
+        Update: Partial<WeeklyRevenueRow>
         Relationships: []
       }
       rider_daily_fees: {
