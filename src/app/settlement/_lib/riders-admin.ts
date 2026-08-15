@@ -9,7 +9,7 @@ export interface RiderListItem {
   phone: string | null;
   region: string | null;
   centerId: string | null;
-  createdAt: string;
+  createdAt: string | null;
   isActive: boolean;
   contractStatus: string | null; // 계약중 | 계약종료 | null(미수집)
   isTerminated: boolean;

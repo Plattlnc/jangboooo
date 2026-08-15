@@ -129,7 +129,7 @@ export type RiderDirectoryRow = {
   phone: string | null
   region: string | null
   center_id: string | null
-  created_at: string
+  created_at: string | null
   is_active: boolean
   contract_status: string | null
   is_terminated: boolean

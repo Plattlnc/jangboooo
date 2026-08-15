@@ -22,12 +22,22 @@ stable
 security invoker
 set search_path = public
 as $$
+  -- 라이더 전체 = 배민 riders ∪ grider 계약상태(rider_contract_status). 어느 한쪽에만 있어도 포함.
+  with ids as (
+    select admin_rider_id from public.riders
+    union
+    select admin_rider_id from public.rider_contract_status
+  )
   select
-    r.admin_rider_id, r.name, r.phone, r.region, r.center_id, r.created_at, r.is_active,
+    i.admin_rider_id,
+    coalesce(r.name, c.rider_name),
+    coalesce(r.phone, c.phone),
+    r.region, r.center_id, r.created_at, coalesce(r.is_active, false),
     c.status, coalesce(c.is_terminated, false),
     s.last_active, coalesce(s.active_days, 0), coalesce(s.total_completed, 0)
-  from public.riders r
-  left join public.rider_contract_status c on c.admin_rider_id = r.admin_rider_id
+  from ids i
+  left join public.riders r on r.admin_rider_id = i.admin_rider_id
+  left join public.rider_contract_status c on c.admin_rider_id = i.admin_rider_id
   left join (
     select admin_rider_id,
            max(snapshot_date) as last_active,
@@ -35,8 +45,8 @@ as $$
            sum(completed)     as total_completed
     from public.sla_snapshots
     group by admin_rider_id
-  ) s on s.admin_rider_id = r.admin_rider_id
-  order by r.name
+  ) s on s.admin_rider_id = i.admin_rider_id
+  order by coalesce(r.name, c.rider_name)
 $$;
 
 revoke all on function public.get_rider_directory() from public, anon, authenticated;
