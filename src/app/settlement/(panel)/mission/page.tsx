@@ -2,6 +2,7 @@ import { fetchMissionSettlement } from "@/app/settlement/_lib/mission";
 import { loadRiderNotes, loadRiderMemos } from "@/app/settlement/_lib/notes";
 import { kstToday, kstYesterday, isValidYmd, weekRangeOf } from "@/app/settlement/_lib/dates";
 import { MissionTabs } from "@/components/settlement/mission-tabs";
+import { DataPulse } from "@/components/settlement/data-pulse";
 
 export const dynamic = "force-dynamic";
 
@@ -22,5 +23,10 @@ export default async function MissionSettlementPage({
     loadRiderNotes(),
     loadRiderMemos(),
   ]);
-  return <MissionTabs data={data} period={period} today={kstToday()} notes={notes} memos={memos} />;
+  return (
+    <div>
+      <div className="mb-4"><DataPulse source="daily" label="본사 미션 데이터" cadence="매일 08:00 자동 수집 (전일분)" /></div>
+      <MissionTabs data={data} period={period} today={kstToday()} notes={notes} memos={memos} />
+    </div>
+  );
 }

@@ -2,6 +2,7 @@ import { fetchDailySettlement } from "@/app/settlement/_lib/daily";
 import { loadRiderNotes, loadRiderMemos } from "@/app/settlement/_lib/notes";
 import { kstToday, kstYesterday, isValidYmd } from "@/app/settlement/_lib/dates";
 import { DailyTabs } from "@/components/settlement/daily-tabs";
+import { DataPulse } from "@/components/settlement/data-pulse";
 
 export const dynamic = "force-dynamic";
 
@@ -18,5 +19,10 @@ export default async function DailySettlementPage({
     loadRiderNotes(),
     loadRiderMemos(),
   ]);
-  return <DailyTabs data={data} today={kstToday()} notes={notes} memos={memos} />;
+  return (
+    <div>
+      <div className="mb-4"><DataPulse source="daily" label="배달처리비 데이터" cadence="매일 08:00 자동 수집 (전일분)" /></div>
+      <DailyTabs data={data} today={kstToday()} notes={notes} memos={memos} />
+    </div>
+  );
 }

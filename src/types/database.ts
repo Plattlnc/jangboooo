@@ -64,6 +64,20 @@ export type RiderAccountRow = {
 }
 
 // 0018: 라이더 일별 배달처리비(세전 수입) — 배민 배달처리비 엑셀 적재분.
+// 0024: 추가 지급(소급 보정) — 바로고 주차별 정산내역서 '추가배달료' 시트 적재분.
+export type RiderExtraPaymentRow = {
+  id: number
+  week_start: string
+  week_end: string
+  admin_rider_id: string
+  rider_name: string | null
+  amount_krw: number
+  delivery_info: string
+  reason: string
+  source: string
+  captured_at: string
+}
+
 export type RiderDailyFeeRow = {
   admin_rider_id: string
   snapshot_date: string
@@ -291,6 +305,13 @@ export type Database = {
         Insert: Pick<CenterPeakGoalRow, 'center_id' | 'snapshot_date' | 'peak_key'> &
           Partial<Omit<CenterPeakGoalRow, 'id' | 'center_id' | 'snapshot_date' | 'peak_key'>>
         Update: Partial<Omit<CenterPeakGoalRow, 'id'>>
+        Relationships: []
+      }
+      rider_extra_payments: {
+        Row: RiderExtraPaymentRow
+        Insert: Pick<RiderExtraPaymentRow, 'week_start' | 'week_end' | 'admin_rider_id' | 'amount_krw'> &
+          Partial<Omit<RiderExtraPaymentRow, 'week_start' | 'week_end' | 'admin_rider_id' | 'amount_krw' | 'id'>>
+        Update: Partial<Omit<RiderExtraPaymentRow, 'id'>>
         Relationships: []
       }
       rider_daily_fees: {

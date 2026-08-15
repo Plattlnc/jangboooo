@@ -4,6 +4,7 @@ import { kstMonth, isValidYm } from "@/app/settlement/_lib/dates";
 import { isRidersUnlocked } from "@/lib/auth/settlement-cookies";
 import { MonthlyStatementView } from "@/components/settlement/monthly-view";
 import { RidersUnlockForm } from "@/components/settlement/riders-unlock-form";
+import { DataPulse } from "@/components/settlement/data-pulse";
 
 export const dynamic = "force-dynamic";
 
@@ -28,9 +29,12 @@ export default async function StatementPage({
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-jb-ink">정산서</h1>
         <span className="rounded-[6px] bg-jb-indigo-tint px-1.5 py-[3px] text-[11px] font-bold leading-none text-jb-indigo">세무사용</span>
+        <span className="ml-auto">
+          <DataPulse source="daily" label="정산 원천 데이터" cadence="매일 08:00 자동 수집 (전일분)" />
+        </span>
       </div>
       <MonthlyStatementView data={data} thisMonth={thisMonth} notes={notes} />
     </div>

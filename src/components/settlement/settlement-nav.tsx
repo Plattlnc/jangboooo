@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, ListChecks, Scissors, Building2, Megaphone, FileSpreadsheet, IdCard, LogOut, Menu, X, type LucideIcon } from "lucide-react";
+import { Home, ListChecks, Scissors, Building2, HandCoins, Megaphone, FileSpreadsheet, IdCard, LogOut, Menu, X, type LucideIcon } from "lucide-react";
 import { BrandLogo } from "@/components/ui/brand-logo";
 import { signOutSettlement } from "@/actions/settlement-auth";
 import { cn } from "@/lib/cn";
@@ -22,6 +22,7 @@ const NAV: NavItem[] = [
   { href: "/settlement/daily", label: "일일 정산", icon: ListChecks, exact: false },
   { href: "/settlement/deductions", label: "차감 정산", icon: Scissors, exact: false },
   { href: "/settlement/mission", label: "본사 미션", icon: Building2, exact: false },
+  { href: "/settlement/extra", label: "추가 지급", icon: HandCoins, exact: false },
   { href: "/settlement/promo", label: "자사 프로모션", icon: Megaphone, exact: false },
   { href: "/settlement/weekly", label: "정산서", icon: FileSpreadsheet, exact: false, badge: "세무사용" },
   { href: "/settlement/riders", label: "라이더 설정", icon: IdCard, exact: false },

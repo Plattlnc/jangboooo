@@ -2,6 +2,7 @@ import { fetchPromoSettlement } from "@/app/settlement/_lib/promo";
 import { loadRiderNotes, loadRiderMemos } from "@/app/settlement/_lib/notes";
 import { kstToday, kstYesterday, isValidYmd, weekRangeOf } from "@/app/settlement/_lib/dates";
 import { PromoTabs } from "@/components/settlement/promo-tabs";
+import { DataPulse } from "@/components/settlement/data-pulse";
 
 export const dynamic = "force-dynamic";
 
@@ -21,5 +22,10 @@ export default async function PromoSettlementPage({
     loadRiderNotes(),
     loadRiderMemos(),
   ]);
-  return <PromoTabs data={data} today={kstToday()} notes={notes} memos={memos} />;
+  return (
+    <div>
+      <div className="mb-4"><DataPulse source="hourly" label="시간대 실적 데이터" cadence="60초 주기 실시간 수집" pollMs={20_000} /></div>
+      <PromoTabs data={data} today={kstToday()} notes={notes} memos={memos} />
+    </div>
+  );
 }
