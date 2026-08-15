@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { setRiderSession, clearRiderSession, setSavedLoginCookie } from '@/lib/auth/cookies'
 import { constantTimeEqual } from '@/lib/auth/session'
+import { isRiderTerminated, CONTRACT_TERMINATED_MESSAGE } from '@/lib/contract'
 import { signInRiderSchema, type SignInResult } from '@/types/api'
 
 /**
@@ -42,6 +43,11 @@ export async function signInRider(input: unknown): Promise<SignInResult> {
   // 비번 = 휴대폰 뒤 4자리(상수시간 비교).
   if (!constantTimeEqual(password, rider.phone_norm.slice(-4))) {
     return { ok: false, code: 'INVALID_PASSWORD', message: '비밀번호가 올바르지 않습니다.' }
+  }
+
+  // 계약종료(탈퇴) 라이더 로그인 차단 — 비번 검증 후 확인(계정 열거로 계약상태 노출 방지).
+  if (await isRiderTerminated(rider.admin_rider_id)) {
+    return { ok: false, code: 'CONTRACT_TERMINATED', message: CONTRACT_TERMINATED_MESSAGE }
   }
 
   await setRiderSession(rider.admin_rider_id)

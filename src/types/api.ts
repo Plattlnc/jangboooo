@@ -50,6 +50,7 @@ export type SignInErrorCode =
   | 'INVALID_INPUT'
   | 'RIDER_NOT_FOUND'
   | 'INVALID_PASSWORD'
+  | 'CONTRACT_TERMINATED'
   | 'SERVER_ERROR'
 
 export type SignInResult =

@@ -83,13 +83,21 @@ function postLoginPath(): string {
   return raw && raw.startsWith("/") && !raw.startsWith("//") ? raw : "/dashboard";
 }
 
-export function RiderLoginForm() {
+export function RiderLoginForm({
+  initialError,
+  blocked = false,
+}: {
+  /** 서버에서 주입하는 초기 에러 메시지(예: 계약종료 라이더 차단). */
+  initialError?: string;
+  /** 계약종료 차단 진입 — 저장 자격 자동 로그인 스킵(재차단 왕복 방지). */
+  blocked?: boolean;
+} = {}) {
   const [riderId, setRiderId] = useState("");
   const [password, setPassword] = useState("");
   const [saveCreds, setSaveCreds] = useState(false);
   const [autoLogin, setAutoLogin] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string>();
+  const [error, setError] = useState<string | undefined>(initialError);
   const autoAttempted = useRef(false);
 
   const validId = riderId.trim().length > 0;
@@ -106,7 +114,8 @@ export function RiderLoginForm() {
   }, []);
 
   async function hydrateSaved() {
-    const loggedOut = new URLSearchParams(window.location.search).has("out");
+    // 로그아웃 직후(?out) 또는 계약종료 차단(?blocked) 진입이면 자동 로그인 스킵.
+    const loggedOut = blocked || new URLSearchParams(window.location.search).has("out");
 
     const saved = loadFromCookie() ?? loadFromLocalStorage();
     if (saved) {
