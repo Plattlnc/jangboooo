@@ -9,7 +9,7 @@ import { useEffect, useRef, useState } from "react";
 // 상태 판정(마지막 업데이트 경과):
 //   ≤3분  = 실시간 수집 중(초록 pulse)  ·  ≤26시간 = 최신(파랑)  ·  그 외 = 대기(회색)
 
-type Source = "daily" | "hourly" | "extra" | "insurance" | "revenue" | "contract";
+type Source = "daily" | "hourly" | "extra" | "insurance" | "revenue" | "sales" | "contract";
 
 const LIVE_MS = 3 * 60 * 1000;
 const FRESH_MS = 26 * 60 * 60 * 1000;

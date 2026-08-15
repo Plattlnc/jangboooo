@@ -12,6 +12,7 @@ const SOURCES = {
   extra: { table: "rider_extra_payments", col: "captured_at" },
   insurance: { table: "rider_weekly_insurance", col: "captured_at" },
   revenue: { table: "weekly_revenue", col: "captured_at" },
+  sales: { table: "weekly_tax_invoice", col: "captured_at" },
   contract: { table: "rider_contract_status", col: "captured_at" },
 } as const;
 

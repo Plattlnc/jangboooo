@@ -8,7 +8,7 @@ import type { Logger } from './logger'
 import { serializeError } from './logger'
 import type { BrowserSession } from './browser'
 import type { Db } from './supabase'
-import { upsertCenterCurrents, upsertDeliveryFeeDetails, upsertHourlyStats, upsertInsurance, upsertRiderContractStatus, upsertRiderDailyFees, upsertRiderExtraPayments, upsertRiderWeeklyInsurance, upsertRiders, upsertSlaSnapshots, upsertWeeklyRevenue, upsertWorkingStatus } from './supabase'
+import { upsertCenterCurrents, upsertDeliveryFeeDetails, upsertHourlyStats, upsertInsurance, upsertRiderContractStatus, upsertRiderDailyFees, upsertRiderExtraPayments, upsertRiderWeeklyInsurance, upsertRiders, upsertSlaSnapshots, upsertWeeklyRevenue, upsertWeeklyTaxInvoice, upsertWorkingStatus } from './supabase'
 import { captureApiHeaders, fetchSlaDataWithHeaders, isSessionExpired, mockScrapeResult } from './sources/baemin'
 import { collectDeliveryFees } from './sources/baemin-fees'
 import { tryCollectGriderRiders, tryCollectGriderWeekly } from './sources/grider'
@@ -358,8 +358,9 @@ async function maybeCollectGriderWeekly(cfg: Config, db: Db, log: Logger): Promi
     const ni = await upsertRiderWeeklyInsurance(db, res.insurance)
     const ne = await upsertRiderExtraPayments(db, res.extra)
     const nr = await upsertWeeklyRevenue(db, res.revenue)
+    const nt = await upsertWeeklyTaxInvoice(db, res.taxInvoice)
     griderDoneWeek = week.start
-    log.info('grider 주정산서 적재 완료', { week: `${week.start}~${week.end}`, insurance: ni, extra: ne, revenue: nr })
+    log.info('grider 주정산서 적재 완료', { week: `${week.start}~${week.end}`, insurance: ni, extra: ne, revenue: nr, tax: nt })
   } catch (err) {
     log.error('grider 주정산서 수집 실패(내일 재시도)', serializeError(err))
   }

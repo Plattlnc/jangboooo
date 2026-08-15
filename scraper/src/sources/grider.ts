@@ -13,7 +13,7 @@ import type { Config } from '../config'
 import type { Logger } from '../logger'
 import { serializeError } from '../logger'
 import { TRAFFIC_ARGS } from '../browser'
-import type { RiderContractStatus, RiderExtraPayment, RiderWeeklyInsurance, WeeklyRevenue } from '../types'
+import type { RiderContractStatus, RiderExtraPayment, RiderWeeklyInsurance, WeeklyRevenue, WeeklyTaxInvoice } from '../types'
 
 const GRIDER_UA =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
@@ -46,6 +46,7 @@ async function griderLogin(cfg: Config): Promise<{ browser: Browser; page: Page 
 const SHEET_EULJI_PREFIX = '을지' // 을지_협력사 소속 라이더 정산 확인용
 const SHEET_EXTRA = '추가배달료'
 const SHEET_MGMT = '관리비'
+const SHEET_GAPJI_PREFIX = '갑지' // 갑지_협력사 전체 정산 확인용
 
 export type GriderWeeklyResult = {
   weekStart: string
@@ -53,6 +54,7 @@ export type GriderWeeklyResult = {
   extra: RiderExtraPayment[]
   insurance: RiderWeeklyInsurance[]
   revenue: WeeklyRevenue | null
+  taxInvoice: WeeklyTaxInvoice | null
 }
 
 const num = (v: unknown): number => {
@@ -149,6 +151,48 @@ function parseRevenue(wb: XLSX.WorkBook, weekStart: string, weekEnd: string): We
   }
 }
 
+/**
+ * '갑지' 시트 "3.세금계산서 내역"(역발행) → 라인별 공급가액/부가세/공급대가.
+ * col1=구분(라벨) col2=공급가액 col3=부가세액 col4=공급대가. 세금계산서 섹션 헤더 이후
+ * 합계까지만 읽어(같은 이름의 다른 섹션 오염 방지) 라인 매핑.
+ */
+function parseTaxInvoice(wb: XLSX.WorkBook, weekStart: string, weekEnd: string): WeeklyTaxInvoice | null {
+  const name = wb.SheetNames.find((n) => n.startsWith(SHEET_GAPJI_PREFIX))
+  if (!name) return null
+  const ws = wb.Sheets[name]
+  if (!ws) return null
+  const rows = XLSX.utils.sheet_to_json<unknown[]>(ws, { header: 1, defval: null })
+  const secIdx = rows.findIndex((r) => r && typeof r[1] === 'string' && (r[1] as string).includes('세금계산서 내역'))
+  if (secIdx < 0) return null
+
+  const line = (r: unknown[]) => ({ supply: num(r[2]), vat: num(r[3]), total: num(r[4]) })
+  const z = { supply: 0, vat: 0, total: 0 }
+  let delivery = z, riderFee = z, mgmt = z, payback = z, sum = z
+  for (let i = secIdx + 1; i < Math.min(secIdx + 9, rows.length); i++) {
+    const r = rows[i]
+    if (!r) continue
+    const label = str(r[1])
+    if (!label) continue
+    if (label.includes('배달료')) delivery = line(r)
+    else if (label.includes('라이더수수료')) riderFee = line(r)
+    else if (label.includes('관리비')) mgmt = line(r)
+    else if (label.includes('페이백')) payback = line(r)
+    else if (label.includes('합계')) {
+      sum = line(r)
+      break // 세금계산서 섹션 합계에서 종료(이후 다른 섹션 '합계' 오염 방지)
+    }
+  }
+  return {
+    week_start: weekStart,
+    week_end: weekEnd,
+    delivery_supply: delivery.supply, delivery_vat: delivery.vat, delivery_total: delivery.total,
+    rider_fee_supply: riderFee.supply, rider_fee_vat: riderFee.vat, rider_fee_total: riderFee.total,
+    mgmt_supply: mgmt.supply, mgmt_vat: mgmt.vat, mgmt_total: mgmt.total,
+    payback_supply: payback.supply, payback_vat: payback.vat, payback_total: payback.total,
+    sum_supply: sum.supply, sum_vat: sum.vat, sum_total: sum.total,
+  }
+}
+
 /** 로그인 후 특정 주차(base_date~end_date) 주정산서 xlsx 를 페이지 컨텍스트 fetch 로 받아 파싱. */
 export async function collectGriderWeekly(
   cfg: Config,
@@ -185,6 +229,7 @@ export async function collectGriderWeekly(
     const extra = parseExtra(wb, weekStart, weekEnd)
     const insurance = parseInsurance(wb, weekStart, weekEnd)
     const revenue = parseRevenue(wb, weekStart, weekEnd)
+    const taxInvoice = parseTaxInvoice(wb, weekStart, weekEnd)
     log.info('grider 주정산서 수집', {
       week: `${weekStart}~${weekEnd}`,
       extra: extra.length,
@@ -192,8 +237,9 @@ export async function collectGriderWeekly(
       insurance: insurance.length,
       insuranceKrw: insurance.reduce((s, r) => s + r.amount_krw, 0),
       mgmtFee: revenue?.mgmt_fee_total ?? null,
+      salesSupply: taxInvoice?.sum_supply ?? null,
     })
-    return { weekStart, weekEnd, extra, insurance, revenue }
+    return { weekStart, weekEnd, extra, insurance, revenue, taxInvoice }
   } finally {
     await browser.close().catch(() => {})
   }

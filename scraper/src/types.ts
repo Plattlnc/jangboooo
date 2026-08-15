@@ -118,6 +118,27 @@ export type RiderContractStatus = {
   is_terminated: boolean
 }
 
+/** grider 주정산서 '갑지' 시트 "3.세금계산서 내역"(역발행) → 주간 매출(세금계산서 기준). */
+export type WeeklyTaxInvoice = {
+  week_start: string
+  week_end: string
+  delivery_supply: number
+  delivery_vat: number
+  delivery_total: number
+  rider_fee_supply: number
+  rider_fee_vat: number
+  rider_fee_total: number
+  mgmt_supply: number
+  mgmt_vat: number
+  mgmt_total: number
+  payback_supply: number
+  payback_vat: number
+  payback_total: number
+  sum_supply: number
+  sum_vat: number
+  sum_total: number
+}
+
 /** grider 주정산서 '관리비' 시트 → 주간 매출(회사 관리수수료 수입). weekly_revenue upsert. */
 export type WeeklyRevenue = {
   week_start: string

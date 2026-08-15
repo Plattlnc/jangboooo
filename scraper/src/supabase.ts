@@ -4,7 +4,7 @@
  */
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import type { Config } from './config'
-import type { CenterCurrentUpsert, CenterGoalUpsert, DeliveryFeeDetail, HourlyStatUpsert, RiderContractStatus, RiderDailyFee, RiderExtraPayment, RiderInsurance, RiderUpsert, RiderWeeklyInsurance, SlaSnapshotUpsert, WeeklyRevenue, WorkingStatusSummary } from './types'
+import type { CenterCurrentUpsert, CenterGoalUpsert, DeliveryFeeDetail, HourlyStatUpsert, RiderContractStatus, RiderDailyFee, RiderExtraPayment, RiderInsurance, RiderUpsert, RiderWeeklyInsurance, SlaSnapshotUpsert, WeeklyRevenue, WeeklyTaxInvoice, WorkingStatusSummary } from './types'
 
 export type Db = SupabaseClient
 
@@ -133,6 +133,16 @@ export async function upsertWeeklyRevenue(db: Db, row: WeeklyRevenue | null): Pr
     .from('weekly_revenue')
     .upsert({ ...row, captured_at: new Date().toISOString() }, { onConflict: 'week_start' })
   if (error) throw new SupabaseUpsertError('weekly_revenue', error)
+  return 1
+}
+
+/** weekly_tax_invoice 멱등 upsert (키: week_start). 세금계산서 내역(매출) 1행. */
+export async function upsertWeeklyTaxInvoice(db: Db, row: WeeklyTaxInvoice | null): Promise<number> {
+  if (!row) return 0
+  const { error } = await db
+    .from('weekly_tax_invoice')
+    .upsert({ ...row, captured_at: new Date().toISOString() }, { onConflict: 'week_start' })
+  if (error) throw new SupabaseUpsertError('weekly_tax_invoice', error)
   return 1
 }
 

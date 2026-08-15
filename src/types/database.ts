@@ -142,6 +142,29 @@ export type RiderDirectoryRow = {
 export type DailyCompletedRow = { day: string; completed: number; riders: number }
 export type WeekSettlementTotalsRow = { fee_total: number; mission_total: number; completed_total: number; active_riders: number }
 
+// 0030: 주간 세금계산서 내역(역발행) — 갑지 3.세금계산서 내역. 회사 매출.
+export type WeeklyTaxInvoiceRow = {
+  week_start: string
+  week_end: string
+  delivery_supply: number
+  delivery_vat: number
+  delivery_total: number
+  rider_fee_supply: number
+  rider_fee_vat: number
+  rider_fee_total: number
+  mgmt_supply: number
+  mgmt_vat: number
+  mgmt_total: number
+  payback_supply: number
+  payback_vat: number
+  payback_total: number
+  sum_supply: number
+  sum_vat: number
+  sum_total: number
+  source: string
+  captured_at: string
+}
+
 export type RiderDailyFeeRow = {
   admin_rider_id: string
   snapshot_date: string
@@ -396,6 +419,12 @@ export type Database = {
         Row: WeeklyRevenueRow
         Insert: Pick<WeeklyRevenueRow, 'week_start' | 'week_end'> & Partial<Omit<WeeklyRevenueRow, 'week_start' | 'week_end'>>
         Update: Partial<WeeklyRevenueRow>
+        Relationships: []
+      }
+      weekly_tax_invoice: {
+        Row: WeeklyTaxInvoiceRow
+        Insert: Pick<WeeklyTaxInvoiceRow, 'week_start' | 'week_end'> & Partial<Omit<WeeklyTaxInvoiceRow, 'week_start' | 'week_end'>>
+        Update: Partial<WeeklyTaxInvoiceRow>
         Relationships: []
       }
       rider_daily_fees: {
