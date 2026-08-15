@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { Search, Download, X, Loader2, ChevronRight, Phone, MapPin, Bike, Shield, Calendar, TrendingUp } from "lucide-react";
+import { Search, Download, X, Loader2, Phone, MapPin, Bike, Shield, Calendar, TrendingUp } from "lucide-react";
 import type { RiderListItem, RiderDetail } from "@/app/settlement/_lib/riders-admin";
 import { loadRiderDetail } from "@/actions/rider-directory";
 import { TerminatedBadge } from "./terminated-badge";
@@ -104,41 +104,49 @@ export function RiderDirectoryView({ riders }: { riders: RiderListItem[] }) {
 
       {/* 목록 */}
       <div className="overflow-hidden rounded-[12px] border border-jb-line bg-jb-card">
-        <table className="w-full whitespace-nowrap text-[13.5px]">
+        <table className="w-full table-fixed text-[13.5px]">
+          <colgroup>
+            <col className="w-[6%]" />
+            <col className="w-[17%]" />
+            <col className="w-[16%]" />
+            <col className="w-[13%]" />
+            <col className="w-[11%]" />
+            <col className="w-[15%]" />
+            <col className="w-[12%]" />
+            <col className="w-[10%]" />
+          </colgroup>
           <thead>
             <tr className="border-b border-jb-line bg-jb-surface text-left text-[12px] text-jb-ink-mute">
-              <th className="px-3 py-2.5 font-medium">순번</th>
-              <th className="min-w-[96px] px-4 py-2.5 font-medium">라이더명</th>
+              <th className="px-4 py-2.5 text-right font-medium">순번</th>
+              <th className="px-4 py-2.5 font-medium">라이더명</th>
               <th className="px-4 py-2.5 font-medium">라이더ID</th>
-              <th className="px-3 py-2.5 font-medium">휴대폰</th>
-              <th className="px-3 py-2.5 font-medium">계약상태</th>
-              <th className="px-3 py-2.5 font-medium">지역</th>
-              <th className="px-3 py-2.5 text-right font-medium">마지막 활동</th>
-              <th className="px-3 py-2.5 text-right font-medium">누적 완료</th>
-              <th className="w-full px-2 py-2.5" aria-hidden />
+              <th className="px-4 py-2.5 font-medium">휴대폰</th>
+              <th className="px-4 py-2.5 font-medium">계약상태</th>
+              <th className="px-4 py-2.5 font-medium">지역</th>
+              <th className="px-4 py-2.5 text-right font-medium">마지막 활동</th>
+              <th className="px-4 py-2.5 text-right font-medium">누적 완료</th>
             </tr>
           </thead>
           <tbody>
             {view.map((r, i) => (
               <tr key={r.riderId} onClick={() => openDetail(r.riderId)}
                 className={cn("cursor-pointer border-b border-jb-line/60 transition-colors hover:bg-jb-surface/70", selected === r.riderId && "bg-jb-indigo-tint/40")}>
-                <td className="px-3 py-2.5 tabular-nums text-jb-ink-mute">{i + 1}</td>
-                <td className="px-4 py-2.5 font-semibold text-jb-ink">{r.name}{r.isTerminated ? <TerminatedBadge /> : null}</td>
-                <td className="px-4 py-2.5 text-jb-ink-mute">{r.riderId}</td>
-                <td className="px-3 py-2.5 tabular-nums text-jb-ink-soft">{dash(r.phone)}</td>
-                <td className="px-3 py-2.5">
+                <td className="px-4 py-2.5 text-right tabular-nums text-jb-ink-mute">{i + 1}</td>
+                <td className="truncate px-4 py-2.5 font-semibold text-jb-ink">{r.name}{r.isTerminated ? <TerminatedBadge /> : null}</td>
+                <td className="truncate px-4 py-2.5 text-jb-ink-mute">{r.riderId}</td>
+                <td className="px-4 py-2.5 tabular-nums text-jb-ink-soft">{dash(r.phone)}</td>
+                <td className="px-4 py-2.5">
                   <span className={cn("rounded-[5px] px-1.5 py-0.5 text-[11px] font-semibold", r.isTerminated ? "bg-jb-red-tint text-jb-red" : r.contractStatus === "계약중" ? "bg-jb-green-tint text-jb-green" : "bg-jb-surface text-jb-ink-mute")}>
                     {r.contractStatus ?? "미수집"}
                   </span>
                 </td>
-                <td className="px-3 py-2.5 text-jb-ink-soft">{dash(r.region)}</td>
-                <td className="px-3 py-2.5 text-right tabular-nums text-jb-ink-soft">{dash(r.lastActive)}</td>
-                <td className="px-3 py-2.5 text-right tabular-nums font-semibold text-jb-ink">{won(r.totalCompleted)}</td>
-                <td className="px-2 py-2.5 text-jb-ink-mute"><ChevronRight size={15} /></td>
+                <td className="truncate px-4 py-2.5 text-jb-ink-soft">{dash(r.region)}</td>
+                <td className="px-4 py-2.5 text-right tabular-nums text-jb-ink-soft">{dash(r.lastActive)}</td>
+                <td className="px-4 py-2.5 text-right tabular-nums font-semibold text-jb-ink">{won(r.totalCompleted)}</td>
               </tr>
             ))}
             {view.length === 0 ? (
-              <tr><td colSpan={9} className="px-4 py-16 text-center text-[13px] text-jb-ink-mute">해당하는 라이더가 없습니다.</td></tr>
+              <tr><td colSpan={8} className="px-4 py-16 text-center text-[13px] text-jb-ink-mute">해당하는 라이더가 없습니다.</td></tr>
             ) : null}
           </tbody>
         </table>
