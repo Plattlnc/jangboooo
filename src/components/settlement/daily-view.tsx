@@ -175,7 +175,7 @@ export function DailySettlementView({
                 <tr className="bg-jb-surface text-[12px] font-medium">
                   <th className="sticky left-0 z-10 w-[40px] min-w-[40px] max-w-[40px] border-b border-jb-line bg-jb-surface px-2 py-2.5 text-right">#</th>
                   <SortableTh label="라이더" onClick={() => toggleSort("name")} active={sortKey === "name"} dir={sortDir} align="left" className="sticky left-[40px] z-10 min-w-[96px] bg-jb-surface" />
-                  <th className="w-[200px] border-b border-jb-line px-3 py-2.5 text-left">메모</th>
+                  <th className="w-[280px] min-w-[280px] border-b border-jb-line px-3 py-2.5 text-left">메모</th>
                   <th className="border-b border-jb-line px-3 py-2.5 text-left">라이더 ID</th>
                   <SortableTh label="완료" onClick={() => toggleSort("completed")} active={sortKey === "completed"} dir={sortDir} align="right" />
                   <SortableTh label="배달처리비(세전)" onClick={() => toggleSort("fee")} active={sortKey === "fee"} dir={sortDir} align="right" className="border-l border-jb-line" />
