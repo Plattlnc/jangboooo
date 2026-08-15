@@ -27,24 +27,30 @@ export async function loadRiderDeductions(): Promise<Record<string, number>> {
 }
 
 /**
- * 스크래퍼가 배달처리비 xlsx '보험' 시트에서 자동 추출한 시간제보험료(settlement/rider-insurance.json).
- * 구조: { 'YYYY-MM-DD': { riderId: amount } }. 최근 스크래핑(가장 늦은 날짜) 기준 라이더별 금액 반환.
+ * 시간제보험료(차감 정산 자동값) — 바로고 주차별 정산내역서 을지 F열 적재분(rider_weekly_insurance, 0025).
+ * 최신 주차(week_start 내림차순) 기준 라이더별 금액 반환. 배민 배달처리비 파일엔 보험 시트가 없어
+ * (2시트뿐) 이 주간 소스가 유일한 자동 경로.
  */
 export async function loadScrapedInsurance(): Promise<{ byRider: Record<string, number>; latestDate: string | null; dates: string[] }> {
   try {
     const supabase = createAdminClient();
-    const { data, error } = await supabase.storage.from(BUCKET).download("rider-insurance.json");
-    if (error || !data) return { byRider: {}, latestDate: null, dates: [] };
-    const parsed = JSON.parse(await data.text()) as Record<string, Record<string, number>>;
-    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return { byRider: {}, latestDate: null, dates: [] };
-    const dates = Object.keys(parsed).sort();
-    const latest = dates.length ? dates[dates.length - 1] : null;
+    const { data, error } = await supabase
+      .from("rider_weekly_insurance")
+      .select("week_start, week_end, admin_rider_id, amount_krw")
+      .order("week_start", { ascending: false })
+      .limit(1000);
+    if (error || !data?.length) return { byRider: {}, latestDate: null, dates: [] };
+    const dates = [...new Set(data.map((r) => r.week_start))].sort();
+    const latest = data[0].week_start; // 내림차순 첫 행 = 최신 주차
+    const latestEnd = data[0].week_end;
     const byRider: Record<string, number> = {};
-    if (latest) for (const [id, v] of Object.entries(parsed[latest] ?? {})) {
-      const n = Math.floor(Number(v));
-      if (Number.isFinite(n) && n > 0) byRider[id] = n;
+    for (const r of data) {
+      if (r.week_start !== latest) continue;
+      const n = Math.floor(Number(r.amount_krw));
+      if (Number.isFinite(n) && n > 0) byRider[r.admin_rider_id] = n;
     }
-    return { byRider, latestDate: latest, dates };
+    // latestDate 표시는 주차 범위(수~화)로 — 화면 '자동 기준' 라벨용.
+    return { byRider, latestDate: `${latest} ~ ${latestEnd}`, dates };
   } catch {
     return { byRider: {}, latestDate: null, dates: [] };
   }

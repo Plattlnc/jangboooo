@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
-"""바로고 주차별 정산내역서 xlsx → rider_extra_payments 멱등 upsert.
+"""바로고 주차별 정산내역서 xlsx → 주간 정산 데이터 멱등 upsert.
 
-'추가배달료' 시트(기상할증 보정 등 사후 소급 지급)를 파싱한다. 배민 배달처리비
-daily 파일에는 이 보정이 반영되지 않음(2026-08-15 재다운로드 diff 0건 실측) —
-주간 정산서가 유일한 소스. 정산 > 추가 지급 메뉴의 데이터.
+두 가지를 함께 적재한다(같은 파일이 유일 소스):
+  1) '추가배달료' 시트 → rider_extra_payments (기상할증 보정 등 사후 소급 지급, 정산>추가지급)
+  2) '을지' 시트 F열 → rider_weekly_insurance (시간제보험료, 정산>차감정산 자동값)
+배민 배달처리비 daily 파일엔 보험 시트가 없고(2시트뿐) 배민 보험료 메뉴는 이메일 발송
+방식이라 즉시 스크래핑 불가 — 주간 정산서가 유일한 자동 소스.
 
 사용:
   set -a; source .env.local; set +a
@@ -59,8 +61,34 @@ def parse(path):
     return rows
 
 
-def upsert(rows, url, key):
-    endpoint = url.rstrip("/") + "/rest/v1/rider_extra_payments?on_conflict=week_start,admin_rider_id,delivery_info,reason"
+def parse_insurance(path):
+    """을지 시트 F열(시간제보험료) — User ID(2) × amount(10). 헤더 'User ID' 행 이후 데이터."""
+    wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
+    ws = next((wb[n] for n in wb.sheetnames if n.startswith("을지")), None)
+    if ws is None:
+        return []
+    rows = []
+    for row in ws.iter_rows(values_only=True):
+        if len(row) <= 10:
+            continue
+        # 데이터 행: NO(1)=숫자, User ID(2) 존재
+        if not isinstance(row[1], (int, float)) or not row[2]:
+            continue
+        amt = row[10]
+        amt = int(amt) if isinstance(amt, (int, float)) else 0
+        if amt <= 0:
+            continue
+        rows.append({
+            "admin_rider_id": str(row[2]).strip(),
+            "rider_name": str(row[3]).strip() if row[3] is not None else None,
+            "amount_krw": amt,
+        })
+    return rows
+
+
+def upsert(rows, url, key, table="rider_extra_payments",
+           on_conflict="week_start,admin_rider_id,delivery_info,reason"):
+    endpoint = url.rstrip("/") + f"/rest/v1/{table}?on_conflict={on_conflict}"
     headers = {
         "apikey": key, "Authorization": f"Bearer {key}",
         "Content-Type": "application/json", "Prefer": "resolution=merge-duplicates,return=minimal",
@@ -84,15 +112,12 @@ def main():
 
     week_start, week_end = parse_week_from_filename(args.excel)
     rows = parse(args.excel)
-    riders = len({r["admin_rider_id"] for r in rows})
-    total = sum(r["amount_krw"] for r in rows)
-    print(f"파싱: 주차 {week_start}~{week_end} | rows={len(rows)} riders={riders} 합계={total:,}원")
-    by_rider = {}
-    for r in rows:
-        by_rider.setdefault(f"{r['rider_name']}({r['admin_rider_id']})", 0)
-        by_rider[f"{r['rider_name']}({r['admin_rider_id']})"] += r["amount_krw"]
-    for k, v in sorted(by_rider.items(), key=lambda x: -x[1]):
-        print(f"  {k}: {v:,}원")
+    ins = parse_insurance(args.excel)
+    print(f"파싱: 주차 {week_start}~{week_end}")
+    print(f"  [추가지급] rows={len(rows)} riders={len({r['admin_rider_id'] for r in rows})} "
+          f"합계={sum(r['amount_krw'] for r in rows):,}원")
+    print(f"  [시간제보험료] rows={len(ins)} riders={len({r['admin_rider_id'] for r in ins})} "
+          f"합계={sum(r['amount_krw'] for r in ins):,}원")
 
     if args.dry_run:
         print("(dry-run: 적재 안 함)")
@@ -102,10 +127,15 @@ def main():
     key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
     if not url or not key:
         sys.exit("SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY 환경변수 필요")
-    payload = [{**r, "week_start": week_start, "week_end": week_end,
-                "source": os.path.basename(args.excel)} for r in rows]
-    n = upsert(payload, url, key)
-    print(f"적재 완료: {n}행 (멱등 upsert)")
+    src = os.path.basename(args.excel)
+    extra_payload = [{**r, "week_start": week_start, "week_end": week_end, "source": src} for r in rows]
+    n1 = upsert(extra_payload, url, key)
+    print(f"추가지급 적재 완료: {n1}행")
+    if ins:
+        ins_payload = [{**r, "week_start": week_start, "week_end": week_end, "source": src} for r in ins]
+        n2 = upsert(ins_payload, url, key, table="rider_weekly_insurance",
+                    on_conflict="week_start,admin_rider_id")
+        print(f"시간제보험료 적재 완료: {n2}행")
 
 
 if __name__ == "__main__":

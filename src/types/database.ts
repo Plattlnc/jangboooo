@@ -78,6 +78,18 @@ export type RiderExtraPaymentRow = {
   captured_at: string
 }
 
+// 0025: 주간 시간제보험료 — 바로고 정산내역서 을지 F열(차감정산 자동값).
+export type RiderWeeklyInsuranceRow = {
+  id: number
+  week_start: string
+  week_end: string
+  admin_rider_id: string
+  rider_name: string | null
+  amount_krw: number
+  source: string
+  captured_at: string
+}
+
 export type RiderDailyFeeRow = {
   admin_rider_id: string
   snapshot_date: string
@@ -312,6 +324,13 @@ export type Database = {
         Insert: Pick<RiderExtraPaymentRow, 'week_start' | 'week_end' | 'admin_rider_id' | 'amount_krw'> &
           Partial<Omit<RiderExtraPaymentRow, 'week_start' | 'week_end' | 'admin_rider_id' | 'amount_krw' | 'id'>>
         Update: Partial<Omit<RiderExtraPaymentRow, 'id'>>
+        Relationships: []
+      }
+      rider_weekly_insurance: {
+        Row: RiderWeeklyInsuranceRow
+        Insert: Pick<RiderWeeklyInsuranceRow, 'week_start' | 'week_end' | 'admin_rider_id' | 'amount_krw'> &
+          Partial<Omit<RiderWeeklyInsuranceRow, 'week_start' | 'week_end' | 'admin_rider_id' | 'amount_krw' | 'id'>>
+        Update: Partial<Omit<RiderWeeklyInsuranceRow, 'id'>>
         Relationships: []
       }
       rider_daily_fees: {

@@ -10,6 +10,7 @@ const SOURCES = {
   daily: { table: "rider_daily_fees", col: "captured_at" },
   hourly: { table: "rider_hourly_stats", col: "captured_at" },
   extra: { table: "rider_extra_payments", col: "captured_at" },
+  insurance: { table: "rider_weekly_insurance", col: "captured_at" },
 } as const;
 
 type SourceKey = keyof typeof SOURCES;
