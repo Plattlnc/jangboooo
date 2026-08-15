@@ -55,6 +55,12 @@ const EnvSchema = z.object({
   DELIVERY_FEE_REASON: z.string().min(1).default('라이더 배달일지 수입 반영용 배달처리비 집계'),
   DELIVERY_FEE_HOUR: z.coerce.number().int().min(0).max(23).default(8), // KST 수집 시각(시)
 
+  // grider(jangboo.grider.ai) 주정산서 수집 — 추가지급·시간제보험료 소스. ID/PW 둘 다 있어야 활성.
+  GRIDER_ID: optionalNonEmpty,
+  GRIDER_PW: optionalNonEmpty,
+  GRIDER_BASE_URL: z.string().min(1).default('http://jangboo.grider.ai'),
+  GRIDER_HOUR: z.coerce.number().int().min(0).max(23).default(9), // KST 주간 수집 시각(시)
+
   // ── 달성현황(beta) = 구글 Looker Studio 임베드 리포트 (best-effort) ──
   // 배민 세션과 별개의 "구글 로그인 세션"이 필요. storageState 패턴은 배민과 동일.
   // 셋 다(또는 B64) 없으면 공동목표 수집은 스킵(배달현황 수집엔 영향 없음).
@@ -107,6 +113,14 @@ export type Config = {
     password?: string
     reason: string
     hour: number // KST 수집 시각
+  }
+  /** grider 주정산서(추가지급·시간제보험료) 수집. configured=false(ID/PW 미설정) 면 스킵. */
+  grider: {
+    configured: boolean
+    id?: string
+    pw?: string
+    baseUrl: string
+    hour: number // KST 주간 수집 시각
   }
   logLevel: LogLevel
   runOnce: boolean
@@ -166,6 +180,13 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env, argv: readonly 
       password: e.DELIVERY_FEE_PASSWORD,
       reason: e.DELIVERY_FEE_REASON,
       hour: e.DELIVERY_FEE_HOUR,
+    },
+    grider: {
+      configured: Boolean(e.GRIDER_ID && e.GRIDER_PW),
+      id: e.GRIDER_ID,
+      pw: e.GRIDER_PW,
+      baseUrl: e.GRIDER_BASE_URL,
+      hour: e.GRIDER_HOUR,
     },
     logLevel: e.LOG_LEVEL,
     runOnce: hasOnceFlag(argv),

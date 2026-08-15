@@ -4,7 +4,7 @@
  */
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import type { Config } from './config'
-import type { CenterCurrentUpsert, CenterGoalUpsert, DeliveryFeeDetail, HourlyStatUpsert, RiderDailyFee, RiderInsurance, RiderUpsert, SlaSnapshotUpsert, WorkingStatusSummary } from './types'
+import type { CenterCurrentUpsert, CenterGoalUpsert, DeliveryFeeDetail, HourlyStatUpsert, RiderDailyFee, RiderExtraPayment, RiderInsurance, RiderUpsert, RiderWeeklyInsurance, SlaSnapshotUpsert, WorkingStatusSummary } from './types'
 
 export type Db = SupabaseClient
 
@@ -99,6 +99,30 @@ export async function upsertRiderDailyFees(db: Db, rows: RiderDailyFee[]): Promi
   if (rows.length === 0) return 0
   const { error } = await db.from('rider_daily_fees').upsert(rows, { onConflict: 'admin_rider_id,snapshot_date' })
   if (error) throw new SupabaseUpsertError('rider_daily_fees', error)
+  return rows.length
+}
+
+/**
+ * rider_extra_payments 멱등 upsert (키: week_start,admin_rider_id,delivery_info,reason).
+ * 주정산서 재수집 시 같은 주차 행이 겹쳐도 안전. 이 주차의 기존 행 중 이번에 안 온 것은
+ * 남지만, 원본이 append-only(건별)라 실무상 문제 없음.
+ */
+export async function upsertRiderExtraPayments(db: Db, rows: RiderExtraPayment[]): Promise<number> {
+  if (rows.length === 0) return 0
+  const { error } = await db
+    .from('rider_extra_payments')
+    .upsert(rows, { onConflict: 'week_start,admin_rider_id,delivery_info,reason' })
+  if (error) throw new SupabaseUpsertError('rider_extra_payments', error)
+  return rows.length
+}
+
+/** rider_weekly_insurance 멱등 upsert (키: week_start,admin_rider_id). 주차별 라이더 1행. */
+export async function upsertRiderWeeklyInsurance(db: Db, rows: RiderWeeklyInsurance[]): Promise<number> {
+  if (rows.length === 0) return 0
+  const { error } = await db
+    .from('rider_weekly_insurance')
+    .upsert(rows, { onConflict: 'week_start,admin_rider_id' })
+  if (error) throw new SupabaseUpsertError('rider_weekly_insurance', error)
   return rows.length
 }
 

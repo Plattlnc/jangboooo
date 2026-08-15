@@ -89,6 +89,26 @@ export type RiderInsurance = {
   amount: number
 }
 
+/** grider 주정산서 '추가배달료' 시트 1건(rider_extra_payments upsert). */
+export type RiderExtraPayment = {
+  week_start: string
+  week_end: string
+  admin_rider_id: string
+  rider_name: string | null
+  amount_krw: number
+  delivery_info: string
+  reason: string
+}
+
+/** grider 주정산서 '을지' F열 시간제보험료(rider_weekly_insurance upsert). */
+export type RiderWeeklyInsurance = {
+  week_start: string
+  week_end: string
+  admin_rider_id: string
+  rider_name: string | null
+  amount_krw: number
+}
+
 /** rider_daily_fees upsert: 라이더 × 영업일 배달처리비(세전 수입) + 본사미션. */
 export type RiderDailyFee = {
   admin_rider_id: string

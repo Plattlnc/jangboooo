@@ -25,11 +25,14 @@ import openpyxl
 
 
 def parse_week_from_filename(path):
-    m = re.match(r"(\d{8})_(\d{8})_", os.path.basename(path))
+    # 바로고 원본 '20260805_...' 또는 grider 다운로드 '20260805~20260811_...' 둘 다 수용.
+    m = re.match(r"(\d{8})[_~](\d{8})?", os.path.basename(path))
     if not m:
-        sys.exit("파일명에서 주차(YYYYMMDD_YYYYMMDD_) 추출 실패")
+        sys.exit("파일명에서 주차 추출 실패 — --week-start 로 직접 지정하세요")
     fmt = lambda s: f"{s[:4]}-{s[4:6]}-{s[6:8]}"
-    return fmt(m.group(1)), fmt(m.group(2))
+    start = fmt(m.group(1))
+    end = fmt(m.group(2)) if m.group(2) else None
+    return start, end
 
 
 def parse(path):
@@ -108,9 +111,17 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("excel")
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--week-start", help="주 시작(수) YYYY-MM-DD — 파일명 대신 직접 지정")
+    ap.add_argument("--week-end", help="주 끝(화) YYYY-MM-DD")
     args = ap.parse_args()
 
-    week_start, week_end = parse_week_from_filename(args.excel)
+    if args.week_start:
+        week_start = args.week_start
+        week_end = args.week_end or args.week_start
+    else:
+        week_start, week_end = parse_week_from_filename(args.excel)
+        if not week_end:
+            sys.exit("주 끝 날짜를 파일명에서 못 읽음 — --week-end 지정 필요")
     rows = parse(args.excel)
     ins = parse_insurance(args.excel)
     print(f"파싱: 주차 {week_start}~{week_end}")

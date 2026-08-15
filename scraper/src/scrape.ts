@@ -8,9 +8,10 @@ import type { Logger } from './logger'
 import { serializeError } from './logger'
 import type { BrowserSession } from './browser'
 import type { Db } from './supabase'
-import { upsertCenterCurrents, upsertDeliveryFeeDetails, upsertHourlyStats, upsertInsurance, upsertRiderDailyFees, upsertRiders, upsertSlaSnapshots, upsertWorkingStatus } from './supabase'
+import { upsertCenterCurrents, upsertDeliveryFeeDetails, upsertHourlyStats, upsertInsurance, upsertRiderDailyFees, upsertRiderExtraPayments, upsertRiderWeeklyInsurance, upsertRiders, upsertSlaSnapshots, upsertWorkingStatus } from './supabase'
 import { captureApiHeaders, fetchSlaDataWithHeaders, isSessionExpired, mockScrapeResult } from './sources/baemin'
 import { collectDeliveryFees } from './sources/baemin-fees'
+import { tryCollectGriderWeekly } from './sources/grider'
 import type { RiderDailyFee, ScrapeResult, UpsertCounts } from './types'
 import { isBusinessDayRollover, trustedNow } from './util'
 
@@ -33,6 +34,26 @@ function prevDay(date: string): string {
   const dt = new Date(`${date}T00:00:00Z`)
   dt.setUTCDate(dt.getUTCDate() - 1)
   return dt.toISOString().slice(0, 10)
+}
+
+function addDays(date: string, n: number): string {
+  const dt = new Date(`${date}T00:00:00Z`)
+  dt.setUTCDate(dt.getUTCDate() + n)
+  return dt.toISOString().slice(0, 10)
+}
+
+/**
+ * 오늘(KST) 기준 '가장 최근 완결된 정산 주(수~화)'. 주 시작=수요일, 끝=화요일.
+ * grider 주정산서는 화요일 마감 후 발행되므로, 이번 주 화요일이 아직 안 지났으면 지난 주를 반환.
+ */
+function lastCompletedSettlementWeek(today: string): { start: string; end: string } {
+  const dow = new Date(`${today}T00:00:00Z`).getUTCDay() // 0=일 … 3=수 … 2=화
+  // 이번 주 수요일(주 시작) 오프셋: 수=0, 목=-1, … 화=-6.
+  const sinceWed = (dow - 3 + 7) % 7
+  const thisWeekStart = addDays(today, -sinceWed)
+  // 완결 주 = 지난 주(이번 주는 아직 진행 중이거나 방금 끝나 발행 전일 수 있음).
+  const start = addDays(thisWeekStart, -7)
+  return { start, end: addDays(start, 6) }
 }
 
 export type CycleDeps = {
@@ -296,6 +317,53 @@ async function maybeCollectFees(deps: CycleDeps, api: ApiSession): Promise<void>
   }
 }
 
+// ── grider 주정산서(추가지급·시간제보험료) 주 1회 자동 수집 ──
+let griderDoneWeek: string | null = null // 이 프로세스에서 마지막으로 적재 완료한 주(week_start)
+let griderLastAttemptDay: string | null = null // 오늘(KST) 시도했는지 — 하루 1회로 제한
+
+/** 최근 완결 주(수~화)가 rider_weekly_insurance 에 이미 있으면 skip(재시작 중복 방지). */
+async function griderWeekAlreadyStored(db: Db, weekStart: string): Promise<boolean> {
+  const { data, error } = await db
+    .from('rider_weekly_insurance')
+    .select('week_start')
+    .eq('week_start', weekStart)
+    .limit(1)
+  if (error) return false
+  return Boolean(data?.length)
+}
+
+/**
+ * grider 주정산서 수집 — GRIDER_HOUR(기본 9시) 이후 하루 1회 시도, 최근 완결 주(수~화)를
+ * 아직 안 받았으면 로그인→다운로드→파싱→멱등 upsert. 2FA 없어 재로그인 저렴. best-effort.
+ */
+async function maybeCollectGriderWeekly(cfg: Config, db: Db, log: Logger): Promise<void> {
+  if (!cfg.grider.configured) return
+  const { date: today, hour } = kstDateHour(trustedNow())
+  if (hour < cfg.grider.hour) return
+  const week = lastCompletedSettlementWeek(today)
+  if (griderDoneWeek === week.start) return // 이 프로세스에서 이미 적재
+  if (griderLastAttemptDay === today) return // 오늘 이미 시도(성공/실패 무관 — 하루 1회)
+  griderLastAttemptDay = today
+  try {
+    if (await griderWeekAlreadyStored(db, week.start)) {
+      griderDoneWeek = week.start
+      return
+    }
+    const res = await tryCollectGriderWeekly(cfg, log, week.start, week.end)
+    if (!res) return // 로그인 실패/미발행 등 — 내일 재시도
+    if (res.insurance.length === 0 && res.extra.length === 0) {
+      log.warn('grider 주정산서 0건 — 미발행 가능(내일 재시도)', { week: week.start })
+      return
+    }
+    const ni = await upsertRiderWeeklyInsurance(db, res.insurance)
+    const ne = await upsertRiderExtraPayments(db, res.extra)
+    griderDoneWeek = week.start
+    log.info('grider 주정산서 적재 완료', { week: `${week.start}~${week.end}`, insurance: ni, extra: ne })
+  } catch (err) {
+    log.error('grider 주정산서 수집 실패(내일 재시도)', serializeError(err))
+  }
+}
+
 // ── app_visits retention — 하루 1회, 90일 초과 로그 삭제 ──
 // 소비처(get_app_usage)는 최근 14일만 읽는데 적재는 무한이라 데드 웨이트만 쌓인다(0017).
 // 90일 보존이면 재집계 여지까지 넉넉. best-effort — 실패해도 사이클 무영향.
@@ -345,6 +413,8 @@ export async function runScrapeCycle(deps: CycleDeps): Promise<UpsertCounts | nu
     if (apiSession) await maybeCollectFees(deps, apiSession)
     // 과거 미수집일 자동 소급(하루 1회 스윕) — 세션 다운으로 놓친 날의 영구 공백 방지.
     if (apiSession) await maybeBackfillMissedFees(deps, apiSession)
+    // grider 주정산서(추가지급·시간제보험료) 주 1회 자동 수집 — 배민 세션과 독립.
+    await maybeCollectGriderWeekly(cfg, db, log)
     await maybePruneAppVisits(db, log)
     return settled
   } catch (err) {
