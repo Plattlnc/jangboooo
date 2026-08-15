@@ -35,7 +35,7 @@ export default async function StatementPage({
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-center gap-2">
-        <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-jb-ink">정산서</h1>
+        <h1 className="text-[22px] font-black tracking-[-0.02em] text-jb-ink">정산서</h1>
         <span className="rounded-[6px] bg-jb-indigo-tint px-1.5 py-[3px] text-[11px] font-bold leading-none text-jb-indigo">세무사용</span>
         <span className="ml-auto">
           <DataPulse source="daily" label="정산 원천 데이터" cadence="매일 08:00 자동 수집 (전일분)" />

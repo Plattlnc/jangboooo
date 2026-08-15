@@ -85,7 +85,7 @@ export function ExtraPaymentsView({ data, terminated }: { data: ExtraPayments; t
       {/* 헤더: 타이틀 + 주 이동 */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-[20px] font-black tracking-[-0.02em] text-jb-ink">추가 지급</h1>
+          <h1 className="text-[22px] font-black tracking-[-0.02em] text-jb-ink">추가 지급</h1>
           <p className="mt-1 text-[13px] text-jb-ink-mute">
             주간 정산서의 소급 보정 내역(기상할증 보정 등) — 본사 미션과 별개 항목입니다.
           </p>

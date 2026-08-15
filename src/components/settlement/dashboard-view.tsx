@@ -17,7 +17,10 @@ export function DashboardView({ data }: { data: DashboardData }) {
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
-          <h1 className="text-[24px] font-black tracking-[-0.02em] text-jb-ink">홈 (대시보드)</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-[24px] font-black tracking-[-0.02em] text-jb-ink">홈</h1>
+            <span className="rounded-[6px] bg-jb-indigo-tint px-1.5 py-[3px] text-[11px] font-bold leading-none text-jb-indigo">대시보드</span>
+          </div>
           <p className="mt-1 text-[13.5px] text-jb-ink-mute">
             {week ? `최신 확정 주차 ${week.start} ~ ${week.end} 기준` : "회사 현황 요약"} · 슬라이더 정산팀
           </p>

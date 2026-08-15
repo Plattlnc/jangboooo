@@ -48,7 +48,7 @@ export function RevenueView({ data }: { data: RevenueData }) {
   if (!week) {
     return (
       <div>
-        <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-jb-ink">매출</h1>
+        <h1 className="text-[22px] font-black tracking-[-0.02em] text-jb-ink">매출</h1>
         <div className="mt-4 grid place-items-center rounded-[12px] border border-jb-line bg-jb-card py-16 text-center">
           <TrendingUp size={28} className="mb-3 text-jb-ink-mute/60" />
           <div className="text-[14px] font-semibold text-jb-ink-soft">매출 데이터가 아직 없습니다</div>

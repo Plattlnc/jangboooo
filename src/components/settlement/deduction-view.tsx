@@ -96,7 +96,7 @@ export function DeductionView({
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-jb-ink">차감 정산</h1>
+        <h1 className="text-[22px] font-black tracking-[-0.02em] text-jb-ink">차감 정산</h1>
         <p className="mt-1 text-[13px] text-jb-ink-mute">
           <span className="font-semibold text-jb-ink-soft">시간제보험료</span>는 주간 정산서(을지)에서 <span className="font-semibold text-jb-ink-soft">자동 반영</span>됩니다{latestDate ? ` (최근 반영 주차: ${latestDate})` : " (아직 반영된 보험료 없음)"}. 필요 시 수동 조정 가능 · 금요일 정산 시 별도 차감.
         </p>

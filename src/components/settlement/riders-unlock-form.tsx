@@ -39,7 +39,7 @@ export function RidersUnlockForm({
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-jb-ink">{title}</h1>
+        <h1 className="text-[22px] font-black tracking-[-0.02em] text-jb-ink">{title}</h1>
         <p className="mt-1 text-[13px] text-jb-ink-mute">{subtitle}</p>
       </div>
 

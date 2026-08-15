@@ -25,7 +25,7 @@ export function MissionTabs({
 
   return (
     <div className="flex flex-col gap-5">
-      <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-jb-ink">본사 미션</h1>
+      <h1 className="text-[22px] font-black tracking-[-0.02em] text-jb-ink">본사 미션</h1>
       <MissionSettlementView data={data} period={period} today={today} notesApi={notesApi} terminated={terminated} />
     </div>
   );

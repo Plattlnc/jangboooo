@@ -23,7 +23,7 @@ export function DailyTabs({
 
   return (
     <div className="flex flex-col gap-5">
-      <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-jb-ink">일일 정산</h1>
+      <h1 className="text-[22px] font-black tracking-[-0.02em] text-jb-ink">일일 정산</h1>
       <DailySettlementView data={data} today={today} notesApi={notesApi} terminated={terminated} />
     </div>
   );

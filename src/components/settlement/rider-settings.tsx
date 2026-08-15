@@ -31,7 +31,7 @@ export function RiderSettings({
     <div className="flex flex-col gap-5">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-jb-ink">라이더 설정</h1>
+          <h1 className="text-[22px] font-black tracking-[-0.02em] text-jb-ink">라이더 설정</h1>
           <p className="mt-1 text-[13px] text-jb-ink-mute">
             라이더별 메모·특이사항·주민등록번호를 입력해 두면 정산 화면 전반에 같은 데이터로 반영됩니다. 주민등록번호는 암호화되어 저장됩니다.
           </p>

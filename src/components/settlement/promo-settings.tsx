@@ -74,7 +74,7 @@ export function PromoSettings({
           <Link href="/settlement/promo" className="mb-1 inline-flex items-center gap-1 text-[12px] font-semibold text-jb-ink-mute hover:text-jb-ink-soft">
             <ArrowLeft size={13} /> 자사 프로모션
           </Link>
-          <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-jb-ink">자사 프로모션 설정</h1>
+          <h1 className="text-[22px] font-black tracking-[-0.02em] text-jb-ink">자사 프로모션 설정</h1>
           <p className="mt-1 text-[13px] text-jb-ink-mute">
             주(수~화)마다 <span className="font-semibold text-jb-ink-soft">초과 기준 건수</span>·<span className="font-semibold text-jb-ink-soft">건당 단가</span>를 정하면 정산서·프로모션에 자동 적용됩니다. (09~00시 완료건 기준)
           </p>
