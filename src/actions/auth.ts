@@ -27,14 +27,26 @@ export async function signInRider(input: unknown): Promise<SignInResult> {
     return { ok: false, code: 'SERVER_ERROR', message: '서버 설정 오류입니다. 잠시 후 다시 시도해주세요.' }
   }
 
-  const { data: rider, error } = await admin
+  // 아이디 대소문자 무시 매칭(사용자 확정, 2026-08-19).
+  // 배경: 배민 grider가 발급하는 admin_rider_id 는 대소문자가 섞임(예: 'Ksh5501').
+  //       라이더가 소문자로 입력해도 로그인이 되어야 하고, 대소문자 중복 행이 존재하는
+  //       경우엔 스크래퍼가 실제 데이터를 쌓고 있는 쪽(=updated_at 최신)을 골라야 한다.
+  //       그래야 로그인 후 대시보드가 그 라이더의 실제 스냅샷을 조회한다.
+  // ilike 는 postgrest에서 '*'가 와일드카드지만 grider의 실 아이디는 영숫자뿐이라
+  // 실사용상 무해. 그래도 방어적으로 아래에서 toLowerCase() 재검증한다.
+  const { data: candidates, error } = await admin
     .from('riders')
     .select('admin_rider_id, phone_norm, is_active, name')
-    .eq('admin_rider_id', riderId)
-    .maybeSingle()
+    .ilike('admin_rider_id', riderId)
+    .order('updated_at', { ascending: false })
+    .limit(2)
   if (error) {
     return { ok: false, code: 'SERVER_ERROR', message: '일시적인 오류입니다. 잠시 후 다시 시도해주세요.' }
   }
+
+  // ilike 오탐 방지: JS 레이어에서 소문자 완전일치만 통과.
+  const wanted = riderId.toLowerCase()
+  const rider = (candidates ?? []).find((r) => r.admin_rider_id.toLowerCase() === wanted) ?? null
 
   // 식별 불가(미존재/비활성/휴대폰 없음).
   if (!rider || !rider.is_active || !rider.phone_norm) {
