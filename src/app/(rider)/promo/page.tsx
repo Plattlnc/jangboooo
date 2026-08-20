@@ -1,5 +1,5 @@
 // 프로모션 — 자사 프로모션 통합 대시보드. 이번 주(수~화) 진행 중인 모든 적립을 한눈에.
-// 집계: 라이더 등급 보상(누진, 쌓이는 금액) + 출석체크(5일 달성 시) + 주간 보너스(151건 초과분).
+// 집계: 라이더 등급 보상(누진, 쌓이는 금액) + 출석체크(5일 달성 시) + 주간 보너스(PROMO_WEEKLY_THRESHOLD 초과분).
 // 데이터: getMyGrade / getMyAttendance(_lib) + weeklyPromo(순수 계산, 등급 완료건 재사용).
 
 import Link from "next/link";

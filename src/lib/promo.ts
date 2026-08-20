@@ -16,17 +16,17 @@ export const PROMO_WEEKLY_ACTIVE = true;
 export interface WeeklyPromo {
   /** 이번 주 완료건 */
   completed: number;
-  /** 151건 도달 여부(=151 포함) */
+  /** PROMO_WEEKLY_THRESHOLD 도달 여부(=포함) */
   reached: boolean;
-  /** 보너스 발생 여부(152건째부터) */
+  /** 보너스 발생 여부(threshold+1 건째부터) */
   earning: boolean;
-  /** 구간(151건)까지 남은 건수 — 도달 후 0 */
+  /** threshold 까지 남은 건수 — 도달 후 0 */
   remaining: number;
   /** 초과 건수 = 보너스 지급 건수 */
   bonusCount: number;
   /** 보너스 금액(원) */
   bonusKrw: number;
-  /** 진행 바(0~100, 151건 기준) */
+  /** 진행 바(0~100, threshold 기준) */
   progressPct: number;
 }
 
