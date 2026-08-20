@@ -164,6 +164,16 @@ async function persistResult(db: Db, result: ScrapeResult, log: Logger, timezone
 // ── 배달처리비(세전 수입) 일 1회 수집 — 8시·전일 미수집 시 파킹 세션 재사용 ──
 let lastFeeDay: string | null = null // 이 프로세스에서 마지막으로 수집한 전일
 let lastFeeSweepDay: string | null = null // 미수집일 소급 스윕을 완주한 날(KST)
+// 실패 시 백오프 — 매 사이클(60s) 재시도로 배민에 4xx 폭주 방지(2026-08-20 배민 신정책 '전날 데이터는 익일 11시 이후'
+// 발견 계기. 실패 유형 무관 최소 15분 간격으로 재시도).
+let lastFeeAttemptAtMs: number | null = null
+const FEE_RETRY_MIN_GAP_MS = 15 * 60 * 1000
+
+/** 배민 신정책 응답 감지 — 전날 데이터를 지정 시각 이전에 요청 시 반환하는 BAD_REQUEST 문구. */
+function isFeeEarlyMorningError(err: unknown): boolean {
+  if (!(err instanceof Error)) return false
+  return /오전 11시 이후|아직 조회할 수 없/.test(err.message)
+}
 
 /** 소급 대상: 그제~lookback일 중 rider_daily_fees 에 행이 하나도 없는 영업일(과거 세션 다운 구간). */
 async function missingOlderFeeDays(db: Db, today: string, lookback: number): Promise<string[]> {
@@ -274,14 +284,23 @@ async function reconcileFees(db: Db, day: string, rows: RiderDailyFee[], log: Lo
   }
 }
 
+/** 배민 신정책(11시) 등 실패 후 매 사이클 재시도로 폭주하지 않도록 최소 15분 간격 백오프. */
+function feeRetryTooSoon(now: Date): boolean {
+  if (lastFeeAttemptAtMs == null) return false
+  return now.getTime() - lastFeeAttemptAtMs < FEE_RETRY_MIN_GAP_MS
+}
+
 /** 8시·전일 미수집 시 배달처리비 1회 수집(같은 파킹 세션 page/headers 재사용). 실패해도 SLA 사이클엔 영향 없음. */
 async function maybeCollectFees(deps: CycleDeps, api: ApiSession): Promise<void> {
   const { cfg, log, db } = deps
   if (!cfg.fees.configured) return
-  const { date: today, hour } = kstDateHour(trustedNow())
+  const now = trustedNow()
+  const { date: today, hour } = kstDateHour(now)
   if (hour < cfg.fees.hour) return // 아직 수집 시각(기본 08시) 전
   const target = prevDay(today) // 전일(11일이면 10일)
   if (lastFeeDay === target) return // 이 프로세스에서 이미 수집
+  if (feeRetryTooSoon(now)) return // 실패 백오프(최소 15분 간격)
+  lastFeeAttemptAtMs = now.getTime()
   try {
     if (await feesAlreadyCollectedToday(db, target, today)) {
       lastFeeDay = target
@@ -291,7 +310,7 @@ async function maybeCollectFees(deps: CycleDeps, api: ApiSession): Promise<void>
     const parsed = await collectDeliveryFees(api.page, api.headers, cfg.fees.password!, cfg.fees.reason, target, log)
     if (parsed.daily.length === 0) {
       log.warn('배달처리비 0건 — 기존 값 보존(덮어쓰지 않음)', { day: target })
-      return // 빈값 가드: lastFeeDay 갱신 안 함 → 다음 사이클 재시도
+      return // 빈값 가드: lastFeeDay 갱신 안 함 → 15분 뒤 재시도
     }
     const capturedAt = trustedNow().toISOString()
     const n = await upsertRiderDailyFees(db, parsed.daily.map((r) => ({ ...r, captured_at: capturedAt })))
@@ -310,10 +329,17 @@ async function maybeCollectFees(deps: CycleDeps, api: ApiSession): Promise<void>
     await reconcileFees(db, target, parsed.daily, log)
   } catch (err) {
     if (isSessionExpired(err)) {
-      log.warn('배달처리비 수집 스킵 — 세션 만료(다음 사이클 재시도)')
+      log.warn('배달처리비 수집 스킵 — 세션 만료(15분 뒤 재시도)')
       return
     }
-    log.error('배달처리비 수집 실패(다음 사이클 재시도)', serializeError(err))
+    if (isFeeEarlyMorningError(err)) {
+      // 배민 신정책(2026-08-20 확인): 전날 데이터는 익일 11시 이후만 조회. 11시 전 요청은 info 로 조용히 대기.
+      // 근본 예방책은 Railway env DELIVERY_FEE_HOUR=11 상향(코드 기본값과 무관). 이 분류는 만일 배민 시각이
+      // 미세하게 밀리거나 env 롤백 시에도 로그가 error 로 튀지 않게 하는 안전장치.
+      log.info('배달처리비 수집 대기 — 배민 정책(전날 데이터 11시 이후)', { day: target })
+      return
+    }
+    log.error('배달처리비 수집 실패(15분 뒤 재시도)', serializeError(err))
   }
 }
 

@@ -53,7 +53,8 @@ const EnvSchema = z.object({
   // 비밀번호(=계정 ID) 미설정이면 수집 스킵. reason 은 규제 다운로드 사유(전송됨).
   DELIVERY_FEE_PASSWORD: optionalNonEmpty,
   DELIVERY_FEE_REASON: z.string().min(1).default('라이더 배달일지 수입 반영용 배달처리비 집계'),
-  DELIVERY_FEE_HOUR: z.coerce.number().int().min(0).max(23).default(8), // KST 수집 시각(시)
+  // KST 수집 시각(시). 2026-08-20 배민 신정책: 전날 데이터는 익일 11시 이후만 조회 가능 → 기본 11.
+  DELIVERY_FEE_HOUR: z.coerce.number().int().min(0).max(23).default(11),
 
   // grider(jangboo.grider.ai) 주정산서 수집 — 추가지급·시간제보험료 소스. ID/PW 둘 다 있어야 활성.
   GRIDER_ID: optionalNonEmpty,
