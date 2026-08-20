@@ -6,6 +6,9 @@ import { ChevronLeft, ChevronRight, Download, Search, ArrowUp, ArrowDown } from 
 import type { PromoSettlement, PromoSettlementRow, PromoTotals } from "@/app/settlement/_lib/promo";
 import { WITHHOLDING_RATE, INSURANCE_RATE } from "@/app/settlement/_lib/rates";
 import { ymdAdd } from "@/app/settlement/_lib/dates";
+// _lib/promo.ts 는 "server-only" 라 값 import 는 클라 번들에서 금지 → 상수만 로컬 재선언
+// (서버 산식과 반드시 동일 유지 — 변경 시 양쪽 함께 수정).
+const PROMO_ACCEPTANCE_MIN = 80;
 import { NotesSaveButton, type NotesApi } from "./notes-api";
 import { DualScrollX } from "./dual-scroll";
 import { TerminatedBadge } from "./terminated-badge";
@@ -13,13 +16,16 @@ import { TerminatedBadge } from "./terminated-badge";
 // 자사 프로모션 정산(주간 전용, 수~화) — 09:00~00:00 완료건을 프로모션 개수로 인정.
 // 주간 100건 초과분 건당 2,000원(세전) → 원천세·고용산재 공제 후 지급액. 수수료(100원) 미적용.
 
-type SortKey = "name" | "promoCount" | "payout";
+type SortKey = "name" | "promoCount" | "payout" | "acceptance";
 type SortDir = "asc" | "desc";
 
 const won = (n: number) => n.toLocaleString("ko-KR");
 const ded = (n: number) => (n > 0 ? `−${won(n)}` : "0");
 const WHT_PCT = `${(WITHHOLDING_RATE * 100).toFixed(1)}%`; // 3.3%
 const INS_PCT = `${(INSURANCE_RATE * 100).toFixed(1)}%`; // 1.8%
+// 수락률 표시 — 소수 1자리(자릿수 스펙: 정수 반올림 금지). null = 활동 없거나 계산 불가.
+const pct = (v: number | null): string => (v == null ? "—" : `${v.toFixed(1)}%`);
+const belowMin = (v: number | null): boolean => v != null && v < PROMO_ACCEPTANCE_MIN;
 
 export function PromoSettlementView({
   data,
@@ -53,12 +59,26 @@ export function PromoSettlementView({
     const dir = sortDir === "asc" ? 1 : -1;
     return [...filtered].sort((a, b) => {
       if (sortKey === "name") return a.name.localeCompare(b.name, "ko") * dir;
+      if (sortKey === "acceptance") {
+        // null(활동 없음/계산 불가) 은 정렬 방향과 무관하게 항상 뒤로.
+        const av = a.acceptanceRate;
+        const bv = b.acceptanceRate;
+        if (av == null && bv == null) return 0;
+        if (av == null) return 1;
+        if (bv == null) return -1;
+        return (av - bv) * dir;
+      }
       return (a[sortKey] - b[sortKey]) * dir;
     });
   }, [rows, q, sortKey, sortDir]);
 
   const vTotals = useMemo(() => sumRows(view), [view]);
   const paidCount = useMemo(() => view.filter((r) => r.payout > 0).length, [view]);
+  // 지급조건(수락률 80% 이상) 미달 라이더 수 — 지급 대상 후보 중에서만 집계(over>0).
+  const belowMinCount = useMemo(
+    () => view.filter((r) => r.over > 0 && belowMin(r.acceptanceRate)).length,
+    [view],
+  );
 
   function toggleSort(key: SortKey) {
     if (key === sortKey) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -71,14 +91,18 @@ export function PromoSettlementView({
   function exportCsv() {
     const head = [
       "번호", "라이더", "메모", "라이더ID", "완료(09~00시)", "100초과",
+      "수락률(%)", "지급조건",
       "프로모션(세전)", `원천세(${WHT_PCT})`, `고용산재(${INS_PCT})`, "지급액", "특이사항",
     ];
     const body = view.map((r, i) => [
       i + 1, r.name, notesApi.memos[r.riderId] ?? "", r.riderId, r.promoCount, r.over,
+      r.acceptanceRate ?? "",
+      // 지급조건 컬럼: 초과 없으면 대상 아님, 초과 있으면 수락률 판정.
+      r.over > 0 ? (r.acceptanceRate == null ? "판정 불가" : r.acceptanceRate >= PROMO_ACCEPTANCE_MIN ? "충족" : `미달(${PROMO_ACCEPTANCE_MIN}% 미만)`) : "",
       r.gross, r.wht, r.ins, r.payout, notesApi.notes[r.riderId] ?? "",
     ]);
     const foot = [
-      "합계", "", "", "", vTotals.promoCount, vTotals.over,
+      "합계", "", "", "", vTotals.promoCount, vTotals.over, "", "",
       vTotals.gross, vTotals.wht, vTotals.ins, vTotals.payout, "",
     ];
     const csv = [head, ...body, foot]
@@ -100,7 +124,7 @@ export function PromoSettlementView({
         <p className="text-[13px] text-jb-ink-mute">
           <span className="font-semibold text-jb-ink-soft">{basisLabel}</span> 완료건 집계 ·{" "}
           {unit > 0 ? (
-            <>이 주 규칙 <span className="font-semibold text-jb-ink-soft">{won(threshold)}건 초과분 건당 {won(unit)}원</span>(세전) · 원천세 {WHT_PCT} · 고용산재 {INS_PCT} 공제 후 지급</>
+            <>이 주 규칙 <span className="font-semibold text-jb-ink-soft">{won(threshold)}건 초과분 건당 {won(unit)}원</span>(세전) · 원천세 {WHT_PCT} · 고용산재 {INS_PCT} 공제 후 지급 · <span className="font-semibold text-jb-ink-soft">지급조건: 수락률 {PROMO_ACCEPTANCE_MIN}% 이상</span>(미달=수동 제외)</>
           ) : (
             <>이 주 프로모션 규칙 미설정 (<span className="font-semibold text-jb-indigo">설정</span>에서 초과 기준·단가·집계기준 입력)</>
           )}
@@ -136,6 +160,12 @@ export function PromoSettlementView({
         <SummaryCard label="총 프로모션" value={`${won(vTotals.gross)}원`} sub="세전" />
         <SummaryCard label="총 지급액" value={`${won(vTotals.payout)}원`} sub="공제 후" accent />
       </div>
+      {/* 지급조건 미달 안내 — 자동 제외는 안 하고 표시만(사용자 수동 판정). */}
+      {belowMinCount > 0 ? (
+        <div className="rounded-[10px] border border-jb-amber/40 bg-jb-amber/5 px-3.5 py-2.5 text-[12.5px] text-jb-ink-soft">
+          지급 대상 중 <span className="font-semibold text-jb-amber">수락률 {PROMO_ACCEPTANCE_MIN}% 미달 {won(belowMinCount)}명</span> — 자동 제외되지 않으니 특이사항 메모에 기록 후 수동 처리하세요.
+        </div>
+      ) : null}
 
       {/* 테이블 카드 */}
       <div className="overflow-hidden rounded-[12px] border border-jb-line bg-jb-card shadow-[var(--toss-shadow)]">
@@ -183,6 +213,7 @@ export function PromoSettlementView({
                   <th className="border-b border-jb-line px-3 py-2.5 text-left">라이더 ID</th>
                   <SortableTh label={`완료 (${basisShort})`} onClick={() => toggleSort("promoCount")} active={sortKey === "promoCount"} dir={sortDir} align="right" className="border-l border-jb-line" />
                   <th className="border-b border-jb-line px-3 py-2.5 text-right">{unit > 0 ? `${won(threshold)} 초과` : "초과"}</th>
+                  <SortableTh label={`수락률 (${PROMO_ACCEPTANCE_MIN}%↑)`} onClick={() => toggleSort("acceptance")} active={sortKey === "acceptance"} dir={sortDir} align="right" className="border-l border-jb-line" />
                   <th className="border-b border-l border-jb-line px-3 py-2.5 text-right">프로모션(세전)</th>
                   <th className="border-b border-jb-line px-3 py-2.5 text-right">원천세 {WHT_PCT}</th>
                   <th className="border-b border-jb-line px-3 py-2.5 text-right">고용산재 {INS_PCT}</th>
@@ -210,6 +241,8 @@ export function PromoSettlementView({
                   <td className="sticky left-0 z-10 bg-jb-surface px-3 py-3 text-right text-jb-ink-mute" colSpan={4}>합계 · {won(view.length)}명</td>
                   <td className="border-l border-jb-line px-3 py-3 text-right font-mono tabular-nums">{won(vTotals.promoCount)}</td>
                   <td className="px-3 py-3 text-right font-mono tabular-nums text-jb-ink-soft">{won(vTotals.over)}</td>
+                  {/* 수락률은 합계가 의미 없어 공란(평균은 오해 유발). */}
+                  <td className="border-l border-jb-line px-3 py-3 text-right font-mono tabular-nums text-jb-ink-mute">—</td>
                   <td className="border-l border-jb-line px-3 py-3 text-right font-mono tabular-nums">{won(vTotals.gross)}</td>
                   <td className="px-3 py-3 text-right font-mono tabular-nums text-jb-red">{ded(vTotals.wht)}</td>
                   <td className="px-3 py-3 text-right font-mono tabular-nums text-jb-red">{ded(vTotals.ins)}</td>
@@ -309,6 +342,22 @@ const Row = memo(function Row({
       <td className="px-3 py-2.5 font-mono text-[12px] text-jb-ink-mute">{row.riderId}</td>
       <td className="border-l border-jb-line-soft px-3 py-2.5 text-right font-mono tabular-nums text-jb-ink">{won(row.promoCount)}</td>
       <td className="px-3 py-2.5 text-right font-mono tabular-nums text-jb-ink-soft">{won(row.over)}</td>
+      <td className={`border-l border-jb-line-soft px-3 py-2.5 text-right font-mono tabular-nums ${
+        row.acceptanceRate == null
+          ? "text-jb-ink-mute"
+          : belowMin(row.acceptanceRate)
+            ? "text-jb-amber"
+            : "text-jb-ink"
+      }`}>
+        <span className="inline-flex items-center gap-1">
+          {pct(row.acceptanceRate)}
+          {row.over > 0 && belowMin(row.acceptanceRate) ? (
+            <span className="rounded-[5px] bg-jb-amber/15 px-1 py-0.5 text-[10px] font-medium text-jb-amber" title={`지급조건 ${PROMO_ACCEPTANCE_MIN}% 미달 — 수동 제외`}>
+              미달
+            </span>
+          ) : null}
+        </span>
+      </td>
       <td className="border-l border-jb-line-soft px-3 py-2.5 text-right font-mono tabular-nums text-jb-ink">{won(row.gross)}</td>
       <td className="px-3 py-2.5 text-right font-mono tabular-nums text-jb-red">{ded(row.wht)}</td>
       <td className="px-3 py-2.5 text-right font-mono tabular-nums text-jb-red">{ded(row.ins)}</td>
