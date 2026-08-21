@@ -4,7 +4,7 @@ import { useMemo, useState, memo, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, Download, Search, ArrowUp, ArrowDown } from "lucide-react";
 import type { PromoSettlement, PromoSettlementRow, PromoTotals } from "@/app/settlement/_lib/promo";
-import { WITHHOLDING_RATE, INSURANCE_RATE } from "@/app/settlement/_lib/rates";
+import { WITHHOLDING_RATE } from "@/app/settlement/_lib/rates";
 import { ymdAdd } from "@/app/settlement/_lib/dates";
 // _lib/promo.ts 는 "server-only" 라 값 import 는 클라 번들에서 금지 → 상수만 로컬 재선언
 // (서버 산식과 반드시 동일 유지 — 변경 시 양쪽 함께 수정).
@@ -22,7 +22,7 @@ type SortDir = "asc" | "desc";
 const won = (n: number) => n.toLocaleString("ko-KR");
 const ded = (n: number) => (n > 0 ? `−${won(n)}` : "0");
 const WHT_PCT = `${(WITHHOLDING_RATE * 100).toFixed(1)}%`; // 3.3%
-const INS_PCT = `${(INSURANCE_RATE * 100).toFixed(1)}%`; // 1.8%
+// 고용산재(1.8%)는 자사 프로모션 미적용 (2026-08-21 사용자 확정, 다른 정산 탭과 다름).
 // 수락률 표시 — 소수 1자리(자릿수 스펙: 정수 반올림 금지). null = 활동 없거나 계산 불가.
 const pct = (v: number | null): string => (v == null ? "—" : `${v.toFixed(1)}%`);
 const belowMin = (v: number | null): boolean => v != null && v < PROMO_ACCEPTANCE_MIN;
@@ -92,18 +92,18 @@ export function PromoSettlementView({
     const head = [
       "번호", "라이더", "메모", "라이더ID", "완료(09~00시)", "100초과",
       "수락률(%)", "지급조건",
-      "프로모션(세전)", `원천세(${WHT_PCT})`, `고용산재(${INS_PCT})`, "지급액", "특이사항",
+      "프로모션(세전)", `원천세(${WHT_PCT})`, "지급액", "특이사항",
     ];
     const body = view.map((r, i) => [
       i + 1, r.name, notesApi.memos[r.riderId] ?? "", r.riderId, r.promoCount, r.over,
       r.acceptanceRate ?? "",
       // 지급조건 컬럼: 초과 없으면 대상 아님, 초과 있으면 수락률 판정.
       r.over > 0 ? (r.acceptanceRate == null ? "판정 불가" : r.acceptanceRate >= PROMO_ACCEPTANCE_MIN ? "충족" : `미달(${PROMO_ACCEPTANCE_MIN}% 미만)`) : "",
-      r.gross, r.wht, r.ins, r.payout, notesApi.notes[r.riderId] ?? "",
+      r.gross, r.wht, r.payout, notesApi.notes[r.riderId] ?? "",
     ]);
     const foot = [
       "합계", "", "", "", vTotals.promoCount, vTotals.over, "", "",
-      vTotals.gross, vTotals.wht, vTotals.ins, vTotals.payout, "",
+      vTotals.gross, vTotals.wht, vTotals.payout, "",
     ];
     const csv = [head, ...body, foot]
       .map((row) => row.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","))
@@ -124,7 +124,7 @@ export function PromoSettlementView({
         <p className="text-[13px] text-jb-ink-mute">
           <span className="font-semibold text-jb-ink-soft">{basisLabel}</span> 완료건 집계 ·{" "}
           {unit > 0 ? (
-            <>이 주 규칙 <span className="font-semibold text-jb-ink-soft">{won(threshold)}건 초과분 건당 {won(unit)}원</span>(세전) · 원천세 {WHT_PCT} · 고용산재 {INS_PCT} 공제 후 지급 · <span className="font-semibold text-jb-ink-soft">지급조건: 수락률 {PROMO_ACCEPTANCE_MIN}% 이상</span>(미달=수동 제외)</>
+            <>이 주 규칙 <span className="font-semibold text-jb-ink-soft">{won(threshold)}건 초과분 건당 {won(unit)}원</span>(세전) · 원천세 {WHT_PCT} 공제 후 지급(고용산재 미적용) · <span className="font-semibold text-jb-ink-soft">지급조건: 수락률 {PROMO_ACCEPTANCE_MIN}% 이상</span>(미달=수동 제외)</>
           ) : (
             <>이 주 프로모션 규칙 미설정 (<span className="font-semibold text-jb-indigo">설정</span>에서 초과 기준·단가·집계기준 입력)</>
           )}
@@ -216,7 +216,6 @@ export function PromoSettlementView({
                   <SortableTh label={`수락률 (${PROMO_ACCEPTANCE_MIN}%↑)`} onClick={() => toggleSort("acceptance")} active={sortKey === "acceptance"} dir={sortDir} align="right" className="border-l border-jb-line" />
                   <th className="border-b border-l border-jb-line px-3 py-2.5 text-right">프로모션(세전)</th>
                   <th className="border-b border-jb-line px-3 py-2.5 text-right">원천세 {WHT_PCT}</th>
-                  <th className="border-b border-jb-line px-3 py-2.5 text-right">고용산재 {INS_PCT}</th>
                   <SortableTh label="지급액" onClick={() => toggleSort("payout")} active={sortKey === "payout"} dir={sortDir} align="right" className="border-l border-jb-line font-semibold text-jb-ink" />
                   <th className="w-[240px] min-w-[240px] border-b border-l border-jb-line px-3 py-2.5 text-left">특이사항</th>
                   <th className="w-full border-b border-jb-line p-0" aria-hidden />
@@ -245,7 +244,6 @@ export function PromoSettlementView({
                   <td className="border-l border-jb-line px-3 py-3 text-right font-mono tabular-nums text-jb-ink-mute">—</td>
                   <td className="border-l border-jb-line px-3 py-3 text-right font-mono tabular-nums">{won(vTotals.gross)}</td>
                   <td className="px-3 py-3 text-right font-mono tabular-nums text-jb-red">{ded(vTotals.wht)}</td>
-                  <td className="px-3 py-3 text-right font-mono tabular-nums text-jb-red">{ded(vTotals.ins)}</td>
                   <td className="border-l border-jb-line px-3 py-3 text-right font-mono tabular-nums text-jb-indigo">{won(vTotals.payout)}</td>
                   <td className="border-l border-jb-line-soft" />
                   <td className="p-0" aria-hidden />
@@ -260,13 +258,12 @@ export function PromoSettlementView({
 }
 
 function sumRows(rows: PromoSettlementRow[]): PromoTotals {
-  const t: PromoTotals = { riders: rows.length, promoCount: 0, over: 0, gross: 0, wht: 0, ins: 0, payout: 0 };
+  const t: PromoTotals = { riders: rows.length, promoCount: 0, over: 0, gross: 0, wht: 0, payout: 0 };
   for (const r of rows) {
     t.promoCount += r.promoCount;
     t.over += r.over;
     t.gross += r.gross;
     t.wht += r.wht;
-    t.ins += r.ins;
     t.payout += r.payout;
   }
   return t;
@@ -360,7 +357,6 @@ const Row = memo(function Row({
       </td>
       <td className="border-l border-jb-line-soft px-3 py-2.5 text-right font-mono tabular-nums text-jb-ink">{won(row.gross)}</td>
       <td className="px-3 py-2.5 text-right font-mono tabular-nums text-jb-red">{ded(row.wht)}</td>
-      <td className="px-3 py-2.5 text-right font-mono tabular-nums text-jb-red">{ded(row.ins)}</td>
       <td className="border-l border-jb-line-soft px-3 py-2.5 text-right font-mono font-bold tabular-nums text-jb-indigo">{won(row.payout)}</td>
       <td className="border-l border-jb-line-soft px-2 py-1.5">
         <input

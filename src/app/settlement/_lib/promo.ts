@@ -1,11 +1,12 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { applyDeductions } from "@/app/settlement/_lib/rates";
+import { WITHHOLDING_RATE } from "@/app/settlement/_lib/rates";
 import { loadPromoRules } from "@/app/settlement/_lib/promo-rules";
 
 // 자사 프로모션 정산 — SLA 운영시간(09:00~00:00 = hour 9~23) 완료건을 프로모션 개수로 인정.
-// 주간(수~화) 100건 초과분(101건째부터) 건당 2,000원(세전). 원천세(3.3%)·고용산재(1.8%) 공제 후 지급액.
-// 수수료(완료건당 100원)는 미적용. 원천: rider_hourly_stats(시간대별 완료). 시간 외(0~8시) 제외.
+// 주간(수~화) 100건 초과분(101건째부터) 건당 2,000원(세전). **원천세(3.3%)만** 공제 후 지급액
+// (2026-08-21 사용자 확정 — 자사 프로모션은 고용산재 1.8% 미적용, 다른 정산 탭과 다름).
+// 수수료(완료건당 100원)도 미적용. 원천: rider_hourly_stats(시간대별 완료). 시간 외(0~8시) 제외.
 // 지급 조건: 수락률 80% 이상(사용자 확정, 2026-08-20) — 계산엔 반영 안 함(표시·배지만), 미달 라이더는
 // 수동 제외. 수락률=배민 공식(푸드완료 / 푸드완료+거절+취소+귀책, breakdown 전무 시 저장된 일별 acceptance_rate 평균 폴백).
 
@@ -22,9 +23,9 @@ export interface PromoSettlementRow {
   over: number;
   /** 프로모션 세전 = 초과분 × 2,000 */
   gross: number;
+  /** 원천세(3.3%, 원단위 절사) */
   wht: number;
-  ins: number;
-  /** 지급액 = 세전 − 원천세 − 고용산재 */
+  /** 지급액 = 세전 − 원천세 (고용산재 미적용 — 자사 프로모션 예외) */
   payout: number;
   /** 수락률(%, 푸드 공식). 활동 없거나 계산 불가 = null. 지급 계산엔 미반영(표시용). */
   acceptanceRate: number | null;
@@ -36,7 +37,6 @@ export interface PromoTotals {
   over: number;
   gross: number;
   wht: number;
-  ins: number;
   payout: number;
 }
 
@@ -180,7 +180,10 @@ export async function fetchPromoSettlement(start: string, end: string, weekly: b
     const promoCount = useDaily ? c.daily : c.op;
     const over = weekly && rule.unit > 0 ? Math.max(0, promoCount - rule.threshold) : 0;
     const gross = over * rule.unit; // 세전
-    const d = applyDeductions(gross, 0); // 원천세·고용산재만(수수료 미적용)
+    // 원천세 3.3% 만 공제 (고용산재 미적용 — 자사 프로모션 예외, 2026-08-21 사용자 확정).
+    // applyDeductions 는 항상 wht+ins 를 함께 빼므로 여기서는 사용하지 않고 직접 계산.
+    const wht = gross > 0 ? Math.floor(gross * WITHHOLDING_RATE) : 0;
+    const payout = gross > 0 ? gross - wht : 0;
     const meta = info.get(id);
     return {
       riderId: id,
@@ -189,21 +192,19 @@ export async function fetchPromoSettlement(start: string, end: string, weekly: b
       promoCount,
       over,
       gross,
-      wht: d.wht,
-      ins: d.ins,
-      payout: d.payout,
+      wht,
+      payout,
       acceptanceRate: acceptance.get(id) ?? null,
     };
   });
   rows.sort((a, b) => b.payout - a.payout || b.promoCount - a.promoCount || a.name.localeCompare(b.name, "ko"));
 
-  const totals: PromoTotals = { riders: rows.length, promoCount: 0, over: 0, gross: 0, wht: 0, ins: 0, payout: 0 };
+  const totals: PromoTotals = { riders: rows.length, promoCount: 0, over: 0, gross: 0, wht: 0, payout: 0 };
   for (const r of rows) {
     totals.promoCount += r.promoCount;
     totals.over += r.over;
     totals.gross += r.gross;
     totals.wht += r.wht;
-    totals.ins += r.ins;
     totals.payout += r.payout;
   }
 
